@@ -39,6 +39,9 @@ server {
     root $APP_DIR/dist;
     index index.html;
 
+    # Block all crawlers/indexing (dev site only)
+    add_header X-Robots-Tag "noindex, nofollow" always;
+
     location / {
         try_files \$uri \$uri/ /index.html;
     }
