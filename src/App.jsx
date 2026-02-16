@@ -68,6 +68,42 @@ const HIGHLIGHTS = [
 
 // ─── HOOKS ───────────────────────────────────────────────
 
+const SITE_NAME = 'The Background Investigator';
+const SITE_URL = 'https://bki2.pacificpact.com';
+const DEFAULT_DESC = 'Your information resource for the background investigation industry. News, court record updates, and compliance analysis for pre-employment screening professionals.';
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.svg`;
+
+function useMeta({ title, description, image, url, type = 'website' }) {
+  useEffect(() => {
+    const fullTitle = title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Background Screening News & Analysis`;
+    const desc = description || DEFAULT_DESC;
+    const img = image || DEFAULT_IMAGE;
+    const pageUrl = url || SITE_URL;
+
+    document.title = fullTitle;
+
+    const setMeta = (attr, key, value) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.setAttribute('content', value);
+    };
+
+    setMeta('name', 'description', desc);
+    setMeta('property', 'og:title', fullTitle);
+    setMeta('property', 'og:description', desc);
+    setMeta('property', 'og:image', img);
+    setMeta('property', 'og:url', pageUrl);
+    setMeta('property', 'og:type', type);
+    setMeta('name', 'twitter:title', fullTitle);
+    setMeta('name', 'twitter:description', desc);
+    setMeta('name', 'twitter:image', img);
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel', 'canonical'); document.head.appendChild(canonical); }
+    canonical.setAttribute('href', pageUrl);
+  }, [title, description, image, url, type]);
+}
+
 function useScrollReveal() {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -678,6 +714,7 @@ function InlineNewsletter() {
 // ─── HOME PAGE ───────────────────────────────────────────
 
 function HomePage({ setPage }) {
+  useMeta({});
   return (
     <>
       <HeroZone setPage={setPage} />
@@ -723,6 +760,7 @@ function HomePage({ setPage }) {
 function CategoryPage({ category, title, setPage }) {
   const articles = ARTICLES[category] || [];
   const color = CAT_COLORS[articles[0]?.category] || '#444';
+  useMeta({ title, description: `Latest ${title.toLowerCase()} from The Background Investigator.` });
   return (
     <div className="wrap" style={{ padding: '0 24px' }}>
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
@@ -758,6 +796,13 @@ function CategoryPage({ category, title, setPage }) {
 
 function ArticlePage({ articleId, setPage }) {
   const article = ALL_ARTICLES.find(a => a.id === articleId);
+  const articleImg = article ? (ARTICLE_IMAGES[article.id] || FALLBACK_IMAGE) : FALLBACK_IMAGE;
+  useMeta(article ? {
+    title: article.title,
+    description: article.excerpt,
+    image: articleImg.url,
+    type: 'article',
+  } : {});
   if (!article) return <div className="wrap" style={{ padding: 60, textAlign: 'center' }}><p>Article not found.</p></div>;
   const catKey = article.category === 'Top Stories' ? 'topStories' : article.category === 'International News' ? 'internationalNews' : article.category === 'National News' ? 'nationalNews' : 'pressReleases';
   const related = ARTICLES[catKey].filter(a => a.id !== article.id).slice(0, 3);
@@ -840,6 +885,7 @@ function ArticlePage({ articleId, setPage }) {
 // ─── EVENTS PAGE ─────────────────────────────────────────
 
 function EventsPage({ setPage }) {
+  useMeta({ title: 'Upcoming Events', description: 'Industry conferences and networking events for background screening professionals.' });
   return (
     <div className="wrap" style={{ padding: '32px 24px 60px' }}>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Upcoming Events</h1>
@@ -861,6 +907,7 @@ function EventsPage({ setPage }) {
 // ─── ADVERTISE PAGE ──────────────────────────────────────
 
 function AdvertisePage() {
+  useMeta({ title: 'Advertise With Us', description: 'Reach thousands of CRAs, compliance officers, and HR decision-makers with targeted ad placements on The Background Investigator.' });
   return (
     <div className="wrap" style={{ maxWidth: 800, padding: '32px 24px 60px' }}>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Advertise With Us</h1>
@@ -891,6 +938,7 @@ function AdvertisePage() {
 // ─── CONTACT PAGE ────────────────────────────────────────
 
 function ContactPage() {
+  useMeta({ title: 'Contact Us', description: 'Get in touch with The Background Investigator — questions, tips, or advertising inquiries.' });
   return (
     <div className="wrap" style={{ maxWidth: 800, padding: '32px 24px 60px' }}>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Contact Us</h1>
@@ -926,6 +974,7 @@ function ContactPage() {
 // ─── SUBSCRIBE PAGE ──────────────────────────────────────
 
 function SubscribePage() {
+  useMeta({ title: 'Subscribe', description: 'Subscribe to The Background Investigator newsletter — background screening news delivered to your inbox.' });
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
       <div style={{ width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg, #0d1b2a, #1a3a4a)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#c0392b', fontFamily: 'var(--f-display)', fontSize: 28, fontWeight: 700 }}>B</div>
@@ -943,6 +992,7 @@ function SubscribePage() {
 // ─── ARCHIVES PAGE ───────────────────────────────────────
 
 function ArchivesPage() {
+  useMeta({ title: 'Archives', description: 'Browse and download past PDF editions of The Background Investigator.' });
   const months = ['January 2026', 'December 2025', 'November 2025', 'October 2025', 'September 2025', 'August 2025', 'July 2025', 'June 2025'];
   return (
     <div className="wrap" style={{ padding: '32px 24px 60px', maxWidth: 800 }}>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0d1b2a"/>
+  <rect y="580" width="1200" height="50" fill="#c0392b"/>
+  <rect x="80" y="180" width="70" height="70" rx="12" fill="url(#g)"/>
+  <text x="115" y="232" font-family="Georgia, serif" font-size="42" font-weight="bold" fill="#c0392b" text-anchor="middle">B</text>
+  <text x="80" y="310" font-family="Georgia, serif" font-size="52" font-weight="bold" fill="#ffffff">The Background</text>
+  <text x="80" y="375" font-family="Georgia, serif" font-size="52" font-weight="bold" fill="#c0392b">Investigator</text>
+  <text x="80" y="430" font-family="system-ui, sans-serif" font-size="22" fill="rgba(255,255,255,0.5)">Background Screening News &amp; Compliance Analysis</text>
+  <text x="80" y="470" font-family="system-ui, sans-serif" font-size="18" fill="rgba(255,255,255,0.35)">bki2.pacificpact.com</text>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1b2a"/>
+      <stop offset="100%" stop-color="#1a3a4a"/>
+    </linearGradient>
+  </defs>
+</svg>
