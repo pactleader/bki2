@@ -13,13 +13,15 @@ async function apiFetch(path, opts = {}) {
     },
   });
 
-  if (res.status === 401) {
-    logout();
-    window.location.href = '/admin/login';
-    return;
-  }
-
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    // Only force logout/redirect if this isn't the login endpoint itself
+    if (!path.includes('/auth/login')) {
+      logout();
+      window.location.href = '/admin/login';
+      return;
+    }
+  }
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
 }
