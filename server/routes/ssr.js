@@ -6,9 +6,17 @@ const router  = express.Router();
 const SITE_NAME = 'The Background Investigator';
 const SITE_URL  = process.env.SITE_URL || 'https://bki2.pacificpact.com';
 
+const BOT_RE = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|applebot|discordbot|embedly|outbrain|pinterest|quora|slack|vkshare|w3c_validator|lighthouse|headlesschrome|prerender|crawl|spider|bot\b/i;
+
 // GET /Articles/:slug/:id/
 router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
   try {
+    // For real browsers, just serve the SPA — it will handle the route via React Router
+    const ua = req.headers['user-agent'] || '';
+    if (!BOT_RE.test(ua)) {
+      // Serve the frontend SPA index.html so React takes over
+      return res.sendFile(require('path').join(__dirname, '../../dist/index.html'));
+    }
     const [rows] = await db.execute(
       `SELECT a.id, a.title, a.slug, a.excerpt, a.body, a.featured_image,
               a.publish_date, a.seo_title, a.seo_description, a.seo_keywords, a.og_image,
