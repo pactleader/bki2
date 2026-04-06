@@ -50,6 +50,7 @@ export default function App() {
           <Route path="events/:id/edit" element={<EventEdit />} />
           <Route path="settings" element={<ProtectedRoute adminOnly><SiteSettings /></ProtectedRoute>} />
         </Route>
+        <Route path="/admin/" element={<Navigate to="/admin" replace />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </BrowserRouter>
