@@ -778,24 +778,42 @@ function HomePage({ setPage, onHighlightIds }) {
             const pageKey = SLUG_TO_PAGE[sec.category.slug] || sec.category.slug;
             const arts = sec.articles;
             if (arts.length === 0) return null;
+            const layout = sec.layout || 'band';
             return (
               <div key={sec.category.id}>
-                {idx === 0 && arts.length > 1 && (
-                  <ContainerA article={arts[1]} setPage={setPage} />
+                {layout === 'featured' && (
+                  <>
+                    <ContainerD
+                      title={sec.category.name}
+                      articles={arts}
+                      sectionKey={pageKey}
+                      color={sec.category.color_hex}
+                      setPage={setPage}
+                    />
+                    {arts[0] && <ContainerA article={arts[0]} setPage={setPage} />}
+                  </>
                 )}
-                {idx === 0 && (
-                  <AdSlot label="Leaderboard — 728×90" style={{ margin: '8px 0 16px' }} />
+                {layout === 'grid' && (
+                  <>
+                    <ContainerD
+                      title={sec.category.name}
+                      articles={arts}
+                      sectionKey={pageKey}
+                      color={sec.category.color_hex}
+                      setPage={setPage}
+                    />
+                    <ContainerB articles={arts} setPage={setPage} />
+                  </>
                 )}
-                {idx === 0 && arts.length > 2 && (
-                  <ContainerB articles={arts.slice(2, 5)} setPage={setPage} />
+                {layout === 'band' && (
+                  <ContainerD
+                    title={sec.category.name}
+                    articles={arts}
+                    sectionKey={pageKey}
+                    color={sec.category.color_hex}
+                    setPage={setPage}
+                  />
                 )}
-                <ContainerD
-                  title={sec.category.name}
-                  articles={arts}
-                  sectionKey={pageKey}
-                  color={sec.category.color_hex}
-                  setPage={setPage}
-                />
                 {idx === 1 && <InlineNewsletter />}
               </div>
             );
