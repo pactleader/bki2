@@ -55,6 +55,13 @@ export default function Layout() {
         </nav>
 
         <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,.1)' }}>
+          <a href="/" target="_blank" rel="noopener noreferrer" style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            fontSize: 12, color: 'rgba(255,255,255,.55)', marginBottom: 12,
+            textDecoration: 'none', padding: '6px 0',
+          }}>
+            <span style={{ fontSize: 13 }}>↗</span> Visit Website
+          </a>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', marginBottom: 2 }}>{user?.display_name}</div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,.35)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>{user?.role}</div>
           <button onClick={handleLogout} style={{
