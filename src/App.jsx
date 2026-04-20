@@ -337,7 +337,7 @@ function Header({ currentPage, setPage, highlightIds }) {
 
           {/* Mobile menu toggle */}
           <button className="mobile-only" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}
-            style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--color-primary)', padding: 8, display: 'none', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--color-primary)', padding: 8, cursor: 'pointer' }}
           >{menuOpen ? '✕' : '☰'}</button>
         </div>
       </div>
@@ -366,9 +366,9 @@ function Header({ currentPage, setPage, highlightIds }) {
 
       {/* Mobile nav dropdown */}
       {menuOpen && (
-        <nav className="mobile-only" style={{ background: '#fff', borderTop: '1px solid var(--color-border)', padding: '8px 0', display: 'none' }}>
+        <nav className="mobile-only" style={{ background: '#fff', borderTop: '1px solid var(--color-border)', padding: '8px 0', flexDirection: 'column' }}>
           {navItems.map(n => (
-            <button key={n.key} onClick={() => setPage(n.key)} style={{
+            <button key={n.key} onClick={() => { setPage(n.key); setMenuOpen(false); }} style={{
               display: 'block', width: '100%', background: 'none', border: 'none', textAlign: 'left',
               fontFamily: 'var(--f-ui)', fontSize: 15, fontWeight: currentPage === n.key ? 700 : 400,
               color: currentPage === n.key ? '#c0392b' : '#333',
@@ -706,9 +706,9 @@ function InlineNewsletter() {
           <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', color: '#fff', fontWeight: 700, marginBottom: 4 }}>Stay ahead of compliance changes.</h3>
           <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'rgba(255,255,255,0.5)' }}>Join thousands of screening professionals who read BKI daily.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flex: '0 1 360px' }}>
+        <div style={{ display: 'flex', gap: 8, flex: '1 1 260px', flexWrap: 'wrap' }}>
           <input placeholder="Email address" style={{
-            flex: 1, padding: '11px 14px', border: '1px solid rgba(255,255,255,0.2)',
+            flex: '1 1 180px', minWidth: 0, padding: '11px 14px', border: '1px solid rgba(255,255,255,0.2)',
             background: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: 3,
             fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', outline: 'none',
           }} />
@@ -716,6 +716,7 @@ function InlineNewsletter() {
             padding: '11px 22px', background: '#c0392b', color: '#fff', border: 'none',
             borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700,
             letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap',
+            flex: '0 0 auto',
           }}>Subscribe</button>
         </div>
       </div>
@@ -907,13 +908,23 @@ const CAT_NAME_TO_PAGE = {
 function ArticlePage({ articleId, setPage, onSlug }) {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [related, setRelated] = useState([]);
 
   useEffect(() => {
     setLoading(true);
+    setRelated([]);
     getArticle(articleId)
       .then(a => {
         setArticle(a);
         if (a?.slug && onSlug) onSlug(a.slug);
+        if (a?.category?.slug) {
+          getArticles({ category: a.category.slug, limit: 4 })
+            .then(res => {
+              const items = (res?.data || []).filter(r => r.id !== articleId).slice(0, 3);
+              setRelated(items);
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -922,7 +933,6 @@ function ArticlePage({ articleId, setPage, onSlug }) {
   const catName = article?.category?.name || article?.category || '';
   const catKey = CAT_NAME_TO_PAGE[catName] || 'topStories';
   const articleImg = article ? (article.featured_image ? { url: article.featured_image, alt: article.title } : (ARTICLE_IMAGES[article.id] || FALLBACK_IMAGE)) : FALLBACK_IMAGE;
-  const related = ARTICLES[catKey]?.filter(a => a.id !== articleId).slice(0, 3) || [];
 
   useMeta(article ? {
     title: article.seo_title || article.title,
@@ -1001,19 +1011,24 @@ function ArticlePage({ articleId, setPage, onSlug }) {
           {related.length > 0 && (
             <section style={{ marginTop: 48, marginBottom: 40 }}>
               <h2 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--color-text-secondary)', paddingBottom: 10, borderBottom: '2px solid var(--color-primary)', marginBottom: 0 }}>Related Articles</h2>
-              {related.map(r => (
-                <div key={r.id} onClick={() => setPage('article-' + r.id, r.slug)} style={{
-                  display: 'flex', gap: 14, padding: '16px 0', borderBottom: '1px solid var(--color-border)', cursor: 'pointer', alignItems: 'flex-start',
-                }}>
-                  <div style={{ flexShrink: 0, width: 90, borderRadius: 4, overflow: 'hidden' }}>
-                    <ArticleImage aspect="4/3" seed={r.id} category={r.category} />
+              {related.map(r => {
+                const rCatName = r.category?.name || r.category || '';
+                const rDate = r.publish_date || r.created_at || r.date || '';
+                const rDateStr = rDate ? (() => { const d = new Date(rDate); return isNaN(d) ? rDate : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); })() : '';
+                return (
+                  <div key={r.id} onClick={() => setPage('article-' + r.id, r.slug)} style={{
+                    display: 'flex', gap: 14, padding: '16px 0', borderBottom: '1px solid var(--color-border)', cursor: 'pointer', alignItems: 'flex-start',
+                  }}>
+                    <div style={{ flexShrink: 0, width: 90, borderRadius: 4, overflow: 'hidden' }}>
+                      <ArticleImage aspect="4/3" seed={r.id} category={rCatName} src={r.featured_image} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>{r.title}</h3>
+                      {rDateStr && <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>{rDateStr}</span>}
+                    </div>
                   </div>
-                  <div>
-                    <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>{r.title}</h3>
-                    <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>{r.date}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </section>
           )}
         </article>
@@ -1028,6 +1043,7 @@ function ArticlePage({ articleId, setPage, onSlug }) {
 function EventsPage({ setPage }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
   useMeta({ title: 'Upcoming Events', description: 'Industry conferences and networking events for background screening professionals.' });
 
   useEffect(() => {
@@ -1043,6 +1059,35 @@ function EventsPage({ setPage }) {
     </div>
   );
 
+  if (selected) return (
+    <div className="wrap" style={{ maxWidth: 760, padding: '32px 24px 60px' }}>
+      <button onClick={() => setSelected(null)} style={{
+        background: 'none', border: 'none', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)',
+        color: '#c0392b', cursor: 'pointer', padding: 0, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6,
+      }}>← Back to Events</button>
+      <div style={{ borderTop: '4px solid #c0392b', paddingTop: 28 }}>
+        <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: 1 }}>
+          {selected.event_date || selected.date}
+        </span>
+        <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginTop: 12, marginBottom: 8, lineHeight: 1.2 }}>{selected.title}</h1>
+        {selected.location && (
+          <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', color: 'var(--color-text-secondary)', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>📍</span> {selected.location}
+          </p>
+        )}
+        <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8, marginBottom: 32 }}>
+          {selected.description}
+        </div>
+        {selected.url && (
+          <a href={selected.url} target="_blank" rel="noopener noreferrer" style={{
+            display: 'inline-block', padding: '12px 28px', background: '#c0392b', color: '#fff',
+            fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', fontWeight: 700, borderRadius: 4, textDecoration: 'none',
+          }}>Learn more →</a>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="wrap" style={{ padding: '32px 24px 60px' }}>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Upcoming Events</h1>
@@ -1050,12 +1095,18 @@ function EventsPage({ setPage }) {
       {events.length === 0 && <p style={{ fontFamily: 'var(--f-ui)', color: 'var(--color-text-secondary)' }}>No upcoming events at this time.</p>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
         {events.map((e, i) => (
-          <div key={e.id || i} style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 28, borderTop: '3px solid #c0392b' }}>
+          <div key={e.id || i} onClick={() => setSelected(e)} style={{
+            border: '1px solid var(--color-border)', borderRadius: 6, padding: 28, borderTop: '3px solid #c0392b',
+            cursor: 'pointer', transition: 'box-shadow 150ms ease',
+          }}
+            onMouseEnter={ev => ev.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'}
+            onMouseLeave={ev => ev.currentTarget.style.boxShadow = 'none'}
+          >
             <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: 1 }}>{e.event_date || e.date}</span>
             <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: 8, lineHeight: 1.3 }}>{e.title}</h2>
             <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginTop: 6 }}>{e.location}</p>
-            <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginTop: 10, lineHeight: 1.6 }}>{e.description}</p>
-            {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 12, fontSize: 'var(--text-xs)', color: '#c0392b', fontFamily: 'var(--f-ui)', fontWeight: 600 }}>Learn more →</a>}
+            <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginTop: 10, lineHeight: 1.6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{e.description}</p>
+            <span style={{ display: 'inline-block', marginTop: 12, fontSize: 'var(--text-xs)', color: '#c0392b', fontFamily: 'var(--f-ui)', fontWeight: 600 }}>View details →</span>
           </div>
         ))}
       </div>
