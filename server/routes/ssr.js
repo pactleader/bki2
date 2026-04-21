@@ -14,7 +14,6 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
     // For real browsers, just serve the SPA — it will handle the route via React Router
     const ua = req.headers['user-agent'] || '';
     if (!BOT_RE.test(ua)) {
-      // Serve the frontend SPA index.html so React takes over
       return res.sendFile(require('path').join(__dirname, '../../dist/index.html'));
     }
     const [rows] = await db.execute(

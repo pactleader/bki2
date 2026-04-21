@@ -41,31 +41,49 @@ export default function AdList() {
     <div>
       <PageHeader title="Ad Management" action={<Link to="/admin/ads/new"><Btn variant="accent">+ New Ad</Btn></Link>} />
       <Card style={{ padding: 0 }}>
-        <Table headers={['Preview', 'Name', 'Position', 'Active', '']}>
-          {ads.map(ad => (
-            <TR key={ad.id}>
-              <TD>
-                {ad.image_url
-                  ? <img src={ad.image_url} alt={ad.name} style={{ width: 80, height: 44, objectFit: 'cover', borderRadius: 4 }} onError={e => e.target.style.display = 'none'} />
-                  : <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>No image</span>}
-              </TD>
-              <TD style={{ fontWeight: 500 }}>{ad.name}</TD>
-              <TD><Badge color="var(--primary)">{POSITIONS[ad.position_slug] || ad.position_slug}</Badge></TD>
-              <TD>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={!!ad.is_active} onChange={() => handleToggle(ad)} style={{ width: 16, height: 16 }} />
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{ad.is_active ? 'Active' : 'Inactive'}</span>
-                </label>
-              </TD>
-              <TD>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <Link to={`/admin/ads/${ad.id}/edit`} style={{ color: 'var(--primary)', fontSize: 12 }}>Edit</Link>
-                  <button onClick={() => setDeleting(ad)} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}>Delete</button>
-                </div>
-              </TD>
-            </TR>
-          ))}
-          {ads.length === 0 && <tr><td colSpan={5} style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>No ads yet.</td></tr>}
+        <Table headers={['Preview', 'Name', 'Position', 'Schedule', 'Active', '']}>
+          {ads.map(ad => {
+            const now = new Date();
+            const started = !ad.starts_at || new Date(ad.starts_at) <= now;
+            const expired = ad.expires_at && new Date(ad.expires_at) < now;
+            const scheduled = ad.starts_at && new Date(ad.starts_at) > now;
+            const fmtDate = v => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+            return (
+              <TR key={ad.id}>
+                <TD>
+                  {ad.image_url
+                    ? <img src={ad.image_url} alt={ad.name} style={{ width: 80, height: 44, objectFit: 'cover', borderRadius: 4 }} onError={e => e.target.style.display = 'none'} />
+                    : <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>No image</span>}
+                </TD>
+                <TD style={{ fontWeight: 500 }}>{ad.name}</TD>
+                <TD><Badge color="var(--primary)">{POSITIONS[ad.position_slug] || ad.position_slug}</Badge></TD>
+                <TD>
+                  {expired ? (
+                    <Badge color="#ef4444">Expired {fmtDate(ad.expires_at)}</Badge>
+                  ) : scheduled ? (
+                    <Badge color="#f59e0b">Starts {fmtDate(ad.starts_at)}</Badge>
+                  ) : ad.expires_at ? (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Expires {fmtDate(ad.expires_at)}</span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
+                  )}
+                </TD>
+                <TD>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={!!ad.is_active} onChange={() => handleToggle(ad)} style={{ width: 16, height: 16 }} />
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{ad.is_active ? 'Active' : 'Inactive'}</span>
+                  </label>
+                </TD>
+                <TD>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Link to={`/admin/ads/${ad.id}/edit`} style={{ color: 'var(--primary)', fontSize: 12 }}>Edit</Link>
+                    <button onClick={() => setDeleting(ad)} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}>Delete</button>
+                  </div>
+                </TD>
+              </TR>
+            );
+          })}
+          {ads.length === 0 && <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>No ads yet.</td></tr>}
         </Table>
       </Card>
       {deleting && (
