@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, submitContact } from "./api.js";
+import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, getAds, submitContact } from "./api.js";
 
 // ─── DATA ────────────────────────────────────────────────
 const ARTICLES = {
@@ -240,15 +240,35 @@ function CatTag({ category, onClick }) {
 
 // ─── AD SLOT ─────────────────────────────────────────────
 
-function AdSlot({ w = '100%', h = 90, maxW = 728, label = 'Advertisement', style = {} }) {
+function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
+  const [ad, setAd] = useState(null);
+  const [tried, setTried] = useState(false);
+
+  useEffect(() => {
+    if (!position) { setTried(true); return; }
+    getAds(position)
+      .then(ads => { setAd(ads?.[0] || null); })
+      .catch(() => {})
+      .finally(() => setTried(true));
+  }, [position]);
+
+  if (!tried || !ad) return null;
+
+  const inner = (
+    <img
+      src={ad.image_url}
+      alt={ad.name}
+      style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+    />
+  );
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center', ...style }}>
-      <div style={{
-        width: w, maxWidth: maxW, height: h,
-        background: 'repeating-linear-gradient(135deg, #f5f5f5, #f5f5f5 10px, #f0f0f0 10px, #f0f0f0 20px)',
-        border: '1px dashed #d5d5d5', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'var(--f-ui)', fontSize: 10, color: '#bbb', letterSpacing: 1.5, textTransform: 'uppercase',
-      }}>{label}</div>
+      <div style={{ width: w, maxWidth: maxW, height: h, overflow: 'hidden', lineHeight: 0 }}>
+        {ad.link_url
+          ? <a href={ad.link_url} target="_blank" rel="noopener noreferrer sponsored" style={{ display: 'block', height: '100%' }}>{inner}</a>
+          : inner}
+      </div>
     </div>
   );
 }
@@ -332,7 +352,7 @@ function Header({ currentPage, setPage, highlightIds }) {
               background: '#c0392b', color: '#fff', border: 'none', fontFamily: 'var(--f-ui)',
               fontSize: 'var(--text-xs)', fontWeight: 700, padding: '9px 20px', borderRadius: 3,
               marginLeft: 10, cursor: 'pointer', letterSpacing: 0.8, textTransform: 'uppercase',
-            }}>Newsletter</button>
+            }}>Stay Informed</button>
           </nav>
 
           {/* Mobile menu toggle */}
@@ -651,7 +671,7 @@ function Sidebar({ setPage, mostReadOverride }) {
         ))}
       </div>
 
-      <AdSlot w="100%" maxW={300} h={250} label="Ad — 300×250" style={{ marginBottom: 28 }} />
+      <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
 
       {/* Newsletter signup */}
       <div style={{
@@ -684,7 +704,7 @@ function Sidebar({ setPage, mostReadOverride }) {
         ))}
       </div>
 
-      <AdSlot w="100%" maxW={300} h={250} label="Ad — 300×250" style={{ marginBottom: 28 }} />
+      <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
     </aside>
   );
 }
@@ -819,7 +839,7 @@ function HomePage({ setPage, onHighlightIds }) {
               </div>
             );
           })}
-          <AdSlot label="Below-Content — 728×90" style={{ margin: '20px 0 40px' }} />
+          <AdSlot position="leaderboard-mid" style={{ margin: '20px 0 40px' }} />
         </div>
 
         <Sidebar setPage={setPage} mostReadOverride={mostRead} />
@@ -871,7 +891,7 @@ function CategoryPage({ category, title, setPage }) {
             <p style={{ fontFamily: 'var(--f-ui)', color: 'var(--color-text-secondary)', padding: '40px 0' }}>No articles yet.</p>
           )}
           {articles[0] && <ContainerA article={articles[0]} setPage={setPage} />}
-          <AdSlot label="In-Category — 728×90" style={{ margin: '8px 0 20px' }} />
+          <AdSlot position="leaderboard-mid" style={{ margin: '8px 0 20px' }} />
           {articles.length > 1 && <ContainerB articles={articles.slice(1, 4)} setPage={setPage} />}
           {articles.length > 4 && articles.slice(4).map(a => (
             <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
@@ -982,7 +1002,7 @@ function ArticlePage({ articleId, setPage, onSlug }) {
             <ArticleImage aspect="16/8" seed={article.id} category={catName} src={articleImg.url} />
           </div>
 
-          <AdSlot label="In-Article — 728×90" style={{ margin: '0 0 28px' }} />
+          <AdSlot position="in-feed" style={{ margin: '0 0 28px' }} />
 
           <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8 }}>
             {article.body ? (
@@ -994,7 +1014,7 @@ function ArticlePage({ articleId, setPage, onSlug }) {
             )}
           </div>
 
-          <AdSlot label="Below-Article — 728×90" style={{ margin: '32px 0' }} />
+          <AdSlot position="leaderboard-top" style={{ margin: '32px 0' }} />
 
           {/* Share */}
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', paddingTop: 20, borderTop: '1px solid var(--color-border)' }}>
@@ -1261,7 +1281,7 @@ function Footer({ setPage }) {
   return (
     <footer style={{ background: '#0d1b2a', color: 'rgba(255,255,255,0.55)', marginTop: 0 }}>
       {/* Banner ad */}
-      <AdSlot w="100%" maxW={9999} h={60} label="Footer Banner" style={{ background: 'rgba(0,0,0,0.15)', padding: '0' }} />
+      <AdSlot position="footer-banner" w="100%" maxW={9999} h={60} style={{ background: 'rgba(0,0,0,0.15)', padding: '0' }} />
 
       <div className="wrap" style={{ padding: '48px 24px 24px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 48, marginBottom: 40 }}>
