@@ -1422,27 +1422,25 @@ export default function App() {
   const articleSlugs = useRef({});
   const [highlightIds, setHighlightIds] = useState(null); // null = not yet loaded
 
-  // Inject custom head/body scripts from site settings
+  // Inject custom scripts from site settings
   useEffect(() => {
-    getSettings().then(rows => {
-      const map = {};
-      rows.forEach(r => { map[r.setting_key] = r.setting_value; });
-      const injectHtml = (html, target) => {
+    getSettings().then(map => {
+      // map is already { key: value } from the public endpoint
+      function injectScripts(html, target) {
         if (!html?.trim()) return;
-        const div = document.createElement('div');
-        div.innerHTML = html;
-        div.querySelectorAll('script').forEach(orig => {
+        const tpl = document.createElement('template');
+        tpl.innerHTML = html;
+        tpl.content.querySelectorAll('script').forEach(orig => {
           const s = document.createElement('script');
-          if (orig.src) s.src = orig.src;
-          else s.textContent = orig.textContent;
-          Array.from(orig.attributes).forEach(a => { if (a.name !== 'src') s.setAttribute(a.name, a.value); });
+          Array.from(orig.attributes).forEach(a => s.setAttribute(a.name, a.value));
+          if (!orig.src) s.textContent = orig.textContent;
           target.appendChild(s);
         });
-        // Non-script nodes (noscript, etc.)
-        div.querySelectorAll(':not(script)').forEach(n => target.appendChild(n.cloneNode(true)));
-      };
-      injectHtml(map['custom_head_scripts'], document.head);
-      injectHtml(map['custom_body_scripts'], document.body);
+        tpl.content.querySelectorAll(':not(script)').forEach(n => target.appendChild(n.cloneNode(true)));
+      }
+      injectScripts(map['custom_head_scripts'],   document.head);
+      injectScripts(map['custom_body_scripts'],   document.body);
+      injectScripts(map['custom_footer_scripts'], document.body);
     }).catch(() => {});
   }, []);
 

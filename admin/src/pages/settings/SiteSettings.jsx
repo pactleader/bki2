@@ -59,8 +59,9 @@ export default function SiteSettings() {
       const items = [
         ...FIELDS.map(f => ({ key: f.key, value: values[f.key] || '', type: f.type })),
         { key: 'og_image_default',     value: values['og_image_default'] || '',     type: 'string' },
-        { key: 'custom_head_scripts',  value: values['custom_head_scripts'] || '',  type: 'string' },
-        { key: 'custom_body_scripts',  value: values['custom_body_scripts'] || '',  type: 'string' },
+        { key: 'custom_head_scripts',   value: values['custom_head_scripts'] || '',   type: 'string' },
+        { key: 'custom_body_scripts',   value: values['custom_body_scripts'] || '',   type: 'string' },
+        { key: 'custom_footer_scripts', value: values['custom_footer_scripts'] || '', type: 'string' },
       ];
       await api.saveSettings(items);
       toast('Settings saved');
@@ -128,6 +129,15 @@ export default function SiteSettings() {
                 value={values['custom_body_scripts'] || ''}
                 onChange={e => set('custom_body_scripts', e.target.value)}
                 placeholder={'<!-- Intercom / HubSpot / etc. -->\n<script>...</script>'}
+                style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 120, resize: 'vertical' }}
+              />
+            </Field>
+
+            <Field label="Footer Scripts" hint="Injected after the footer element — ideal for conversion pixels, retargeting, etc.">
+              <Textarea
+                value={values['custom_footer_scripts'] || ''}
+                onChange={e => set('custom_footer_scripts', e.target.value)}
+                placeholder={'<!-- Retargeting pixel / conversion tag -->\n<script>...</script>'}
                 style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 120, resize: 'vertical' }}
               />
             </Field>
