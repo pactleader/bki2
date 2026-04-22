@@ -129,7 +129,7 @@ export default function MediaLibrary() {
           {uploading ? 'Uploading…' : 'Drag & drop files here, or click to browse'}
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-          Images, PDFs, videos — up to 10 MB each
+          Images, PDFs, videos — up to 400 MB each
         </div>
       </div>
 
