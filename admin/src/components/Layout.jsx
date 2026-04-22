@@ -7,7 +7,7 @@ const NAV = [
   { to: '/admin/articles',  label: 'Articles',   icon: '✎' },
   { to: '/admin/categories',label: 'Categories', icon: '⊞' },
   { to: '/admin/events',    label: 'Events',     icon: '◷' },
-  { to: '/admin/contacts',  label: 'Contacts',   icon: '✉' },
+  { to: '/admin/contacts',  label: 'Contact Form', icon: '✉' },
   { to: '/admin/ads',       label: 'Ads',        icon: '▣',  adminOnly: true },
   { to: '/admin/menu',      label: 'Menu',       icon: '≡',  adminOnly: true },
   { to: '/admin/homepage',  label: 'Homepage',   icon: '⌂',  adminOnly: true },
