@@ -96,3 +96,8 @@ export const saveSetting    = (key, value, type) => apiFetch(`/admin/settings/${
 // ── Media ─────────────────────────────────────────────────────
 export const listMedia   = () => apiFetch('/admin/media');
 export const deleteMedia = (filename) => apiFetch(`/admin/media/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+
+// ── Subscribers ───────────────────────────────────────────────
+export const listSubscribers        = (params = {}) => apiFetch('/admin/subscribers?' + new URLSearchParams(params));
+export const deleteSubscriber       = (id) => apiFetch(`/admin/subscribers/${id}`, { method: 'DELETE' });
+export const updateSubscriberStatus = (id, status) => apiFetch(`/admin/subscribers/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });

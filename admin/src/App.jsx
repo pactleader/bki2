@@ -18,6 +18,7 @@ import EventList from './pages/events/EventList.jsx';
 import EventEdit from './pages/events/EventEdit.jsx';
 import SiteSettings from './pages/settings/SiteSettings.jsx';
 import MediaLibrary from './pages/media/MediaLibrary.jsx';
+import SubscriberList from './pages/subscribers/SubscriberList.jsx';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   if (!isLoggedIn()) return <Navigate to="/admin/login" replace />;
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="events/new" element={<EventEdit />} />
           <Route path="events/:id/edit" element={<EventEdit />} />
           <Route path="media" element={<ProtectedRoute adminOnly><MediaLibrary /></ProtectedRoute>} />
+          <Route path="subscribers" element={<ProtectedRoute adminOnly><SubscriberList /></ProtectedRoute>} />
           <Route path="settings" element={<ProtectedRoute adminOnly><SiteSettings /></ProtectedRoute>} />
         </Route>
         <Route path="/admin/" element={<Navigate to="/admin" replace />} />

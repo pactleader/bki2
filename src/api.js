@@ -17,6 +17,17 @@ export const getAds        = (position)   => get(`/ads?position=${position}`);
 export const getMenu       = ()           => get('/menu');
 export const getSettings   = ()           => get('/settings');
 
+export async function subscribe(email, source = 'website') {
+  const res = await fetch(`${BASE}/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, source }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Subscription failed');
+  return data;
+}
+
 export async function submitContact(payload) {
   const res = await fetch(`${BASE}/contacts`, {
     method: 'POST',

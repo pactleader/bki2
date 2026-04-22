@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, getAds, submitContact } from "./api.js";
+import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, getAds, subscribe, submitContact } from "./api.js";
 
 // ─── DATA ────────────────────────────────────────────────
 const ARTICLES = {
@@ -674,27 +674,7 @@ function Sidebar({ setPage, mostReadOverride }) {
       <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
 
       {/* Newsletter signup */}
-      <div style={{
-        background: '#0d1b2a', borderRadius: 6, padding: '28px 24px', marginBottom: 28,
-      }}>
-        <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-lg)', color: '#fff', fontWeight: 700, marginBottom: 6 }}>
-          Get the day's top stories.
-        </h3>
-        <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 16 }}>
-          Background screening news delivered to your inbox every morning.
-        </p>
-        <input placeholder="Your email" style={{
-          width: '100%', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.15)',
-          background: 'rgba(255,255,255,0.06)', color: '#fff', borderRadius: 3,
-          fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', marginBottom: 10,
-          boxSizing: 'border-box', outline: 'none',
-        }} />
-        <button style={{
-          width: '100%', padding: 10, background: '#c0392b', color: '#fff', border: 'none',
-          borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700,
-          letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer',
-        }}>Subscribe</button>
-      </div>
+      <SidebarSubscribe />
 
       {/* Partners */}
       <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
@@ -711,34 +691,99 @@ function Sidebar({ setPage, mostReadOverride }) {
 
 // ─── INLINE NEWSLETTER (between containers) ──────────────
 
+function useSubscribeForm(source) {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState(''); // '' | 'loading' | 'ok' | 'error'
+  const [msg, setMsg] = useState('');
+
+  async function handleSubmit(e) {
+    e?.preventDefault();
+    if (!email) return;
+    setStatus('loading');
+    try {
+      await subscribe(email, source);
+      setStatus('ok');
+      setEmail('');
+      setMsg('');
+    } catch (err) {
+      setStatus('error');
+      setMsg(err.message);
+    }
+  }
+  return { email, setEmail, status, msg, handleSubmit };
+}
+
+function SidebarSubscribe() {
+  const { email, setEmail, status, msg, handleSubmit } = useSubscribeForm('sidebar');
+  return (
+    <div style={{ background: '#0d1b2a', borderRadius: 6, padding: '28px 24px', marginBottom: 28 }}>
+      <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-lg)', color: '#fff', fontWeight: 700, marginBottom: 6 }}>
+        Get the day's top stories.
+      </h3>
+      <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 16 }}>
+        Background screening news delivered to your inbox every morning.
+      </p>
+      {status === 'ok' ? (
+        <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: '#4ade80', textAlign: 'center' }}>✓ You're subscribed!</p>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Your email" type="email" required
+            style={{ width: '100%', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', marginBottom: 10, boxSizing: 'border-box', outline: 'none' }} />
+          {status === 'error' && <p style={{ fontFamily: 'var(--f-ui)', fontSize: 11, color: '#f87171', marginBottom: 8 }}>{msg}</p>}
+          <button type="submit" disabled={status === 'loading'}
+            style={{ width: '100%', padding: 10, background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+            {status === 'loading' ? 'Subscribing…' : 'Subscribe'}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function FooterSubscribe() {
+  const { email, setEmail, status, msg, handleSubmit } = useSubscribeForm('footer');
+  return (
+    <div style={{ flex: '1 1 240px' }}>
+      <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: '#fff', fontWeight: 700, marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1 }}>Subscribe</h3>
+      <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', marginBottom: 12, lineHeight: 1.5 }}>Get the day's top stories in your inbox.</p>
+      {status === 'ok' ? (
+        <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: '#4ade80' }}>✓ You're subscribed!</p>
+      ) : (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 6 }}>
+          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" type="email" required
+            style={{ flex: 1, padding: '9px 12px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', outline: 'none' }} />
+          <button type="submit" disabled={status === 'loading'}
+            style={{ padding: '9px 16px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, cursor: 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+            {status === 'loading' ? '…' : 'Go'}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function InlineNewsletter() {
+  const { email, setEmail, status, msg, handleSubmit } = useSubscribeForm('inline');
   const [ref, vis] = useScrollReveal();
   return (
-    <div ref={ref} className="wrap" style={{
-      padding: '0 24px', opacity: vis ? 1 : 0, transition: 'opacity 500ms ease',
-    }}>
-      <div style={{
-        background: 'linear-gradient(135deg, #0d1b2a, #1a3a4a)', borderRadius: 8,
-        padding: '32px 40px', display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap',
-        justifyContent: 'space-between', margin: '20px 0',
-      }}>
+    <div ref={ref} className="wrap" style={{ padding: '0 24px', opacity: vis ? 1 : 0, transition: 'opacity 500ms ease' }}>
+      <div style={{ background: 'linear-gradient(135deg, #0d1b2a, #1a3a4a)', borderRadius: 8, padding: '32px 40px', display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap', justifyContent: 'space-between', margin: '20px 0' }}>
         <div style={{ flex: '1 1 300px' }}>
           <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', color: '#fff', fontWeight: 700, marginBottom: 4 }}>Stay ahead of compliance changes.</h3>
           <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'rgba(255,255,255,0.5)' }}>Join thousands of screening professionals who read BKI daily.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flex: '1 1 260px', flexWrap: 'wrap' }}>
-          <input placeholder="Email address" style={{
-            flex: '1 1 180px', minWidth: 0, padding: '11px 14px', border: '1px solid rgba(255,255,255,0.2)',
-            background: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: 3,
-            fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', outline: 'none',
-          }} />
-          <button style={{
-            padding: '11px 22px', background: '#c0392b', color: '#fff', border: 'none',
-            borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700,
-            letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap',
-            flex: '0 0 auto',
-          }}>Subscribe</button>
-        </div>
+        {status === 'ok' ? (
+          <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', color: '#4ade80', flex: '1 1 260px' }}>✓ You're subscribed!</p>
+        ) : (
+          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, flex: '1 1 260px', flexWrap: 'wrap' }}>
+            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" required
+              style={{ flex: '1 1 180px', minWidth: 0, padding: '11px 14px', border: `1px solid ${status === 'error' ? '#f87171' : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', outline: 'none' }} />
+            <button type="submit" disabled={status === 'loading'}
+              style={{ padding: '11px 22px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto', opacity: status === 'loading' ? 0.7 : 1 }}>
+              {status === 'loading' ? '…' : 'Subscribe'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
@@ -1236,15 +1281,29 @@ function ContactPage() {
 
 function SubscribePage() {
   useMeta({ title: 'Subscribe', description: 'Subscribe to The Background Investigator newsletter — background screening news delivered to your inbox.' });
+  const { email, setEmail, status, msg, handleSubmit } = useSubscribeForm('subscribe-page');
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
       <div style={{ width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg, #0d1b2a, #1a3a4a)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#c0392b', fontFamily: 'var(--f-display)', fontSize: 28, fontWeight: 700 }}>B</div>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 12 }}>Stay Informed</h1>
       <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-secondary)', lineHeight: 1.7, marginBottom: 36 }}>Background screening news, court record updates, and compliance analysis — delivered to your inbox.</p>
-      <div style={{ display: 'flex', gap: 8, maxWidth: 400, margin: '0 auto', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <input placeholder="Email address" style={{ flex: '1 1 240px', padding: '14px 18px', border: '1px solid var(--color-border)', borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', outline: 'none' }} />
-        <button style={{ padding: '14px 24px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>Subscribe</button>
-      </div>
+      {status === 'ok' ? (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '24px', color: '#166534', fontFamily: 'var(--f-ui)' }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>✓</div>
+          <strong>You're subscribed!</strong>
+          <p style={{ marginTop: 6, fontSize: 'var(--text-sm)', color: '#15803d' }}>Thank you for subscribing to The Background Investigator.</p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, maxWidth: 400, margin: '0 auto', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" required
+            style={{ flex: '1 1 240px', padding: '14px 18px', border: `1px solid ${status === 'error' ? '#fca5a5' : 'var(--color-border)'}`, borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', outline: 'none' }} />
+          <button type="submit" disabled={status === 'loading'}
+            style={{ padding: '14px 24px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', opacity: status === 'loading' ? 0.7 : 1 }}>
+            {status === 'loading' ? 'Subscribing…' : 'Subscribe'}
+          </button>
+          {status === 'error' && <p style={{ width: '100%', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: '#dc2626', marginTop: 4 }}>{msg}</p>}
+        </form>
+      )}
       <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 14 }}>By subscribing you agree to our Terms & Privacy Policy</p>
     </div>
   );
@@ -1321,14 +1380,7 @@ function Footer({ setPage }) {
           </nav>
 
           {/* Footer newsletter — second conversion point */}
-          <div style={{ flex: '1 1 240px' }}>
-            <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: '#fff', fontWeight: 700, marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1 }}>Subscribe</h3>
-            <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', marginBottom: 12, lineHeight: 1.5 }}>Get the day's top stories in your inbox.</p>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <input placeholder="Email" style={{ flex: 1, padding: '9px 12px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', outline: 'none' }} />
-              <button style={{ padding: '9px 16px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, cursor: 'pointer' }}>Go</button>
-            </div>
-          </div>
+          <FooterSubscribe />
         </div>
 
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
