@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import * as api from '../../api.js';
 import { getToken } from '../../auth.js';
 import { useToast } from '../../components/Toast.jsx';
-import PageHeader, { Btn, Card, Field, Input } from '../../components/PageHeader.jsx';
+import PageHeader, { Btn, Card, Field, Input, Textarea } from '../../components/PageHeader.jsx';
 
 const FIELDS = [
   { key: 'site_name',        label: 'Site Name',    type: 'string' },
@@ -58,7 +58,9 @@ export default function SiteSettings() {
     try {
       const items = [
         ...FIELDS.map(f => ({ key: f.key, value: values[f.key] || '', type: f.type })),
-        { key: 'og_image_default', value: values['og_image_default'] || '', type: 'string' },
+        { key: 'og_image_default',     value: values['og_image_default'] || '',     type: 'string' },
+        { key: 'custom_head_scripts',  value: values['custom_head_scripts'] || '',  type: 'string' },
+        { key: 'custom_body_scripts',  value: values['custom_body_scripts'] || '',  type: 'string' },
       ];
       await api.saveSettings(items);
       toast('Settings saved');
@@ -107,6 +109,29 @@ export default function SiteSettings() {
               )}
             </div>
           </Field>
+
+          {/* Custom Scripts */}
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 20, marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 16 }}>Custom Scripts</div>
+
+            <Field label="Head Scripts" hint="Injected inside <head> — ideal for Google Analytics, Meta Pixel, etc.">
+              <Textarea
+                value={values['custom_head_scripts'] || ''}
+                onChange={e => set('custom_head_scripts', e.target.value)}
+                placeholder={'<!-- Google Analytics -->\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>\n<script>...</script>'}
+                style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 120, resize: 'vertical' }}
+              />
+            </Field>
+
+            <Field label="Body Scripts" hint="Injected at the end of <body> — ideal for chat widgets, heat-maps, etc.">
+              <Textarea
+                value={values['custom_body_scripts'] || ''}
+                onChange={e => set('custom_body_scripts', e.target.value)}
+                placeholder={'<!-- Intercom / HubSpot / etc. -->\n<script>...</script>'}
+                style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 120, resize: 'vertical' }}
+              />
+            </Field>
+          </div>
 
           <div style={{ marginTop: 8 }}>
             <Btn type="submit" variant="accent" disabled={saving}>{saving ? 'Saving…' : 'Save Settings'}</Btn>

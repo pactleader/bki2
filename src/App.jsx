@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, getAds, subscribe, submitContact } from "./api.js";
+import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, getAds, subscribe, submitContact, getSettings } from "./api.js";
 
 // ─── DATA ────────────────────────────────────────────────
 const ARTICLES = {
@@ -1421,6 +1421,30 @@ export default function App() {
   const [page, setPage] = useState(() => parsePathToPage(window.location.pathname));
   const articleSlugs = useRef({});
   const [highlightIds, setHighlightIds] = useState(null); // null = not yet loaded
+
+  // Inject custom head/body scripts from site settings
+  useEffect(() => {
+    getSettings().then(rows => {
+      const map = {};
+      rows.forEach(r => { map[r.setting_key] = r.setting_value; });
+      const injectHtml = (html, target) => {
+        if (!html?.trim()) return;
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        div.querySelectorAll('script').forEach(orig => {
+          const s = document.createElement('script');
+          if (orig.src) s.src = orig.src;
+          else s.textContent = orig.textContent;
+          Array.from(orig.attributes).forEach(a => { if (a.name !== 'src') s.setAttribute(a.name, a.value); });
+          target.appendChild(s);
+        });
+        // Non-script nodes (noscript, etc.)
+        div.querySelectorAll(':not(script)').forEach(n => target.appendChild(n.cloneNode(true)));
+      };
+      injectHtml(map['custom_head_scripts'], document.head);
+      injectHtml(map['custom_body_scripts'], document.body);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
 
