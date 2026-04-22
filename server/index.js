@@ -55,6 +55,7 @@ app.use('/api/homepage',         require('./routes/homepage').public);
 app.use('/api/admin/homepage',   require('./routes/homepage').admin);
 app.use('/api/admin/users',      require('./routes/users'));
 app.use('/api/admin/upload',     require('./routes/upload'));
+app.use('/api/admin/media',      require('./routes/media'));
 
 // ── Article SSR ───────────────────────────────────────────────
 app.use('/Articles', require('./routes/ssr'));

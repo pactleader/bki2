@@ -92,3 +92,7 @@ export const reorderHomepage = (items) => apiFetch('/admin/homepage/reorder', { 
 export const listSettings   = () => apiFetch('/admin/settings');
 export const saveSettings   = (items) => apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify(items) });
 export const saveSetting    = (key, value, type) => apiFetch(`/admin/settings/${key}`, { method: 'PUT', body: JSON.stringify({ value, type }) });
+
+// ── Media ─────────────────────────────────────────────────────
+export const listMedia   = () => apiFetch('/admin/media');
+export const deleteMedia = (filename) => apiFetch(`/admin/media/${encodeURIComponent(filename)}`, { method: 'DELETE' });

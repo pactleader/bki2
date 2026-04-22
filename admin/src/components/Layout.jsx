@@ -12,6 +12,7 @@ const NAV = [
   { to: '/admin/menu',      label: 'Menu',       icon: '≡',  adminOnly: true },
   { to: '/admin/homepage',  label: 'Homepage',   icon: '⌂',  adminOnly: true },
   { to: '/admin/users',     label: 'Users',      icon: '👤',  adminOnly: true },
+  { to: '/admin/media',     label: 'Media',      icon: '🖼',  adminOnly: true },
   { to: '/admin/settings',  label: 'Settings',   icon: '⚙',  adminOnly: true },
 ];
 
