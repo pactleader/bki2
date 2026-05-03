@@ -273,6 +273,58 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
   );
 }
 
+// ─── MOBILE TICKER ───────────────────────────────────────
+
+function MobileTicker({ highlights, setPage }) {
+  const [idx, setIdx] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    if (highlights.length < 2) return;
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIdx(i => (i + 1) % highlights.length);
+        setVisible(true);
+      }, 350);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [highlights.length]);
+
+  const h = highlights[idx];
+  if (!h) return null;
+
+  return (
+    <div className="mobile-only" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)', overflow: 'hidden' }}>
+      <button
+        onClick={() => setPage('article-' + h.id, h.slug)}
+        style={{
+          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px',
+          textAlign: 'left',
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(6px)',
+          transition: 'opacity 300ms ease, transform 300ms ease',
+        }}
+      >
+        <span style={{
+          flexShrink: 0, fontFamily: 'var(--f-ui)', fontSize: 9, fontWeight: 800,
+          color: '#fff', background: '#c0392b', textTransform: 'uppercase',
+          letterSpacing: 1, padding: '2px 6px', borderRadius: 2, whiteSpace: 'nowrap',
+        }}>{h.category?.name || 'News'}</span>
+        <span style={{
+          fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600,
+          color: 'var(--color-text-primary)', lineHeight: 1.3,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+        }}>{h.title}</span>
+        <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--color-text-secondary)' }}>
+          {idx + 1}/{highlights.length}
+        </span>
+      </button>
+    </div>
+  );
+}
+
 // ─── HEADER ──────────────────────────────────────────────
 
 function Header({ currentPage, setPage, highlightIds }) {
@@ -404,7 +456,7 @@ function Header({ currentPage, setPage, highlightIds }) {
       </div>
 
       {/* Highlights bar — desktop only */}
-      {!scrolled && currentPage === 'home' && (
+      {!scrolled && currentPage === 'home' && highlights.length > 0 && (
         <div className="desktop-only" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
           <div className="wrap" style={{ display: 'flex', gap: 0, overflow: 'hidden' }}>
             {highlights.map((h, i) => (
@@ -423,6 +475,11 @@ function Header({ currentPage, setPage, highlightIds }) {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Mobile ticker — rotating headlines */}
+      {!scrolled && currentPage === 'home' && highlights.length > 0 && (
+        <MobileTicker highlights={highlights} setPage={setPage} />
       )}
 
       {/* Mobile nav dropdown */}
