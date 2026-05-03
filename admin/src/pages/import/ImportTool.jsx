@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { importPreview, importRun } from '../../api.js';
 import { useToast } from '../../components/Toast.jsx';
-import { PageHeader, Btn, Card } from '../../components/PageHeader.jsx';
+import PageHeader, { Btn, Card } from '../../components/PageHeader.jsx';
 
 const STEP = { IDLE: 'idle', PREVIEWING: 'previewing', PREVIEW: 'preview', RUNNING: 'running', DONE: 'done' };
 
