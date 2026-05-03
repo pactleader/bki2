@@ -56,6 +56,7 @@ app.use('/api/admin/homepage',   require('./routes/homepage').admin);
 app.use('/api/admin/users',      require('./routes/users'));
 app.use('/api/admin/upload',     require('./routes/upload'));
 app.use('/api/admin/media',      require('./routes/media'));
+app.use('/api/admin/import',     require('./routes/import'));
 app.use('/api/subscribe',        require('./routes/subscribers').public);
 app.use('/api/admin/subscribers',require('./routes/subscribers').admin);
 

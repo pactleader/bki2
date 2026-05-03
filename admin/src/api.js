@@ -97,6 +97,24 @@ export const saveSetting    = (key, value, type) => apiFetch(`/admin/settings/${
 export const listMedia   = () => apiFetch('/admin/media');
 export const deleteMedia = (filename) => apiFetch(`/admin/media/${encodeURIComponent(filename)}`, { method: 'DELETE' });
 
+// ── Import ────────────────────────────────────────────────────
+export function importPreview(file) {
+  const token = getToken();
+  const fd = new FormData();
+  fd.append('sql', file);
+  return fetch(`${BASE}/admin/import/preview`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: fd,
+  }).then(async r => {
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    return data;
+  });
+}
+export const importRun = (posts, cat_map_override) =>
+  apiFetch('/admin/import/run', { method: 'POST', body: JSON.stringify({ posts, cat_map_override }) });
+
 // ── Subscribers ───────────────────────────────────────────────
 export const listSubscribers        = (params = {}) => apiFetch('/admin/subscribers?' + new URLSearchParams(params));
 export const deleteSubscriber       = (id) => apiFetch(`/admin/subscribers/${id}`, { method: 'DELETE' });
