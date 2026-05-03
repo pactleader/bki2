@@ -116,17 +116,16 @@ export default function ArticleList() {
 
         {/* Pagination */}
         {meta.pages > 1 && (
-          <div style={{ padding: 16, display: 'flex', gap: 8, justifyContent: 'center' }}>
-            {Array.from({ length: meta.pages }, (_, i) => i + 1).map(p => (
-              <button key={p} onClick={() => setFilters(f => ({ ...f, page: p }))}
-                style={{
-                  padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)',
-                  background: filters.page === p ? 'var(--primary)' : '#fff',
-                  color: filters.page === p ? '#fff' : 'var(--text)', cursor: 'pointer', fontSize: 13,
-                }}>
-                {p}
-              </button>
-            ))}
+          <div style={{ padding: 16, display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+            <PaginationBtn disabled={filters.page <= 1} onClick={() => setFilters(f => ({ ...f, page: f.page - 1 }))}>‹ Prev</PaginationBtn>
+            {paginationWindow(filters.page, meta.pages).map((p, i) =>
+              p === '…' ? (
+                <span key={`ellipsis-${i}`} style={{ padding: '4px 6px', fontSize: 13, color: 'var(--text-muted)' }}>…</span>
+              ) : (
+                <PaginationBtn key={p} active={filters.page === p} onClick={() => setFilters(f => ({ ...f, page: p }))}>{p}</PaginationBtn>
+              )
+            )}
+            <PaginationBtn disabled={filters.page >= meta.pages} onClick={() => setFilters(f => ({ ...f, page: f.page + 1 }))}>Next ›</PaginationBtn>
           </div>
         )}
       </Card>
@@ -140,5 +139,38 @@ export default function ArticleList() {
         />
       )}
     </div>
+  );
+}
+
+function paginationWindow(current, total) {
+  const delta = 2;
+  const pages = [];
+  const rangeStart = Math.max(2, current - delta);
+  const rangeEnd   = Math.min(total - 1, current + delta);
+
+  pages.push(1);
+  if (rangeStart > 2) pages.push('…');
+  for (let p = rangeStart; p <= rangeEnd; p++) pages.push(p);
+  if (rangeEnd < total - 1) pages.push('…');
+  if (total > 1) pages.push(total);
+
+  return pages;
+}
+
+function PaginationBtn({ children, onClick, active, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)',
+        background: active ? 'var(--primary)' : '#fff',
+        color: active ? '#fff' : disabled ? 'var(--text-muted)' : 'var(--text)',
+        cursor: disabled ? 'default' : 'pointer',
+        fontSize: 13, opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      {children}
+    </button>
   );
 }

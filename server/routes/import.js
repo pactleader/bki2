@@ -282,9 +282,10 @@ router.post('/run', express.json({ limit: '50mb' }), async (req, res) => {
       if (slugToId[slug]) catMap[oldId] = slugToId[slug];
     }
 
-    let imported = 0;
-    let skipped  = 0;
-    const errors  = [];
+    let skipped = 0;
+    const errors = [];
+    const rows   = [];  // rows to batch-insert
+    const params = [];
 
     // Build used-slugs set to deduplicate within this batch
     const [existingSlugs] = await db.execute('SELECT slug FROM articles');
@@ -292,52 +293,63 @@ router.post('/run', express.json({ limit: '50mb' }), async (req, res) => {
 
     for (const p of posts) {
       if (p.status !== 1 || p.type !== 'content') { skipped++; continue; }
-      if (existingIds.has(p.uid)) { skipped++; continue; }
+      if (existingIds.has(p.uid))                 { skipped++; continue; }
 
       const catId = catMap[p.cat];
       if (!catId) { skipped++; continue; }
 
-      // Generate unique slug
-      let slug = slugify(p.title || `post-${p.uid}`);
-      if (!slug) slug = `post-${p.uid}`;
+      // Generate unique slug within existing + this batch
+      let slug = slugify(p.title || `post-${p.uid}`) || `post-${p.uid}`;
       let candidate = slug;
       let counter = 1;
-      while (usedSlugs.has(candidate)) {
-        candidate = `${slug}-${counter++}`;
-      }
+      while (usedSlugs.has(candidate)) candidate = `${slug}-${counter++}`;
       usedSlugs.add(candidate);
 
-      const seoKeywords    = p.keywords   === 'None' ? null : p.keywords;
-      const seoDescription = p.description === 'None' ? null : p.description;
-      const publishDate    = p.date_start || null;
+      const seoKeywords    = p.keywords    === 'None' ? null : (p.keywords    || null);
+      const seoDescription = p.description === 'None' ? null : (p.description || null);
+      const publishDate    = p.date_start  || null;
+      const editedDate     = p.last_edited || publishDate || new Date().toISOString().slice(0, 10);
 
+      rows.push('(?, ?, ?, ?, ?, ?, ?, \'published\', ?, ?, ?, ?, ?)');
+      params.push(
+        p.uid, (p.title || '').trim(), candidate, p.content || '',
+        seoDescription, authorId, catId,
+        publishDate, seoKeywords, seoDescription,
+        editedDate, editedDate
+      );
+    }
+
+    // Single batched INSERT — much faster, avoids gateway timeout
+    if (rows.length > 0) {
       try {
         await db.execute(
           `INSERT INTO articles
              (id, title, slug, body, excerpt, author_id, category_id,
               status, publish_date, seo_keywords, seo_description, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'published', ?, ?, ?, ?, ?)`,
-          [
-            p.uid,
-            (p.title || '').trim(),
-            candidate,
-            p.content || '',
-            seoDescription,
-            authorId,
-            catId,
-            publishDate,
-            seoKeywords,
-            seoDescription,
-            p.last_edited || publishDate || new Date().toISOString().slice(0, 10),
-            p.last_edited || publishDate || new Date().toISOString().slice(0, 10),
-          ]
+           VALUES ${rows.join(',')}`,
+          params
         );
-        imported++;
       } catch (insertErr) {
-        errors.push({ uid: p.uid, title: p.title, error: insertErr.message });
-        skipped++;
+        // Batch failed — fall back to one-by-one so we can identify which rows error
+        for (let i = 0; i < rows.length; i++) {
+          const rowParams = params.slice(i * 13, i * 13 + 13);
+          try {
+            await db.execute(
+              `INSERT INTO articles
+                 (id, title, slug, body, excerpt, author_id, category_id,
+                  status, publish_date, seo_keywords, seo_description, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 'published', ?, ?, ?, ?, ?)`,
+              rowParams
+            );
+          } catch (e) {
+            errors.push({ uid: rowParams[0], title: rowParams[1], error: e.message });
+            skipped++;
+          }
+        }
       }
     }
+
+    const imported = rows.length - errors.length;
 
     // Reset AUTO_INCREMENT above highest imported id
     const [[maxRow]] = await db.execute('SELECT MAX(id) AS mx FROM articles');

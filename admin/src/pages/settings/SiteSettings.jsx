@@ -17,8 +17,10 @@ export default function SiteSettings() {
   const toast = useToast();
   const [values, setValues]     = useState({});
   const [saving, setSaving]     = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef(null);
+  const [uploading, setUploading]       = useState(false);
+  const [uploadingArticle, setUploadingArticle] = useState(false);
+  const fileRef        = useRef(null);
+  const articleFileRef = useRef(null);
 
   useEffect(() => {
     api.listSettings()
@@ -52,13 +54,34 @@ export default function SiteSettings() {
     finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
   }
 
+  async function handleArticleImageUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingArticle(true);
+    try {
+      const data = new FormData();
+      data.append('image', file);
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: data,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed');
+      set('default_article_image', json.url);
+      toast('Image uploaded');
+    } catch (err) { toast(err.message, 'error'); }
+    finally { setUploadingArticle(false); if (articleFileRef.current) articleFileRef.current.value = ''; }
+  }
+
   async function save(e) {
     e.preventDefault();
     setSaving(true);
     try {
       const items = [
         ...FIELDS.map(f => ({ key: f.key, value: values[f.key] || '', type: f.type })),
-        { key: 'og_image_default',     value: values['og_image_default'] || '',     type: 'string' },
+        { key: 'og_image_default',       value: values['og_image_default'] || '',       type: 'string' },
+        { key: 'default_article_image', value: values['default_article_image'] || '', type: 'string' },
         { key: 'custom_head_scripts',   value: values['custom_head_scripts'] || '',   type: 'string' },
         { key: 'custom_body_scripts',   value: values['custom_body_scripts'] || '',   type: 'string' },
         { key: 'custom_footer_scripts', value: values['custom_footer_scripts'] || '', type: 'string' },
@@ -105,6 +128,34 @@ export default function SiteSettings() {
                     onError={e => e.target.style.display = 'none'}
                     style={{ width: '100%', maxHeight: 140, objectFit: 'contain', borderRadius: 4, border: '1px solid var(--border)' }} />
                   <button type="button" onClick={() => set('og_image_default', '')}
+                    style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, fontSize: 13, cursor: 'pointer', lineHeight: 1 }}>×</button>
+                </div>
+              )}
+            </div>
+          </Field>
+
+          {/* Default Article Image */}
+          <Field label="Default Article Image" hint="Shown on any article that has no featured image set.">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input ref={articleFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleArticleImageUpload} />
+                <button type="button" onClick={() => articleFileRef.current?.click()} disabled={uploadingArticle}
+                  style={{ padding: '7px 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: uploadingArticle ? 0.6 : 1 }}>
+                  {uploadingArticle ? 'Uploading…' : '↑ Upload Image'}
+                </button>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>or paste a URL below</span>
+              </div>
+              <Input
+                value={values['default_article_image'] || ''}
+                onChange={e => set('default_article_image', e.target.value)}
+                placeholder="https://… or /uploads/filename.jpg"
+              />
+              {values['default_article_image'] && (
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <img src={values['default_article_image']} alt="Article image preview"
+                    onError={e => e.target.style.display = 'none'}
+                    style={{ width: '100%', maxHeight: 140, objectFit: 'contain', borderRadius: 4, border: '1px solid var(--border)' }} />
+                  <button type="button" onClick={() => set('default_article_image', '')}
                     style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, fontSize: 13, cursor: 'pointer', lineHeight: 1 }}>×</button>
                 </div>
               )}

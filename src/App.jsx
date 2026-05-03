@@ -147,7 +147,7 @@ const ARTICLE_IMAGES = {
   3114: { url: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=450&fit=crop', alt: 'Professional reviewing criminal record documents at desk' },
 };
 
-const FALLBACK_IMAGE = { url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=450&fit=crop', alt: 'Background screening industry' };
+let FALLBACK_IMAGE = { url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=450&fit=crop', alt: 'Background screening industry' };
 
 function ArticleImage({ aspect = '16/9', height, style = {}, seed = 1, category = 'Top Stories', src }) {
   const img = src ? { url: src, alt: '' } : (ARTICLE_IMAGES[seed] || FALLBACK_IMAGE);
@@ -1425,6 +1425,9 @@ export default function App() {
   // Inject custom scripts from site settings
   useEffect(() => {
     getSettings().then(map => {
+      if (map['default_article_image']) {
+        FALLBACK_IMAGE = { url: map['default_article_image'], alt: 'Article image' };
+      }
       // map is already { key: value } from the public endpoint
       function injectScripts(html, target) {
         if (!html?.trim()) return;
