@@ -1216,7 +1216,7 @@ function EventsPage({ setPage }) {
   );
 
   if (selected) return (
-    <div className="wrap" style={{ maxWidth: 760, padding: '32px 24px 60px' }}>
+    <div className="wrap" style={{ maxWidth: 960, padding: '32px 24px 60px' }}>
       <button onClick={() => setSelected(null)} style={{
         background: 'none', border: 'none', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)',
         color: '#c0392b', cursor: 'pointer', padding: 0, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6,
@@ -1245,11 +1245,11 @@ function EventsPage({ setPage }) {
   );
 
   return (
-    <div className="wrap" style={{ padding: '32px 24px 60px' }}>
+    <div className="wrap" style={{ maxWidth: 960, padding: '32px 24px 60px' }}>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Upcoming Events</h1>
       <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-base)', color: 'var(--color-text-secondary)', maxWidth: 560, lineHeight: 1.6, marginBottom: 32 }}>Industry conferences and networking for background screening professionals.</p>
       {events.length === 0 && <p style={{ fontFamily: 'var(--f-ui)', color: 'var(--color-text-secondary)' }}>No upcoming events at this time.</p>}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
         {events.map((e, i) => (
           <div key={e.id || i} onClick={() => setSelected(e)} style={{
             border: '1px solid var(--color-border)', borderRadius: 6, padding: 28, borderTop: '3px solid #c0392b',
