@@ -67,6 +67,11 @@ app.use('/Articles', require('./routes/ssr'));
 // ── Health ────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
+// ── SPA fallback — serve index.html for client-side routes ───
+app.get('/search', (req, res) => {
+  res.sendFile(require('path').join(__dirname, '../dist/index.html'));
+});
+
 // ── 404 / Error ───────────────────────────────────────────────
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, _next) => {

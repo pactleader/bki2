@@ -279,6 +279,22 @@ function Header({ currentPage, setPage, highlightIds }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [highlights, setHighlights] = useState([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+    else setSearchQuery('');
+  }, [searchOpen]);
+
+  function submitSearch(e) {
+    e?.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    setSearchOpen(false);
+    setPage('search-' + encodeURIComponent(q));
+  }
 
   useEffect(() => {
     if (highlightIds === null) return; // wait until homepage has reported back
@@ -348,10 +364,35 @@ function Header({ currentPage, setPage, highlightIds }) {
                 transition: 'all 150ms ease',
               }}>{n.label}</button>
             ))}
+            {/* Search */}
+            <form onSubmit={submitSearch} style={{ display: 'flex', alignItems: 'center', marginLeft: 8, position: 'relative' }}>
+              {searchOpen && (
+                <input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Escape' && setSearchOpen(false)}
+                  placeholder="Search articles…"
+                  style={{
+                    width: 220, padding: '7px 12px', border: '1px solid var(--color-border)',
+                    borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 13,
+                    outline: 'none', marginRight: 4,
+                  }}
+                />
+              )}
+              <button type={searchOpen ? 'submit' : 'button'} onClick={() => !searchOpen && setSearchOpen(true)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 8px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center' }}
+                aria-label="Search">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+            </form>
+
             <button onClick={() => setPage('subscribe')} style={{
               background: '#c0392b', color: '#fff', border: 'none', fontFamily: 'var(--f-ui)',
               fontSize: 'var(--text-xs)', fontWeight: 700, padding: '9px 20px', borderRadius: 3,
-              marginLeft: 10, cursor: 'pointer', letterSpacing: 0.8, textTransform: 'uppercase',
+              marginLeft: 6, cursor: 'pointer', letterSpacing: 0.8, textTransform: 'uppercase',
             }}>Stay Informed</button>
           </nav>
 
@@ -387,6 +428,22 @@ function Header({ currentPage, setPage, highlightIds }) {
       {/* Mobile nav dropdown */}
       {menuOpen && (
         <nav className="mobile-only" style={{ background: '#fff', borderTop: '1px solid var(--color-border)', padding: '8px 0', flexDirection: 'column' }}>
+          {/* Mobile search */}
+          <form onSubmit={e => { submitSearch(e); setMenuOpen(false); }} style={{ padding: '10px 16px 6px' }}>
+            <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: 4, overflow: 'hidden' }}>
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search articles…"
+                style={{ flex: 1, padding: '9px 12px', border: 'none', fontFamily: 'var(--f-ui)', fontSize: 14, outline: 'none' }}
+              />
+              <button type="submit" style={{ background: '#c0392b', border: 'none', color: '#fff', padding: '0 14px', cursor: 'pointer' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+            </div>
+          </form>
           {navItems.map(n => (
             <button key={n.key} onClick={() => { setPage(n.key); setMenuOpen(false); }} style={{
               display: 'block', width: '100%', background: 'none', border: 'none', textAlign: 'left',
@@ -625,6 +682,130 @@ function ContainerD({ title, articles, sectionKey, color, setPage }) {
         </div>
       </div>
     </section>
+  );
+}
+
+// ─── SEARCH PAGE ─────────────────────────────────────────
+
+function SearchPage({ query, setPage, partners }) {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [inputVal, setInputVal] = useState(query);
+
+  useMeta({ title: `Search: ${query}` });
+
+  useEffect(() => {
+    setInputVal(query);
+    setCurrentPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    if (!query.trim()) return;
+    setLoading(true);
+    getArticles({ search: query, page: currentPage, limit: 12 })
+      .then(res => { setResults(res.data || []); setTotal(res.meta?.total ?? 0); setTotalPages(res.meta?.pages ?? 1); })
+      .catch(() => { setResults([]); setTotal(0); })
+      .finally(() => setLoading(false));
+  }, [query, currentPage]);
+
+  function handleSearch(e) {
+    e.preventDefault();
+    const q = inputVal.trim();
+    if (q) setPage('search-' + encodeURIComponent(q));
+  }
+
+  return (
+    <div className="wrap" style={{ padding: '32px 24px 60px', display: 'flex', gap: 40, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div style={{ flex: '1 1 560px', minWidth: 0 }}>
+        {/* Search bar */}
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, marginBottom: 28 }}>
+          <input
+            value={inputVal}
+            onChange={e => setInputVal(e.target.value)}
+            placeholder="Search articles…"
+            style={{
+              flex: 1, padding: '11px 16px', border: '1px solid var(--color-border)',
+              borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 15, outline: 'none',
+            }}
+          />
+          <button type="submit" style={{
+            background: '#c0392b', color: '#fff', border: 'none', borderRadius: 4,
+            padding: '0 22px', fontFamily: 'var(--f-ui)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+          }}>Search</button>
+        </form>
+
+        {/* Heading */}
+        <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 4 }}>
+          Search Results
+        </h1>
+        {total !== null && (
+          <p style={{ fontFamily: 'var(--f-ui)', fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 24 }}>
+            {total === 0 ? `No results for "${query}"` : `${total} result${total === 1 ? '' : 's'} for "${query}"`}
+          </p>
+        )}
+
+        {loading && <div style={{ padding: '40px 0', color: 'var(--color-text-secondary)', fontFamily: 'var(--f-ui)' }}>Searching…</div>}
+
+        {!loading && results.length === 0 && total === 0 && (
+          <div style={{ padding: '40px 0', fontFamily: 'var(--f-ui)', color: 'var(--color-text-secondary)' }}>
+            Try different keywords or browse a category above.
+          </div>
+        )}
+
+        {/* Results list */}
+        {!loading && results.map(a => (
+          <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)}
+            style={{ display: 'flex', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }}>
+            <div style={{ flexShrink: 0, width: 100, borderRadius: 4, overflow: 'hidden' }}>
+              <ArticleImage aspect="4/3" seed={a.id} category={a.category?.name} src={a.featured_image} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              {a.category && (
+                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: a.category.color_hex || '#c0392b' }}>
+                  {a.category.name}
+                </span>
+              )}
+              <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1.35, margin: '4px 0 6px' }}>
+                {a.title}
+              </h2>
+              {a.excerpt && (
+                <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {a.excerpt}
+                </p>
+              )}
+              <span style={{ fontFamily: 'var(--f-ui)', fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
+                {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+              </span>
+            </div>
+          </article>
+        ))}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 32, flexWrap: 'wrap' }}>
+            <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage <= 1}
+              style={{ padding: '6px 14px', border: '1px solid var(--color-border)', borderRadius: 4, background: '#fff', cursor: currentPage <= 1 ? 'default' : 'pointer', opacity: currentPage <= 1 ? 0.4 : 1, fontFamily: 'var(--f-ui)', fontSize: 13 }}>
+              ‹ Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <button key={p} onClick={() => setCurrentPage(p)}
+                style={{ padding: '6px 12px', border: '1px solid var(--color-border)', borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 13, cursor: 'pointer', background: p === currentPage ? '#c0392b' : '#fff', color: p === currentPage ? '#fff' : 'inherit', fontWeight: p === currentPage ? 700 : 400 }}>
+                {p}
+              </button>
+            ))}
+            <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages}
+              style={{ padding: '6px 14px', border: '1px solid var(--color-border)', borderRadius: 4, background: '#fff', cursor: currentPage >= totalPages ? 'default' : 'pointer', opacity: currentPage >= totalPages ? 0.4 : 1, fontFamily: 'var(--f-ui)', fontSize: 13 }}>
+              Next ›
+            </button>
+          </div>
+        )}
+      </div>
+
+      <Sidebar setPage={setPage} partners={partners} />
+    </div>
   );
 }
 
@@ -1524,6 +1705,11 @@ function parsePathToPage(pathname) {
   // /Articles/{title-slug}/{id}/  or  /Articles/{title-slug}/{id}
   const m = pathname.match(/^\/Articles\/[^/]+\/(\d+)\/?$/i);
   if (m) return 'article-' + m[1];
+  // /search?q=...
+  if (pathname === '/search') {
+    const q = new URLSearchParams(window.location.search).get('q') || '';
+    if (q) return 'search-' + encodeURIComponent(q);
+  }
   // fallback: home
   return 'home';
 }
@@ -1533,6 +1719,10 @@ function pageToPath(p, articleSlug) {
     const id = p.replace('article-', '');
     const slug = articleSlug || 'article';
     return `/Articles/${slug}/${id}/`;
+  }
+  if (p.startsWith('search-')) {
+    const q = p.replace('search-', '');
+    return `/search?q=${q}`;
   }
   return '/';
 }
@@ -1626,6 +1816,10 @@ export default function App() {
       </div>
     </div>
   );
+  else if (page.startsWith('search-')) {
+    const q = decodeURIComponent(page.replace('search-', ''));
+    content = <SearchPage query={q} setPage={nav} partners={partners} />;
+  }
   else if (page.startsWith('article-')) {
     const id = parseInt(page.replace('article-', ''));
     content = <ArticlePage articleId={id} setPage={nav} partners={partners} onSlug={slug => {
