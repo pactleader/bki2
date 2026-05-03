@@ -1518,7 +1518,7 @@ function EventsPage({ setPage }) {
 function AdvertisePage() {
   useMeta({ title: 'Advertise With Us', description: 'Reach thousands of CRAs, compliance officers, and HR decision-makers with targeted ad placements on The Background Investigator.' });
   return (
-    <div className="wrap" style={{ maxWidth: 800, padding: '32px 24px 60px' }}>
+    <div className="wrap" style={{ padding: '32px 24px 60px' }}>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Advertise With Us</h1>
       <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-secondary)', lineHeight: 1.8, marginBottom: 32 }}>Reach thousands of CRAs, compliance officers, and HR decision-makers with targeted placements.</p>
       {[
@@ -1566,7 +1566,7 @@ function ContactPage() {
   }
 
   return (
-    <div className="wrap" style={{ maxWidth: 800, padding: '32px 24px 60px' }}>
+    <div className="wrap" style={{ padding: '32px 24px 60px' }}>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Contact Us</h1>
       <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-base)', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: 32 }}>Questions, tips, or advertising inquiries — we'd love to hear from you.</p>
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
