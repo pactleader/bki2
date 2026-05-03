@@ -70,6 +70,7 @@ pub.get('/slug/:slug', async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     await db.execute('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [rows[0].id]);
+    res.set('Cache-Control', 'no-store');
     res.json({ ...fmt(rows[0]), body: rows[0].body });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
@@ -86,6 +87,7 @@ pub.get('/:id', async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     await db.execute('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [rows[0].id]);
+    res.set('Cache-Control', 'no-store');
     res.json({ ...fmt(rows[0]), body: rows[0].body });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
