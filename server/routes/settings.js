@@ -2,7 +2,7 @@ const express = require('express');
 const db      = require('../db');
 const { verifyToken, requireAdmin } = require('../middleware/auth');
 
-const PUBLIC_KEYS = ['site_name', 'site_tagline', 'site_url', 'og_image_default', 'default_article_image', 'phone', 'address', 'robots_meta', 'custom_head_scripts', 'custom_body_scripts', 'custom_footer_scripts'];
+const PUBLIC_KEYS = ['site_name', 'site_tagline', 'site_url', 'og_image_default', 'default_article_image', 'phone', 'address', 'robots_meta', 'custom_head_scripts', 'custom_body_scripts', 'custom_footer_scripts', 'partners'];
 
 // ── PUBLIC ────────────────────────────────────────────────────
 const pub = express.Router();

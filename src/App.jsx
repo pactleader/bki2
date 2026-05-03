@@ -630,7 +630,7 @@ function ContainerD({ title, articles, sectionKey, color, setPage }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────
 
-function Sidebar({ setPage, mostReadOverride }) {
+function Sidebar({ setPage, mostReadOverride, partners = [] }) {
   const [mostReadList, setMostReadList] = useState(mostReadOverride || []);
 
   useEffect(() => {
@@ -677,12 +677,17 @@ function Sidebar({ setPage, mostReadOverride }) {
       <SidebarSubscribe />
 
       {/* Partners */}
-      <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
-        <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
-        {['Straightline International', 'Insolvenzverfahren'].map((p, i) => (
-          <a key={i} href="#" style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: '#c0392b', padding: '8px 0', borderBottom: i === 0 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>{p}</a>
-        ))}
-      </div>
+      {partners.length > 0 && (
+        <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
+          <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
+          {partners.map((p, i) => (
+            <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
+              style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: '#c0392b', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
+              {p.name}
+            </a>
+          ))}
+        </div>
+      )}
 
       <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
     </aside>
@@ -799,7 +804,7 @@ const SLUG_TO_PAGE = {
   'press-releases':     'pressReleases',
 };
 
-function HomePage({ setPage, onHighlightIds }) {
+function HomePage({ setPage, onHighlightIds, partners }) {
   useMeta({});
   const [hpData, setHpData] = useState(null);
   const [hpLoading, setHpLoading] = useState(true);
@@ -887,7 +892,7 @@ function HomePage({ setPage, onHighlightIds }) {
           <AdSlot position="leaderboard-mid" style={{ margin: '20px 0 40px' }} />
         </div>
 
-        <Sidebar setPage={setPage} mostReadOverride={mostRead} />
+        <Sidebar setPage={setPage} mostReadOverride={mostRead} partners={partners} />
       </div>
     </>
   );
@@ -903,7 +908,7 @@ const PAGE_TO_SLUG = {
 
 // ─── CATEGORY PAGE ───────────────────────────────────────
 
-function CategoryPage({ category, title, setPage }) {
+function CategoryPage({ category, title, setPage, partners }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -992,7 +997,7 @@ function CategoryPage({ category, title, setPage }) {
             </div>
           )}
         </div>
-        <Sidebar setPage={setPage} />
+        <Sidebar setPage={setPage} partners={partners} />
       </div>
     </div>
   );
@@ -1007,7 +1012,7 @@ const CAT_NAME_TO_PAGE = {
   'Press Releases': 'pressReleases',
 };
 
-function ArticlePage({ articleId, setPage, onSlug }) {
+function ArticlePage({ articleId, setPage, onSlug, partners }) {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState([]);
@@ -1188,7 +1193,7 @@ function ArticlePage({ articleId, setPage, onSlug }) {
             </section>
           )}
         </article>
-        <Sidebar setPage={setPage} />
+        <Sidebar setPage={setPage} partners={partners} />
       </div>
     </div>
   );
@@ -1538,12 +1543,16 @@ export default function App() {
   const [page, setPage] = useState(() => parsePathToPage(window.location.pathname));
   const articleSlugs = useRef({});
   const [highlightIds, setHighlightIds] = useState(null); // null = not yet loaded
+  const [partners, setPartners] = useState([]);
 
   // Inject custom scripts from site settings
   useEffect(() => {
     getSettings().then(map => {
       if (map['default_article_image']) {
         FALLBACK_IMAGE = { url: map['default_article_image'], alt: 'Article image' };
+      }
+      if (Array.isArray(map['partners'])) {
+        setPartners(map['partners']);
       }
       // map is already { key: value } from the public endpoint
       function injectScripts(html, target) {
@@ -1595,11 +1604,11 @@ export default function App() {
   };
 
   let content;
-  if (page === 'home') content = <HomePage setPage={nav} onHighlightIds={setHighlightIds} />;
-  else if (page === 'topStories') content = <CategoryPage category="topStories" title="Top Stories" setPage={nav} />;
-  else if (page === 'internationalNews') content = <CategoryPage category="internationalNews" title="International News" setPage={nav} />;
-  else if (page === 'nationalNews') content = <CategoryPage category="nationalNews" title="National News" setPage={nav} />;
-  else if (page === 'pressReleases') content = <CategoryPage category="pressReleases" title="Press Releases" setPage={nav} />;
+  if (page === 'home') content = <HomePage setPage={nav} onHighlightIds={setHighlightIds} partners={partners} />;
+  else if (page === 'topStories') content = <CategoryPage category="topStories" title="Top Stories" setPage={nav} partners={partners} />;
+  else if (page === 'internationalNews') content = <CategoryPage category="internationalNews" title="International News" setPage={nav} partners={partners} />;
+  else if (page === 'nationalNews') content = <CategoryPage category="nationalNews" title="National News" setPage={nav} partners={partners} />;
+  else if (page === 'pressReleases') content = <CategoryPage category="pressReleases" title="Press Releases" setPage={nav} partners={partners} />;
   else if (page === 'events') content = <EventsPage setPage={nav} />;
   else if (page === 'advertise') content = <AdvertisePage />;
   else if (page === 'archives') content = <ArchivesPage />;
@@ -1619,13 +1628,13 @@ export default function App() {
   );
   else if (page.startsWith('article-')) {
     const id = parseInt(page.replace('article-', ''));
-    content = <ArticlePage articleId={id} setPage={nav} onSlug={slug => {
+    content = <ArticlePage articleId={id} setPage={nav} partners={partners} onSlug={slug => {
       articleSlugs.current[id] = slug;
       const path = `/Articles/${slug}/${id}/`;
       if (window.location.pathname !== path) window.history.replaceState({ page }, '', path);
     }} />;
   }
-  else content = <HomePage setPage={nav} onHighlightIds={setHighlightIds} />;
+  else content = <HomePage setPage={nav} onHighlightIds={setHighlightIds} partners={partners} />;
 
   return (
     <div style={{ minHeight: '100vh' }}>

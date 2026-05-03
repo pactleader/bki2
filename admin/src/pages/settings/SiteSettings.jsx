@@ -19,6 +19,7 @@ export default function SiteSettings() {
   const [saving, setSaving]     = useState(false);
   const [uploading, setUploading]       = useState(false);
   const [uploadingArticle, setUploadingArticle] = useState(false);
+  const [partners, setPartners] = useState([]); // [{name, url}]
   const fileRef        = useRef(null);
   const articleFileRef = useRef(null);
 
@@ -28,9 +29,16 @@ export default function SiteSettings() {
         const map = {};
         rows.forEach(r => { map[r.setting_key] = r.setting_value; });
         setValues(map);
+        try { setPartners(JSON.parse(map['partners'] || '[]')); } catch { setPartners([]); }
       })
       .catch(() => toast('Load failed', 'error'));
   }, []);
+
+  function addPartner() { setPartners(p => [...p, { name: '', url: '' }]); }
+  function removePartner(i) { setPartners(p => p.filter((_, idx) => idx !== i)); }
+  function updatePartner(i, field, val) {
+    setPartners(p => p.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
+  }
 
   function set(k, v) { setValues(prev => ({ ...prev, [k]: v })); }
 
@@ -83,6 +91,7 @@ export default function SiteSettings() {
         { key: 'og_image_default',       value: values['og_image_default'] || '',       type: 'string' },
         { key: 'default_article_image', value: values['default_article_image'] || '',  type: 'string' },
         { key: 'openai_api_key',        value: values['openai_api_key'] || '',         type: 'string' },
+        { key: 'partners',              value: JSON.stringify(partners.filter(p => p.name.trim())), type: 'json' },
         { key: 'custom_head_scripts',   value: values['custom_head_scripts'] || '',   type: 'string' },
         { key: 'custom_body_scripts',   value: values['custom_body_scripts'] || '',   type: 'string' },
         { key: 'custom_footer_scripts', value: values['custom_footer_scripts'] || '', type: 'string' },
@@ -194,6 +203,37 @@ export default function SiteSettings() {
                 style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 120, resize: 'vertical' }}
               />
             </Field>
+          </div>
+
+          {/* Partners */}
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 20, marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 16 }}>Sidebar Partners</div>
+            {partners.map((p, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <Input
+                  value={p.name}
+                  onChange={e => updatePartner(i, 'name', e.target.value)}
+                  placeholder="Partner name"
+                  style={{ flex: '1 1 160px' }}
+                />
+                <Input
+                  value={p.url}
+                  onChange={e => updatePartner(i, 'url', e.target.value)}
+                  placeholder="https://…"
+                  style={{ flex: '2 1 220px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removePartner(i)}
+                  style={{ padding: '0 10px', height: 36, background: 'none', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--danger)', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}
+                >×</button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addPartner}
+              style={{ marginTop: 4, padding: '6px 14px', background: '#fff', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12, cursor: 'pointer', color: 'var(--text)' }}
+            >+ Add Partner</button>
           </div>
 
           {/* OpenAI */}
