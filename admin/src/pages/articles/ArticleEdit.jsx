@@ -16,10 +16,11 @@ const EMPTY = {
   seo_title: '', seo_description: '', seo_keywords: '', og_image: '',
 };
 
-function FeaturedImageUpload({ value, onChange }) {
-  const fileRef = useRef();
+function FeaturedImageUpload({ value, onChange, articleTitle = '' }) {
+  const fileRef  = useRef();
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
+  const [error,     setError]     = useState('');
+  const [aiOpen,    setAiOpen]    = useState(false);
 
   async function handleFile(e) {
     const file = e.target.files[0];
@@ -53,7 +54,7 @@ function FeaturedImageUpload({ value, onChange }) {
           <Input
             value={value}
             onChange={e => onChange(e.target.value)}
-            placeholder="Upload a file or paste a URL…"
+            placeholder="Upload, generate, or paste a URL…"
             style={{ flex: 1 }}
           />
           <button
@@ -73,6 +74,22 @@ function FeaturedImageUpload({ value, onChange }) {
         </div>
         {error && <p style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{error}</p>}
       </Field>
+
+      {/* Generate with AI button */}
+      <button
+        type="button"
+        onClick={() => setAiOpen(true)}
+        style={{
+          marginTop: 8, width: '100%', padding: '7px 0',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          color: '#a78bfa', border: '1px solid #4c1d95', borderRadius: 4,
+          fontSize: 12, fontWeight: 600, cursor: 'pointer', letterSpacing: '.02em',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}
+      >
+        <span style={{ fontSize: 14 }}>✦</span> Generate with AI
+      </button>
+
       {value && (
         <div style={{ position: 'relative', marginTop: 8 }}>
           <img
@@ -91,6 +108,155 @@ function FeaturedImageUpload({ value, onChange }) {
           >Remove</button>
         </div>
       )}
+
+      {aiOpen && (
+        <AiGenerateModal
+          initialPrompt={articleTitle}
+          onAccept={url => { onChange(url); setAiOpen(false); }}
+          onClose={() => setAiOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function AiGenerateModal({ initialPrompt, onAccept, onClose }) {
+  const [prompt,      setPrompt]      = useState(
+    initialPrompt
+      ? `A high-quality, editorial-style photorealistic image for a news article titled: "${initialPrompt}". Professional, no text.`
+      : ''
+  );
+  const [generating,  setGenerating]  = useState(false);
+  const [previewUrl,  setPreviewUrl]  = useState(null);
+  const [error,       setError]       = useState('');
+
+  async function handleGenerate() {
+    if (!prompt.trim()) return;
+    setGenerating(true);
+    setError('');
+    setPreviewUrl(null);
+    try {
+      const res = await api.generateImage(prompt);
+      setPreviewUrl(res.url);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, padding: 16,
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 8, width: '100%', maxWidth: 560,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '16px 20px', borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16, color: '#a78bfa' }}>✦</span>
+            <span style={{ fontWeight: 600, fontSize: 14, color: '#fff' }}>Generate Image with AI</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ padding: 20 }}>
+          {/* Prompt */}
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>
+            Prompt
+          </label>
+          <textarea
+            value={prompt}
+            onChange={e => setPrompt(e.target.value)}
+            rows={4}
+            style={{
+              width: '100%', padding: '8px 10px', fontSize: 13, border: '1px solid var(--border)',
+              borderRadius: 4, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
+            }}
+            placeholder="Describe the image you want…"
+          />
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '4px 0 16px' }}>
+            Uses DALL·E 3 (1792×1024). Be specific for best results.
+          </p>
+
+          {/* Generate button */}
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={generating || !prompt.trim()}
+            style={{
+              width: '100%', padding: '9px 0', borderRadius: 4, border: 'none',
+              background: generating || !prompt.trim() ? '#c4b5fd' : '#7c3aed',
+              color: '#fff', fontWeight: 600, fontSize: 13,
+              cursor: generating || !prompt.trim() ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            {generating ? (
+              <>
+                <span style={{
+                  display: 'inline-block', width: 14, height: 14,
+                  border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff',
+                  borderRadius: '50%', animation: 'spin 0.7s linear infinite',
+                }} />
+                Generating… (up to 30s)
+              </>
+            ) : (
+              <><span>✦</span> {previewUrl ? 'Regenerate' : 'Generate'}</>
+            )}
+          </button>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+          {/* Error */}
+          {error && (
+            <p style={{ color: '#c0392b', fontSize: 12, marginTop: 10, padding: '8px 10px', background: '#fef2f2', borderRadius: 4, border: '1px solid #fecaca' }}>
+              {error.includes('API key') ? (
+                <>⚠ {error} — go to <strong>Settings → AI Image Generation</strong></>
+              ) : error}
+            </p>
+          )}
+
+          {/* Preview */}
+          {previewUrl && (
+            <div style={{ marginTop: 16 }}>
+              <img
+                src={previewUrl} alt="AI generated"
+                style={{ width: '100%', borderRadius: 6, display: 'block', border: '1px solid var(--border)' }}
+              />
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => onAccept(previewUrl)}
+                  style={{
+                    flex: 1, padding: '8px 0', background: '#166534', color: '#fff',
+                    border: 'none', borderRadius: 4, fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                  }}
+                >
+                  ✓ Use this image
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  style={{
+                    padding: '8px 16px', background: '#fff', color: 'var(--text)',
+                    border: '1px solid var(--border)', borderRadius: 4, fontSize: 13, cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -271,6 +437,7 @@ export default function ArticleEdit() {
               <FeaturedImageUpload
                 value={form.featured_image}
                 onChange={url => set('featured_image', url)}
+                articleTitle={form.title}
               />
             </Card>
           </div>

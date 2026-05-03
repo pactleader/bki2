@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../../api.js';
 import { getToken } from '../../auth.js';
 import { useToast } from '../../components/Toast.jsx';
@@ -81,7 +81,8 @@ export default function SiteSettings() {
       const items = [
         ...FIELDS.map(f => ({ key: f.key, value: values[f.key] || '', type: f.type })),
         { key: 'og_image_default',       value: values['og_image_default'] || '',       type: 'string' },
-        { key: 'default_article_image', value: values['default_article_image'] || '', type: 'string' },
+        { key: 'default_article_image', value: values['default_article_image'] || '',  type: 'string' },
+        { key: 'openai_api_key',        value: values['openai_api_key'] || '',         type: 'string' },
         { key: 'custom_head_scripts',   value: values['custom_head_scripts'] || '',   type: 'string' },
         { key: 'custom_body_scripts',   value: values['custom_body_scripts'] || '',   type: 'string' },
         { key: 'custom_footer_scripts', value: values['custom_footer_scripts'] || '', type: 'string' },
@@ -93,6 +94,7 @@ export default function SiteSettings() {
     } finally { setSaving(false); }
   }
 
+  const [showApiKey, setShowApiKey] = useState(false);
   const ogUrl = values['og_image_default'] || '';
 
   return (
@@ -191,6 +193,32 @@ export default function SiteSettings() {
                 placeholder={'<!-- Retargeting pixel / conversion tag -->\n<script>...</script>'}
                 style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 120, resize: 'vertical' }}
               />
+            </Field>
+          </div>
+
+          {/* OpenAI */}
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 20, marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>AI Image Generation</div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              Used for the "Generate with AI" button on the article editor. Requires an OpenAI account with DALL·E access.
+            </p>
+            <Field label="OpenAI API Key" hint="Stored securely — never exposed to the public.">
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Input
+                  type={showApiKey ? 'text' : 'password'}
+                  value={values['openai_api_key'] || ''}
+                  onChange={e => set('openai_api_key', e.target.value)}
+                  placeholder="sk-…"
+                  style={{ flex: 1, fontFamily: 'monospace', fontSize: 12 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(v => !v)}
+                  style={{ padding: '0 12px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', cursor: 'pointer', fontSize: 12, whiteSpace: 'nowrap' }}
+                >
+                  {showApiKey ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </Field>
           </div>
 

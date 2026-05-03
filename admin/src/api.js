@@ -96,6 +96,10 @@ export const saveSetting    = (key, value, type) => apiFetch(`/admin/settings/${
 export const listMedia   = () => apiFetch('/admin/media');
 export const deleteMedia = (filename) => apiFetch(`/admin/media/${encodeURIComponent(filename)}`, { method: 'DELETE' });
 
+// ── AI Image Generation ───────────────────────────────────────
+export const generateImage = (prompt) =>
+  apiFetch('/admin/generate-image', { method: 'POST', body: JSON.stringify({ prompt }) });
+
 // ── Import ────────────────────────────────────────────────────
 export function importPreview(file) {
   const token = getToken();
