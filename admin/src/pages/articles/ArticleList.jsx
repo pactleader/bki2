@@ -82,7 +82,16 @@ export default function ArticleList() {
             {articles.map(a => (
               <TR key={a.id}>
                 <TD>
-                  <div style={{ fontWeight: 500, maxWidth: 320 }}>{a.title}</div>
+                  {a.status === 'published' && a.slug ? (
+                    <a href={`/Articles/${a.slug}/${a.id}/`} target="_blank" rel="noopener noreferrer"
+                      style={{ fontWeight: 500, maxWidth: 320, display: 'block', color: 'inherit', textDecoration: 'none' }}
+                      onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
+                      {a.title}
+                    </a>
+                  ) : (
+                    <div style={{ fontWeight: 500, maxWidth: 320 }}>{a.title}</div>
+                  )}
                 </TD>
                 <TD><Badge color={a.category?.color_hex}>{a.category?.name}</Badge></TD>
                 <TD style={{ color: 'var(--text-muted)' }}>{a.author?.display_name}</TD>
