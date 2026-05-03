@@ -1099,15 +1099,69 @@ function ArticlePage({ articleId, setPage, onSlug }) {
           <AdSlot position="leaderboard-top" style={{ margin: '32px 0' }} />
 
           {/* Share */}
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', paddingTop: 20, borderTop: '1px solid var(--color-border)' }}>
-            <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Share:</span>
-            {['LinkedIn', 'X', 'Email'].map(s => (
-              <button key={s} style={{
-                padding: '6px 14px', border: '1px solid var(--color-border)', borderRadius: 3,
-                background: '#fff', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', cursor: 'pointer',
-              }}>{s}</button>
-            ))}
-          </div>
+          {article && (() => {
+            const articleUrl = `${SITE_URL}/Articles/${article.slug}/${article.id}/`;
+            const encoded    = encodeURIComponent(articleUrl);
+            const encodedTitle = encodeURIComponent(article.title || '');
+            const shares = [
+              {
+                label: 'Facebook',
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                  </svg>
+                ),
+                bg: '#1877f2', color: '#fff',
+                href: `https://www.facebook.com/sharer/sharer.php?u=${encoded}`,
+              },
+              {
+                label: 'X',
+                icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25h6.845l4.265 5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                ),
+                bg: '#000', color: '#fff',
+                href: `https://x.com/intent/tweet?url=${encoded}&text=${encodedTitle}`,
+              },
+              {
+                label: 'Email',
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                ),
+                bg: '#374151', color: '#fff',
+                href: `mailto:?subject=${encodedTitle}&body=I thought you might find this interesting: ${articleUrl}`,
+              },
+            ];
+            return (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 20, borderTop: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 600, marginRight: 2 }}>Share:</span>
+                {shares.map(s => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target={s.label !== 'Email' ? '_blank' : undefined}
+                    rel="noopener noreferrer"
+                    onClick={s.label !== 'Email' ? e => { e.preventDefault(); window.open(s.href, '_blank', 'width=600,height=480,noopener'); } : undefined}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '6px 14px', borderRadius: 4, textDecoration: 'none',
+                      background: s.bg, color: s.color,
+                      fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 600,
+                      transition: 'opacity .15s', cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                  >
+                    {s.icon}{s.label}
+                  </a>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Related */}
           {related.length > 0 && (
