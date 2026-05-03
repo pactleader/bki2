@@ -906,6 +906,8 @@ const PAGE_TO_SLUG = {
 function CategoryPage({ category, title, setPage }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const color = CAT_COLORS[articles[0]?.category?.name] || CAT_COLORS[title] || '#444';
   useMeta({ title, description: `Latest ${title.toLowerCase()} from The Background Investigator.` });
 
@@ -913,11 +915,17 @@ function CategoryPage({ category, title, setPage }) {
     const slug = PAGE_TO_SLUG[category];
     if (!slug) { setLoading(false); return; }
     setLoading(true);
-    getCategory(slug)
-      .then(res => { setArticles(res.data || []); })
+    getCategory(slug, currentPage)
+      .then(res => {
+        setArticles(res.data || []);
+        setTotalPages(res.meta?.pages || 1);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [category]);
+  }, [category, currentPage]);
+
+  // Reset to page 1 when switching categories
+  useEffect(() => { setCurrentPage(1); }, [category]);
 
   if (loading) return (
     <div className="wrap" style={{ padding: '0 24px', minHeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -954,6 +962,35 @@ function CategoryPage({ category, title, setPage }) {
               </div>
             </article>
           ))}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '32px 0 16px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                disabled={currentPage <= 1}
+                style={pagerBtn(false, currentPage <= 1)}
+              >← Prev</button>
+
+              {catPageWindow(currentPage, totalPages).map((p, i) =>
+                p === '…' ? (
+                  <span key={`e${i}`} style={{ fontFamily: 'var(--f-ui)', fontSize: 13, color: 'var(--color-text-secondary)', padding: '0 4px' }}>…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={pagerBtn(p === currentPage, false, color)}
+                  >{p}</button>
+                )
+              )}
+
+              <button
+                onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                disabled={currentPage >= totalPages}
+                style={pagerBtn(false, currentPage >= totalPages)}
+              >Next →</button>
+            </div>
+          )}
         </div>
         <Sidebar setPage={setPage} />
       </div>
@@ -1394,6 +1431,32 @@ function Footer({ setPage }) {
       </div>
     </footer>
   );
+}
+
+// ─── CATEGORY PAGE HELPERS ───────────────────────────────
+
+function catPageWindow(current, total) {
+  const delta = 2;
+  const pages = [];
+  const start = Math.max(2, current - delta);
+  const end   = Math.min(total - 1, current + delta);
+  pages.push(1);
+  if (start > 2) pages.push('…');
+  for (let p = start; p <= end; p++) pages.push(p);
+  if (end < total - 1) pages.push('…');
+  if (total > 1) pages.push(total);
+  return pages;
+}
+
+function pagerBtn(active, disabled, color = '#c0392b') {
+  return {
+    padding: '6px 13px', borderRadius: 4, fontSize: 13,
+    fontFamily: 'var(--f-ui)', cursor: disabled ? 'default' : 'pointer',
+    border: `1px solid ${active ? color : 'var(--color-border)'}`,
+    background: active ? color : '#fff',
+    color: active ? '#fff' : disabled ? 'var(--color-text-secondary)' : 'var(--color-text-primary)',
+    opacity: disabled ? 0.45 : 1,
+  };
 }
 
 // ─── URL HELPERS ─────────────────────────────────────────
