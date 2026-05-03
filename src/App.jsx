@@ -403,9 +403,9 @@ function Header({ currentPage, setPage, highlightIds }) {
         </div>
       </div>
 
-      {/* Highlights bar */}
+      {/* Highlights bar — desktop only */}
       {!scrolled && currentPage === 'home' && (
-        <div style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
+        <div className="desktop-only" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
           <div className="wrap" style={{ display: 'flex', gap: 0, overflow: 'hidden' }}>
             {highlights.map((h, i) => (
               <button key={h.id} onClick={() => setPage('article-' + h.id, h.slug)} style={{
