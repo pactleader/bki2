@@ -90,7 +90,8 @@ export default function SiteSettings() {
         ...FIELDS.map(f => ({ key: f.key, value: values[f.key] || '', type: f.type })),
         { key: 'og_image_default',       value: values['og_image_default'] || '',       type: 'string' },
         { key: 'default_article_image', value: values['default_article_image'] || '',  type: 'string' },
-        { key: 'openai_api_key',        value: values['openai_api_key'] || '',         type: 'string' },
+        { key: 'openai_api_key',         value: values['openai_api_key'] || '',         type: 'string' },
+        { key: 'google_ai_api_key',      value: values['google_ai_api_key'] || '',      type: 'string' },
         { key: 'partners',              value: JSON.stringify(partners.filter(p => p.name.trim())), type: 'json' },
         { key: 'custom_head_scripts',   value: values['custom_head_scripts'] || '',   type: 'string' },
         { key: 'custom_body_scripts',   value: values['custom_body_scripts'] || '',   type: 'string' },
@@ -104,6 +105,7 @@ export default function SiteSettings() {
   }
 
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showGoogleKey, setShowGoogleKey] = useState(false);
   const ogUrl = values['og_image_default'] || '';
 
   return (
@@ -236,13 +238,13 @@ export default function SiteSettings() {
             >+ Add Partner</button>
           </div>
 
-          {/* OpenAI */}
+          {/* AI Image Generation */}
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 20, marginBottom: 4 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>AI Image Generation</div>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 16px' }}>
-              Used for the "Generate with AI" button on the article editor. Requires an OpenAI account with DALL·E access.
+              Used for the "Generate with AI" button on the article editor. Configure one or both providers.
             </p>
-            <Field label="OpenAI API Key" hint="Stored securely — never exposed to the public.">
+            <Field label="OpenAI API Key" hint="DALL·E 3 — stored securely, never exposed to the public.">
               <div style={{ display: 'flex', gap: 8 }}>
                 <Input
                   type={showApiKey ? 'text' : 'password'}
@@ -257,6 +259,24 @@ export default function SiteSettings() {
                   style={{ padding: '0 12px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', cursor: 'pointer', fontSize: 12, whiteSpace: 'nowrap' }}
                 >
                   {showApiKey ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </Field>
+            <Field label="Google AI API Key" hint="Imagen 3 via Google AI Studio — stored securely, never exposed to the public.">
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Input
+                  type={showGoogleKey ? 'text' : 'password'}
+                  value={values['google_ai_api_key'] || ''}
+                  onChange={e => set('google_ai_api_key', e.target.value)}
+                  placeholder="AIza…"
+                  style={{ flex: 1, fontFamily: 'monospace', fontSize: 12 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGoogleKey(v => !v)}
+                  style={{ padding: '0 12px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', cursor: 'pointer', fontSize: 12, whiteSpace: 'nowrap' }}
+                >
+                  {showGoogleKey ? 'Hide' : 'Show'}
                 </button>
               </div>
             </Field>
