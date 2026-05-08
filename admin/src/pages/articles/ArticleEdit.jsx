@@ -123,7 +123,7 @@ function FeaturedImageUpload({ value, onChange, articleTitle = '' }) {
 function AiGenerateModal({ initialPrompt, onAccept, onClose }) {
   const [prompt,      setPrompt]      = useState(
     initialPrompt
-      ? `A high-quality, editorial-style photorealistic image for a news article titled: "${initialPrompt}". Professional, no text.`
+      ? `A high-quality, Newspaper headline image for a news article titled: "${initialPrompt}". Professional, no text.`
       : ''
   );
   const [provider,    setProvider]    = useState('openai');
