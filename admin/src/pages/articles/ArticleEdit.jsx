@@ -188,7 +188,7 @@ function AiGenerateModal({ initialPrompt, onAccept, onClose }) {
           <div style={{ display: 'flex', gap: 6, margin: '10px 0 16px' }}>
             {[
               { value: 'openai', label: 'OpenAI DALL·E 3' },
-              { value: 'google', label: 'Google Imagen 3' },
+              { value: 'google', label: 'Google Imagen 4' },
             ].map(p => (
               <button
                 key={p.value}
@@ -205,7 +205,7 @@ function AiGenerateModal({ initialPrompt, onAccept, onClose }) {
             ))}
           </div>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '-10px 0 16px' }}>
-            {provider === 'openai' ? 'DALL·E 3 — 1792×1024, landscape.' : 'Imagen 3 — 16:9, high quality.'}
+            {provider === 'openai' ? 'DALL·E 3 — 1792×1024, landscape.' : 'Imagen 4 — 16:9, high quality.'}
             {' '}Be specific for best results.
           </p>
 

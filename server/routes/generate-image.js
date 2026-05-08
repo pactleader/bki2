@@ -49,9 +49,9 @@ async function generateWithGoogle(prompt, apiKey) {
   const { GoogleGenAI } = require('@google/genai');
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateImages({
-    model:  'imagen-3.0-generate-002',
+    model:  'imagen-4.0-generate-001',
     prompt: prompt.trim(),
-    config: { numberOfImages: 1, aspectRatio: '16:9', outputMimeType: 'image/png' },
+    config: { numberOfImages: 1, aspectRatio: '16:9' },
   });
   const b64 = response.generatedImages?.[0]?.image?.imageBytes;
   if (!b64) throw new Error('No image returned from Google AI');

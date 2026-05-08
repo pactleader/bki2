@@ -262,7 +262,7 @@ export default function SiteSettings() {
                 </button>
               </div>
             </Field>
-            <Field label="Google AI API Key" hint="Imagen 3 via Google AI Studio — stored securely, never exposed to the public.">
+            <Field label="Google AI API Key" hint="Imagen 4 via Google AI Studio — stored securely, never exposed to the public.">
               <div style={{ display: 'flex', gap: 8 }}>
                 <Input
                   type={showGoogleKey ? 'text' : 'password'}
