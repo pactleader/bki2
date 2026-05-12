@@ -202,6 +202,19 @@ INSERT INTO site_settings (setting_key, setting_value, setting_type, description
   ('highlight_items',     '[]',                                                                   'json',    'Highlight bar items [{label,title,article_id}] (JSON array)')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
 
+-- ─── REDIRECTS ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS redirects (
+  id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  from_path   VARCHAR(1000) NOT NULL,
+  to_url      VARCHAR(1000) NOT NULL,
+  is_active   TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_redirects_from (from_path(255)),
+  KEY idx_redirects_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- NOTE: Create your first admin user by running this after installing bcryptjs:
 --   node server/scripts/create-admin.js
 -- Or insert manually with a bcrypt hash (cost 12) for the password.

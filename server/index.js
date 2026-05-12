@@ -58,8 +58,12 @@ app.use('/api/admin/upload',     require('./routes/upload'));
 app.use('/api/admin/media',      require('./routes/media'));
 app.use('/api/admin/import',          require('./routes/import'));
 app.use('/api/admin/generate-image',  require('./routes/generate-image'));
+app.use('/api/admin/redirects',       require('./routes/redirects').admin);
 app.use('/api/subscribe',        require('./routes/subscribers').public);
 app.use('/api/admin/subscribers',require('./routes/subscribers').admin);
+
+// ── 301 Redirects — must come before SSR and SPA fallback ────
+app.use(require('./routes/redirects').public);
 
 // ── Article SSR ───────────────────────────────────────────────
 app.use('/Articles', require('./routes/ssr'));

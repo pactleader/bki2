@@ -118,6 +118,12 @@ export function importPreview(file) {
 export const importRun = (posts, cat_map_override) =>
   apiFetch('/admin/import/run', { method: 'POST', body: JSON.stringify({ posts, cat_map_override }) });
 
+// ── Redirects ─────────────────────────────────────────────────
+export const listRedirects   = () => apiFetch('/admin/redirects');
+export const createRedirect  = (data) => apiFetch('/admin/redirects', { method: 'POST', body: JSON.stringify(data) });
+export const updateRedirect  = (id, data) => apiFetch(`/admin/redirects/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteRedirect  = (id) => apiFetch(`/admin/redirects/${id}`, { method: 'DELETE' });
+
 // ── Subscribers ───────────────────────────────────────────────
 export const listSubscribers        = (params = {}) => apiFetch('/admin/subscribers?' + new URLSearchParams(params));
 export const deleteSubscriber       = (id) => apiFetch(`/admin/subscribers/${id}`, { method: 'DELETE' });
