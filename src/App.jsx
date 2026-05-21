@@ -1673,16 +1673,33 @@ function StaticPage({ slug }) {
   );
 
   return (
-    <div style={{ maxWidth: 780, margin: '0 auto', padding: '48px 24px 80px' }}>
+    <div style={{ maxWidth: 780, width: '100%', margin: '0 auto', padding: '48px 24px 80px', boxSizing: 'border-box' }}>
       <h1 style={{
         fontFamily: 'var(--f-display)', fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)',
         fontWeight: 700, lineHeight: 1.2, color: 'var(--color-primary)',
         marginBottom: 32, paddingBottom: 20, borderBottom: '2px solid var(--color-border)',
+        overflowWrap: 'break-word',
       }}>
         {page.title}
       </h1>
+      <style>{`
+        .static-page-body { font-family: var(--f-body); font-size: 1.0625rem; line-height: 1.85; color: var(--color-text-primary); overflow-wrap: break-word; word-break: break-word; }
+        .static-page-body p  { margin-bottom: 1.3em; }
+        .static-page-body h1, .static-page-body h2, .static-page-body h3, .static-page-body h4 { font-family: var(--f-display); color: var(--color-primary); margin: 1.6em 0 0.5em; line-height: 1.25; }
+        .static-page-body h1 { font-size: 1.6rem; }
+        .static-page-body h2 { font-size: 1.3rem; }
+        .static-page-body h3 { font-size: 1.1rem; }
+        .static-page-body ul, .static-page-body ol { padding-left: 1.6em; margin-bottom: 1.3em; }
+        .static-page-body li { margin-bottom: 0.35em; }
+        .static-page-body a  { color: var(--color-accent, #c0392b); word-break: break-all; }
+        .static-page-body blockquote { border-left: 3px solid #c0392b; margin: 1.5em 0; padding: 0.5em 1.2em; color: var(--color-text-secondary); font-style: italic; }
+        .static-page-body table { width: 100%; border-collapse: collapse; margin-bottom: 1.3em; overflow-x: auto; display: block; }
+        .static-page-body th, .static-page-body td { border: 1px solid var(--color-border, #e5e5e0); padding: 8px 12px; text-align: left; font-size: 0.9375rem; }
+        .static-page-body pre, .static-page-body code { overflow-x: auto; white-space: pre-wrap; word-break: break-all; font-size: 0.875rem; }
+        .static-page-body img { max-width: 100%; height: auto; border-radius: 4px; }
+      `}</style>
       <div
-        style={{ fontFamily: 'var(--f-body)', fontSize: '1.0625rem', lineHeight: 1.85, color: 'var(--color-text-primary)' }}
+        className="static-page-body"
         dangerouslySetInnerHTML={{ __html: page.body || '' }}
       />
     </div>
