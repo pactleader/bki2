@@ -200,8 +200,10 @@ INSERT INTO site_settings (setting_key, setting_value, setting_type, description
   ('robots_meta',         'noindex, nofollow',                                                    'string',  'Robots meta tag content'),
   ('most_read_article_ids','[]',                                                                  'json',    'Article IDs for Most Read sidebar (JSON array)'),
   ('highlight_items',     '[]',                                                                   'json',    'Highlight bar items [{label,title,article_id}] (JSON array)'),
-  ('footer_privacy_slug', '',                                                                      'string',  'Slug of the static page used as the Privacy Policy footer link'),
-  ('footer_terms_slug',   '',                                                                      'string',  'Slug of the static page used as the Terms footer link')
+  ('footer_privacy_slug',      '',                                                                  'string',  'Slug of the static page used as the Privacy Policy footer link'),
+  ('footer_terms_slug',        '',                                                                  'string',  'Slug of the static page used as the Terms footer link'),
+  ('cookie_consent_enabled',   '0',                                                                 'boolean', 'Show cookie consent banner on first visit'),
+  ('cookie_consent_message',   'We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies.',  'string',  'Cookie banner message text')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
 
 -- ─── STATIC PAGES ────────────────────────────────────────────

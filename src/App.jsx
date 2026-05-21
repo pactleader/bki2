@@ -1731,6 +1731,75 @@ function ArchivesPage() {
   );
 }
 
+// ─── COOKIE BANNER ───────────────────────────────────────
+
+const COOKIE_KEY = 'bki_cookie_consent';
+
+function CookieBanner({ settings, privacySlug, setPage }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (settings.enabled && !localStorage.getItem(COOKIE_KEY)) {
+      // Small delay so it doesn't flash during initial paint
+      const t = setTimeout(() => setVisible(true), 800);
+      return () => clearTimeout(t);
+    }
+  }, [settings.enabled]);
+
+  if (!visible) return null;
+
+  function respond(accepted) {
+    localStorage.setItem(COOKIE_KEY, accepted ? 'accepted' : 'declined');
+    setVisible(false);
+  }
+
+  const msg = settings.message || 'We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies.';
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9000,
+      background: '#0d1b2a', color: 'rgba(255,255,255,0.85)',
+      boxShadow: '0 -4px 24px rgba(0,0,0,0.25)',
+      fontFamily: 'var(--f-ui)',
+      animation: 'cookieSlideUp .3s ease',
+    }}>
+      <style>{`@keyframes cookieSlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+      <div style={{
+        maxWidth: 1280, margin: '0 auto', padding: '16px 24px',
+        display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+      }}>
+        <span style={{ fontSize: 13, lineHeight: 1.5, flex: '1 1 300px' }}>
+          🍪 {msg}
+          {privacySlug && (
+            <> {' '}
+              <button
+                onClick={() => { respond('accepted'); setPage('page-' + privacySlug); }}
+                style={{ background: 'none', border: 'none', color: '#c0392b', cursor: 'pointer', fontSize: 13, padding: 0, textDecoration: 'underline' }}
+              >Learn more</button>
+            </>
+          )}
+        </span>
+        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+          <button
+            onClick={() => respond(false)}
+            style={{
+              padding: '8px 20px', borderRadius: 5, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.65)',
+            }}
+          >Decline</button>
+          <button
+            onClick={() => respond(true)}
+            style={{
+              padding: '8px 20px', borderRadius: 5, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              background: '#c0392b', border: 'none', color: '#fff',
+            }}
+          >Accept</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── FOOTER ──────────────────────────────────────────────
 
 function Footer({ setPage, footerSlugs = {} }) {
@@ -1870,6 +1939,7 @@ export default function App() {
   const [highlightIds, setHighlightIds] = useState(null); // null = not yet loaded
   const [partners, setPartners] = useState([]);
   const [footerSlugs, setFooterSlugs] = useState({ privacy: '', terms: '' });
+  const [cookieSettings, setCookieSettings] = useState({ enabled: false, message: '' });
 
   // Inject custom scripts from site settings
   useEffect(() => {
@@ -1883,6 +1953,10 @@ export default function App() {
       setFooterSlugs({
         privacy: map['footer_privacy_slug'] || '',
         terms:   map['footer_terms_slug']   || '',
+      });
+      setCookieSettings({
+        enabled: map['cookie_consent_enabled'] === '1',
+        message: map['cookie_consent_message'] || '',
       });
       // map is already { key: value } from the public endpoint
       function injectScripts(html, target) {
@@ -2022,6 +2096,7 @@ export default function App() {
       <Header currentPage={page} setPage={nav} highlightIds={highlightIds} />
       <main id="main-content">{content}</main>
       <Footer setPage={nav} footerSlugs={footerSlugs} />
+      <CookieBanner settings={cookieSettings} privacySlug={footerSlugs.privacy} setPage={nav} />
     </div>
   );
 }

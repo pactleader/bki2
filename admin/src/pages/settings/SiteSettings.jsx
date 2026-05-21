@@ -100,8 +100,10 @@ export default function SiteSettings() {
         { key: 'custom_head_scripts',   value: values['custom_head_scripts'] || '',   type: 'string' },
         { key: 'custom_body_scripts',   value: values['custom_body_scripts'] || '',   type: 'string' },
         { key: 'custom_footer_scripts', value: values['custom_footer_scripts'] || '', type: 'string' },
-        { key: 'footer_privacy_slug',   value: values['footer_privacy_slug'] || '',   type: 'string' },
-        { key: 'footer_terms_slug',     value: values['footer_terms_slug'] || '',     type: 'string' },
+        { key: 'footer_privacy_slug',    value: values['footer_privacy_slug']    || '', type: 'string' },
+        { key: 'footer_terms_slug',      value: values['footer_terms_slug']      || '', type: 'string' },
+        { key: 'cookie_consent_enabled', value: values['cookie_consent_enabled'] === '1' ? '1' : '0', type: 'boolean' },
+        { key: 'cookie_consent_message', value: values['cookie_consent_message'] || '', type: 'string' },
       ];
       await api.saveSettings(items);
       toast('Settings saved');
@@ -205,6 +207,33 @@ export default function SiteSettings() {
                 </select>
               </Field>
             ))}
+          </div>
+
+          {/* Cookie Consent */}
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 20, marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Cookie Consent Banner</div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              Shown on first visit. The "Learn more" link points to the Privacy Policy page set above.
+            </p>
+            <Field label="">
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13 }}>
+                <input
+                  type="checkbox"
+                  checked={values['cookie_consent_enabled'] === '1'}
+                  onChange={e => set('cookie_consent_enabled', e.target.checked ? '1' : '0')}
+                  style={{ width: 16, height: 16 }}
+                />
+                <span>Enable cookie consent banner</span>
+              </label>
+            </Field>
+            <Field label="Banner message">
+              <Textarea
+                value={values['cookie_consent_message'] || ''}
+                onChange={e => set('cookie_consent_message', e.target.value)}
+                placeholder="We use cookies to improve your experience…"
+                style={{ minHeight: 72 }}
+              />
+            </Field>
           </div>
 
           {/* Custom Scripts */}
