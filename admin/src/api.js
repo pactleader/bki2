@@ -118,6 +118,13 @@ export function importPreview(file) {
 export const importRun = (posts, cat_map_override) =>
   apiFetch('/admin/import/run', { method: 'POST', body: JSON.stringify({ posts, cat_map_override }) });
 
+// ── Static Pages ──────────────────────────────────────────────
+export const listPages   = () => apiFetch('/admin/pages');
+export const getPage     = (id) => apiFetch(`/admin/pages/${id}`);
+export const createPage  = (data) => apiFetch('/admin/pages', { method: 'POST', body: JSON.stringify(data) });
+export const updatePage  = (id, data) => apiFetch(`/admin/pages/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deletePage  = (id) => apiFetch(`/admin/pages/${id}`, { method: 'DELETE' });
+
 // ── Redirects ─────────────────────────────────────────────────
 export const listRedirects   = () => apiFetch('/admin/redirects');
 export const createRedirect  = (data) => apiFetch('/admin/redirects', { method: 'POST', body: JSON.stringify(data) });

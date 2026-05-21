@@ -199,8 +199,26 @@ INSERT INTO site_settings (setting_key, setting_value, setting_type, description
   ('address',             'PMB 1007 Box 10001, Saipan, MP 96950',                                 'string',  'Office address'),
   ('robots_meta',         'noindex, nofollow',                                                    'string',  'Robots meta tag content'),
   ('most_read_article_ids','[]',                                                                  'json',    'Article IDs for Most Read sidebar (JSON array)'),
-  ('highlight_items',     '[]',                                                                   'json',    'Highlight bar items [{label,title,article_id}] (JSON array)')
+  ('highlight_items',     '[]',                                                                   'json',    'Highlight bar items [{label,title,article_id}] (JSON array)'),
+  ('footer_privacy_slug', '',                                                                      'string',  'Slug of the static page used as the Privacy Policy footer link'),
+  ('footer_terms_slug',   '',                                                                      'string',  'Slug of the static page used as the Terms footer link')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
+
+-- ─── STATIC PAGES ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS pages (
+  id               INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  title            VARCHAR(500)  NOT NULL,
+  slug             VARCHAR(500)  NOT NULL,
+  body             LONGTEXT,
+  meta_title       VARCHAR(255),
+  meta_description VARCHAR(500),
+  is_published     TINYINT(1)    NOT NULL DEFAULT 0,
+  created_at       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_pages_slug (slug),
+  KEY idx_pages_published (is_published)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─── REDIRECTS ───────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS redirects (

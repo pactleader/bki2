@@ -21,6 +21,8 @@ import MediaLibrary from './pages/media/MediaLibrary.jsx';
 import SubscriberList from './pages/subscribers/SubscriberList.jsx';
 import ImportTool from './pages/import/ImportTool.jsx';
 import RedirectList from './pages/redirects/RedirectList.jsx';
+import PageList from './pages/pages/PageList.jsx';
+import PageEdit from './pages/pages/PageEdit.jsx';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   if (!isLoggedIn()) return <Navigate to="/admin/login" replace />;
@@ -57,6 +59,9 @@ export default function App() {
           <Route path="settings" element={<ProtectedRoute adminOnly><SiteSettings /></ProtectedRoute>} />
           <Route path="import" element={<ProtectedRoute adminOnly><ImportTool /></ProtectedRoute>} />
           <Route path="redirects" element={<ProtectedRoute adminOnly><RedirectList /></ProtectedRoute>} />
+          <Route path="pages" element={<ProtectedRoute adminOnly><PageList /></ProtectedRoute>} />
+          <Route path="pages/new" element={<ProtectedRoute adminOnly><PageEdit /></ProtectedRoute>} />
+          <Route path="pages/:id/edit" element={<ProtectedRoute adminOnly><PageEdit /></ProtectedRoute>} />
         </Route>
         <Route path="/admin/" element={<Navigate to="/admin" replace />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />

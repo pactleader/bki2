@@ -1643,6 +1643,52 @@ function SubscribePage() {
   );
 }
 
+// ─── STATIC PAGE ─────────────────────────────────────────
+
+function StaticPage({ slug }) {
+  const [page, setPage] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/pages/${slug}`)
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(setPage)
+      .catch(() => setNotFound(true));
+  }, [slug]);
+
+  useMeta(page ? {
+    title: page.meta_title || page.title,
+    description: page.meta_description || '',
+  } : {});
+
+  if (notFound) return (
+    <div style={{ maxWidth: 780, margin: '0 auto', padding: '60px 24px', textAlign: 'center', fontFamily: 'var(--f-ui)' }}>
+      <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', color: 'var(--color-primary)', marginBottom: 12 }}>Page Not Found</h1>
+      <p style={{ color: 'var(--color-text-secondary)' }}>This page doesn't exist or has been removed.</p>
+    </div>
+  );
+
+  if (!page) return (
+    <div style={{ maxWidth: 780, margin: '80px auto', textAlign: 'center', color: 'var(--color-text-secondary)', fontFamily: 'var(--f-ui)' }}>Loading…</div>
+  );
+
+  return (
+    <div style={{ maxWidth: 780, margin: '0 auto', padding: '48px 24px 80px' }}>
+      <h1 style={{
+        fontFamily: 'var(--f-display)', fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)',
+        fontWeight: 700, lineHeight: 1.2, color: 'var(--color-primary)',
+        marginBottom: 32, paddingBottom: 20, borderBottom: '2px solid var(--color-border)',
+      }}>
+        {page.title}
+      </h1>
+      <div
+        style={{ fontFamily: 'var(--f-body)', fontSize: '1.0625rem', lineHeight: 1.85, color: 'var(--color-text-primary)' }}
+        dangerouslySetInnerHTML={{ __html: page.body || '' }}
+      />
+    </div>
+  );
+}
+
 // ─── ARCHIVES PAGE ───────────────────────────────────────
 
 function ArchivesPage() {
@@ -1670,7 +1716,9 @@ function ArchivesPage() {
 
 // ─── FOOTER ──────────────────────────────────────────────
 
-function Footer({ setPage }) {
+function Footer({ setPage, footerSlugs = {} }) {
+  const privacySlug = footerSlugs.privacy || '';
+  const termsSlug   = footerSlugs.terms   || '';
   return (
     <footer style={{ background: '#0d1b2a', color: 'rgba(255,255,255,0.55)', marginTop: 0 }}>
       {/* Banner ad */}
@@ -1703,11 +1751,12 @@ function Footer({ setPage }) {
           <nav style={{ flex: '1 1 130px' }}>
             <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: '#fff', fontWeight: 700, marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1 }}>Company</h3>
             {[
-              { label: 'Events', key: 'events' },
+              { label: 'Events',    key: 'events' },
               { label: 'Advertise', key: 'advertise' },
-              { label: 'Archives', key: 'archives' },
-              { label: 'Contact', key: 'contact' },
-              { label: 'Privacy', key: 'privacy' },
+              { label: 'Archives',  key: 'archives' },
+              { label: 'Contact',   key: 'contact' },
+              ...(privacySlug ? [{ label: 'Privacy', key: 'page-' + privacySlug }] : []),
+              ...(termsSlug   ? [{ label: 'Terms',   key: 'page-' + termsSlug   }] : []),
             ].map(l => (
               <button key={l.key} onClick={() => setPage(l.key)} style={{ display: 'block', background: 'none', border: 'none', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'rgba(255,255,255,0.55)', padding: '5px 0', cursor: 'pointer', textAlign: 'left' }}>{l.label}</button>
             ))}
@@ -1719,11 +1768,17 @@ function Footer({ setPage }) {
 
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)' }}>© 2026 The Background Investigator. All Rights Reserved.</span>
-          <div style={{ display: 'flex', gap: 16, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)' }}>
-            <button onClick={() => setPage('privacy')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)' }}>Privacy</button>
-            <span>·</span>
-            <span style={{ color: 'rgba(255,255,255,0.45)' }}>Terms</span>
-          </div>
+          {(privacySlug || termsSlug) && (
+            <div style={{ display: 'flex', gap: 16, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)' }}>
+              {privacySlug && (
+                <button onClick={() => setPage('page-' + privacySlug)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)' }}>Privacy</button>
+              )}
+              {privacySlug && termsSlug && <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>}
+              {termsSlug && (
+                <button onClick={() => setPage('page-' + termsSlug)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)' }}>Terms</button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </footer>
@@ -1762,6 +1817,9 @@ function parsePathToPage(pathname) {
   // /Articles/{title-slug}/{id}/  or  /Articles/{title-slug}/{id}
   const m = pathname.match(/^\/Articles\/[^/]+\/(\d+)\/?$/i);
   if (m) return 'article-' + m[1];
+  // /p/:slug  — static pages
+  const pm = pathname.match(/^\/p\/([^/]+)\/?$/);
+  if (pm) return 'page-' + pm[1];
   // /search?q=...
   if (pathname === '/search') {
     const q = new URLSearchParams(window.location.search).get('q') || '';
@@ -1777,6 +1835,9 @@ function pageToPath(p, articleSlug) {
     const slug = articleSlug || 'article';
     return `/Articles/${slug}/${id}/`;
   }
+  if (p.startsWith('page-')) {
+    return `/p/${p.replace('page-', '')}`;
+  }
   if (p.startsWith('search-')) {
     const q = p.replace('search-', '');
     return `/search?q=${q}`;
@@ -1791,6 +1852,7 @@ export default function App() {
   const articleSlugs = useRef({});
   const [highlightIds, setHighlightIds] = useState(null); // null = not yet loaded
   const [partners, setPartners] = useState([]);
+  const [footerSlugs, setFooterSlugs] = useState({ privacy: '', terms: '' });
 
   // Inject custom scripts from site settings
   useEffect(() => {
@@ -1801,6 +1863,10 @@ export default function App() {
       if (Array.isArray(map['partners'])) {
         setPartners(map['partners']);
       }
+      setFooterSlugs({
+        privacy: map['footer_privacy_slug'] || '',
+        terms:   map['footer_terms_slug']   || '',
+      });
       // map is already { key: value } from the public endpoint
       function injectScripts(html, target) {
         if (!html?.trim()) return;
@@ -1861,18 +1927,9 @@ export default function App() {
   else if (page === 'archives') content = <ArchivesPage />;
   else if (page === 'contact') content = <ContactPage />;
   else if (page === 'subscribe') content = <SubscribePage />;
-  else if (page === 'privacy') content = (
-    <div className="wrap" style={{ maxWidth: 800, padding: '32px 24px 60px' }}>
-      <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 16 }}>Privacy Policy</h1>
-      <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-base)', color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
-        <p style={{ marginBottom: 20 }}>The Background Investigator is committed to protecting your privacy. This page outlines our policies regarding the collection, use, and disclosure of personal data when you use our website and newsletter services.</p>
-        <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)', marginTop: 32, marginBottom: 12 }}>Information We Collect</h2>
-        <p style={{ marginBottom: 20 }}>We collect information you voluntarily provide, such as your email address when subscribing to our newsletter or contacting us through our contact form.</p>
-        <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)', marginTop: 32, marginBottom: 12 }}>Contact</h2>
-        <p>For privacy-related inquiries, contact us at 866-909-6678.</p>
-      </div>
-    </div>
-  );
+  else if (page.startsWith('page-')) {
+    content = <StaticPage slug={page.replace('page-', '')} />;
+  }
   else if (page.startsWith('search-')) {
     const q = decodeURIComponent(page.replace('search-', ''));
     content = <SearchPage query={q} setPage={nav} partners={partners} />;
@@ -1947,7 +2004,7 @@ export default function App() {
 
       <Header currentPage={page} setPage={nav} highlightIds={highlightIds} />
       <main id="main-content">{content}</main>
-      <Footer setPage={nav} />
+      <Footer setPage={nav} footerSlugs={footerSlugs} />
     </div>
   );
 }

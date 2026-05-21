@@ -20,6 +20,7 @@ export default function SiteSettings() {
   const [uploading, setUploading]       = useState(false);
   const [uploadingArticle, setUploadingArticle] = useState(false);
   const [partners, setPartners] = useState([]); // [{name, url}]
+  const [pages, setPages]       = useState([]); // published static pages
   const fileRef        = useRef(null);
   const articleFileRef = useRef(null);
 
@@ -32,6 +33,9 @@ export default function SiteSettings() {
         try { setPartners(JSON.parse(map['partners'] || '[]')); } catch { setPartners([]); }
       })
       .catch(() => toast('Load failed', 'error'));
+    api.listPages()
+      .then(all => setPages(all.filter(p => p.is_published)))
+      .catch(() => {});
   }, []);
 
   function addPartner() { setPartners(p => [...p, { name: '', url: '' }]); }
@@ -96,6 +100,8 @@ export default function SiteSettings() {
         { key: 'custom_head_scripts',   value: values['custom_head_scripts'] || '',   type: 'string' },
         { key: 'custom_body_scripts',   value: values['custom_body_scripts'] || '',   type: 'string' },
         { key: 'custom_footer_scripts', value: values['custom_footer_scripts'] || '', type: 'string' },
+        { key: 'footer_privacy_slug',   value: values['footer_privacy_slug'] || '',   type: 'string' },
+        { key: 'footer_terms_slug',     value: values['footer_terms_slug'] || '',     type: 'string' },
       ];
       await api.saveSettings(items);
       toast('Settings saved');
@@ -174,6 +180,32 @@ export default function SiteSettings() {
               )}
             </div>
           </Field>
+
+          {/* Footer Links */}
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 20, marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Footer Links</div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              Choose which static page appears as the Privacy and Terms links in the footer. Only published pages are listed.{' '}
+              <span style={{ color: 'var(--accent)' }}>Create pages under <strong>Pages</strong> first.</span>
+            </p>
+            {[
+              { key: 'footer_privacy_slug', label: 'Privacy Policy page' },
+              { key: 'footer_terms_slug',   label: 'Terms of Service page' },
+            ].map(({ key, label }) => (
+              <Field key={key} label={label}>
+                <select
+                  value={values[key] || ''}
+                  onChange={e => set(key, e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 14, background: '#fff' }}
+                >
+                  <option value="">— Not set (hidden in footer) —</option>
+                  {pages.map(p => (
+                    <option key={p.id} value={p.slug}>{p.title} (/p/{p.slug})</option>
+                  ))}
+                </select>
+              </Field>
+            ))}
+          </div>
 
           {/* Custom Scripts */}
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 20, marginBottom: 4 }}>
