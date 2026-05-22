@@ -700,43 +700,42 @@ function ContainerD({ title, articles, sectionKey, color, setPage }) {
   return (
     <section ref={ref} aria-label={title} style={{
       background: 'var(--color-surface)', borderTop: `3px solid ${color}`,
-      padding: '32px 0 40px', marginTop: 8,
+      padding: '24px 0 28px', marginTop: 8,
       opacity: vis ? 1 : 0, transform: vis ? 'translateY(0)' : 'translateY(16px)',
       transition: 'all 500ms ease',
     }}>
-      <div className="wrap">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{
-            fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
-            color, textTransform: 'uppercase', letterSpacing: 1,
-          }}>{title}</h2>
-          <button onClick={() => setPage(sectionKey)} style={{
-            background: 'none', border: 'none', fontFamily: 'var(--f-ui)',
-            fontSize: 'var(--text-xs)', fontWeight: 600, color: '#c0392b', cursor: 'pointer',
-          }}>More {title} →</button>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
-          {articles.slice(0, 4).map((a, i) => (
-            <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
-              cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'flex-start',
-              transitionDelay: `${i * 60}ms`,
-              opacity: vis ? 1 : 0, transform: vis ? 'translateY(0)' : 'translateY(8px)',
-              transition: 'all 350ms ease',
-            }}>
-              <div style={{ flexShrink: 0, width: 72, borderRadius: 4, overflow: 'hidden' }}>
-                <ArticleImage aspect="1/1" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <h3 style={{
-                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
-                  color: 'var(--color-text-primary)', lineHeight: 1.3,
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                }}>{a.title}</h3>
-                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>{a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}</span>
-              </div>
-            </article>
-          ))}
-        </div>
+      <h2 style={{
+        fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
+        color, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 20,
+      }}>{title}</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
+        {articles.slice(0, 4).map((a, i) => (
+          <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
+            cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'flex-start',
+            transitionDelay: `${i * 60}ms`,
+            opacity: vis ? 1 : 0, transform: vis ? 'translateY(0)' : 'translateY(8px)',
+            transition: 'all 350ms ease',
+          }}>
+            <div style={{ flexShrink: 0, width: 72, borderRadius: 4, overflow: 'hidden' }}>
+              <ArticleImage aspect="1/1" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{
+                fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
+                color: 'var(--color-text-primary)', lineHeight: 1.3,
+                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>{a.title}</h3>
+              <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>{a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 24 }}>
+        <button onClick={() => setPage(sectionKey)} style={{
+          background: 'none', border: '1px solid #c0392b', borderRadius: 4,
+          fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 600,
+          color: '#c0392b', cursor: 'pointer', padding: '7px 20px',
+        }}>More {title} →</button>
       </div>
     </section>
   );
