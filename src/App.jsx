@@ -1134,29 +1134,53 @@ const PAGE_TO_SLUG = {
 
 function CategoryPage({ category, title, setPage, partners }) {
   const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const color = CAT_COLORS[articles[0]?.category?.name] || CAT_COLORS[title] || '#444';
+  const [loadingFirst, setLoadingFirst] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPageNum] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const sentinelRef = useRef(null);
+  const color = CAT_COLORS[title] || '#444';
   useMeta({ title, description: `Latest ${title.toLowerCase()} from The Background Investigator.` });
 
+  // Reset when category changes
   useEffect(() => {
+    setArticles([]);
+    setPageNum(1);
+    setHasMore(true);
+    setLoadingFirst(true);
+  }, [category]);
+
+  // Fetch a page of articles and append
+  const fetchPage = useCallback((pg) => {
     const slug = PAGE_TO_SLUG[category];
-    if (!slug) { setLoading(false); return; }
-    setLoading(true);
-    getCategory(slug, currentPage)
+    if (!slug) { setLoadingFirst(false); setHasMore(false); return; }
+    if (pg === 1) setLoadingFirst(true); else setLoadingMore(true);
+    getCategory(slug, pg)
       .then(res => {
-        setArticles(res.data || []);
-        setTotalPages(res.meta?.pages || 1);
+        const incoming = res.data || [];
+        setArticles(prev => pg === 1 ? incoming : [...prev, ...incoming]);
+        const totalPages = res.meta?.pages || 1;
+        setHasMore(pg < totalPages);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [category, currentPage]);
+      .catch(() => setHasMore(false))
+      .finally(() => { setLoadingFirst(false); setLoadingMore(false); });
+  }, [category]);
 
-  // Reset to page 1 when switching categories
-  useEffect(() => { setCurrentPage(1); }, [category]);
+  useEffect(() => { fetchPage(page); }, [page, fetchPage]);
 
-  if (loading) return (
+  // IntersectionObserver sentinel — fires when bottom of list enters viewport
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !loadingMore && !loadingFirst) {
+        setPageNum(p => p + 1);
+      }
+    }, { rootMargin: '300px' });
+    obs.observe(sentinelRef.current);
+    return () => obs.disconnect();
+  }, [hasMore, loadingMore, loadingFirst]);
+
+  if (loadingFirst) return (
     <div className="wrap" style={{ padding: '0 24px', minHeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ fontFamily: 'var(--f-ui)', color: 'var(--color-text-secondary)' }}>Loading…</p>
     </div>
@@ -1164,60 +1188,61 @@ function CategoryPage({ category, title, setPage, partners }) {
 
   return (
     <div className="wrap" style={{ padding: '0 24px' }}>
+      <style>{`
+        .cat-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 28px;
+          margin-top: 28px;
+        }
+        @media (max-width: 900px) { .cat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 540px) { .cat-grid { grid-template-columns: 1fr; } }
+      `}</style>
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
         <div style={{ flex: '1 1 600px', minWidth: 0 }}>
-          <div style={{ borderBottom: `3px solid ${color}`, paddingBottom: 8, marginTop: 32, marginBottom: 4 }}>
+          <div style={{ borderBottom: `3px solid ${color}`, paddingBottom: 8, marginTop: 32 }}>
             <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color }}>{title}</h1>
           </div>
-          {articles.length === 0 && (
+
+          {articles.length === 0 && !loadingFirst && (
             <p style={{ fontFamily: 'var(--f-ui)', color: 'var(--color-text-secondary)', padding: '40px 0' }}>No articles yet.</p>
           )}
-          {articles[0] && <ContainerA article={articles[0]} setPage={setPage} />}
-          <AdSlot position="leaderboard-mid" style={{ margin: '8px 0 20px' }} />
-          {articles.length > 1 && <ContainerB articles={articles.slice(1, 4)} setPage={setPage} />}
-          {articles.length > 4 && articles.slice(4).map(a => (
-            <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
-              display: 'flex', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--color-border)', cursor: 'pointer',
-            }}>
-              <div style={{ flexShrink: 0, width: 100, borderRadius: 4, overflow: 'hidden' }}>
-                <ArticleImage aspect="4/3" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
-              </div>
-              <div>
+
+          <div className="cat-grid">
+            {articles.map((a, i) => (
+              <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
+                <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
+                  <div style={{ transition: 'transform 300ms ease' }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+                  </div>
+                </div>
                 <CatTag category={a.category?.name || a.category} />
-                <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--color-text-primary)', lineHeight: 1.3, marginTop: 6 }}>{a.title}</h3>
+                <h3 style={{
+                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
+                  color: 'var(--color-text-primary)', lineHeight: 1.3, marginTop: 8,
+                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
                   {a.author?.display_name || a.author} · {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
                 </span>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '32px 0 16px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                disabled={currentPage <= 1}
-                style={pagerBtn(false, currentPage <= 1)}
-              >← Prev</button>
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} style={{ height: 1 }} />
 
-              {catPageWindow(currentPage, totalPages).map((p, i) =>
-                p === '…' ? (
-                  <span key={`e${i}`} style={{ fontFamily: 'var(--f-ui)', fontSize: 13, color: 'var(--color-text-secondary)', padding: '0 4px' }}>…</span>
-                ) : (
-                  <button
-                    key={p}
-                    onClick={() => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    style={pagerBtn(p === currentPage, false, color)}
-                  >{p}</button>
-                )
-              )}
-
-              <button
-                onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                disabled={currentPage >= totalPages}
-                style={pagerBtn(false, currentPage >= totalPages)}
-              >Next →</button>
+          {loadingMore && (
+            <div style={{ textAlign: 'center', padding: '28px 0', fontFamily: 'var(--f-ui)', fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              Loading more…
+            </div>
+          )}
+          {!hasMore && articles.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '28px 0', fontFamily: 'var(--f-ui)', fontSize: 12, color: 'var(--color-text-secondary)', letterSpacing: 1, textTransform: 'uppercase' }}>
+              All articles loaded
             </div>
           )}
         </div>
