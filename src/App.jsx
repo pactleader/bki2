@@ -275,7 +275,7 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
 
 // ─── MOBILE TICKER ───────────────────────────────────────
 
-function MobileTicker({ highlights, setPage }) {
+function NewsTicker({ highlights, setPage }) {
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(true);
 
@@ -286,8 +286,8 @@ function MobileTicker({ highlights, setPage }) {
       setTimeout(() => {
         setIdx(i => (i + 1) % highlights.length);
         setVisible(true);
-      }, 350);
-    }, 4000);
+      }, 300);
+    }, 3000);
     return () => clearInterval(interval);
   }, [highlights.length]);
 
@@ -295,32 +295,28 @@ function MobileTicker({ highlights, setPage }) {
   if (!h) return null;
 
   return (
-    <div className="mobile-only" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)', overflow: 'hidden' }}>
-      <button
-        onClick={() => setPage('article-' + h.id, h.slug)}
-        style={{
-          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px',
-          textAlign: 'left',
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(6px)',
-          transition: 'opacity 300ms ease, transform 300ms ease',
-        }}
-      >
+    <div style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)', overflow: 'hidden' }}>
+      <div className="wrap" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 24px' }}>
         <span style={{
-          flexShrink: 0, fontFamily: 'var(--f-ui)', fontSize: 9, fontWeight: 800,
-          color: '#fff', background: '#c0392b', textTransform: 'uppercase',
-          letterSpacing: 1, padding: '2px 6px', borderRadius: 2, whiteSpace: 'nowrap',
-        }}>{h.category?.name || 'News'}</span>
-        <span style={{
-          fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600,
-          color: 'var(--color-text-primary)', lineHeight: 1.3,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
-        }}>{h.title}</span>
-        <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--color-text-secondary)' }}>
-          {idx + 1}/{highlights.length}
-        </span>
-      </button>
+          flexShrink: 0, fontFamily: 'var(--f-ui)', fontSize: 10, fontWeight: 800,
+          color: '#fff', background: 'var(--color-accent)', textTransform: 'uppercase',
+          letterSpacing: 1.2, padding: '3px 8px', borderRadius: 2, whiteSpace: 'nowrap',
+        }}>Latest News</span>
+        <span style={{ flexShrink: 0, color: 'var(--color-border)', fontSize: 14 }}>·</span>
+        <button
+          onClick={() => setPage('article-' + h.id, h.slug)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600,
+            color: 'var(--color-text-primary)', lineHeight: 1.3,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            flex: 1, textAlign: 'left', minWidth: 0,
+            opacity: visible ? 1 : 0,
+            transform: visible ? 'translateY(0)' : 'translateY(5px)',
+            transition: 'opacity 250ms ease, transform 250ms ease',
+          }}
+        >{h.title}</button>
+      </div>
     </div>
   );
 }
@@ -330,7 +326,7 @@ function MobileTicker({ highlights, setPage }) {
 function Header({ currentPage, setPage, highlightIds }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [highlights, setHighlights] = useState([]);
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
@@ -348,18 +344,6 @@ function Header({ currentPage, setPage, highlightIds }) {
     setPage('search-' + encodeURIComponent(q));
   }
 
-  useEffect(() => {
-    if (highlightIds === null) return; // wait until homepage has reported back
-    if (highlightIds.length > 0) {
-      Promise.all(highlightIds.map(id => getArticle(id).catch(() => null)))
-        .then(articles => setHighlights(articles.filter(Boolean)));
-    } else {
-      // No curated IDs saved — fall back to 4 most recent
-      getArticles({ limit: 4, page: 1 })
-        .then(res => setHighlights(res.data || []))
-        .catch(() => {});
-    }
-  }, [JSON.stringify(highlightIds)]);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 60);
@@ -394,13 +378,13 @@ function Header({ currentPage, setPage, highlightIds }) {
           <div onClick={() => setPage('home')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
               width: 40, height: 40, borderRadius: 6,
-              background: 'linear-gradient(135deg, #0d1b2a, #1a3a4a)',
+              background: 'var(--color-primary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#c0392b', fontFamily: 'var(--f-display)', fontSize: 21, fontWeight: 700,
+              color: 'var(--color-accent)', fontFamily: 'var(--f-display)', fontSize: 21, fontWeight: 700,
             }}>B</div>
             <div style={{ lineHeight: 1.1 }}>
               <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-primary)', letterSpacing: -0.5 }}>The Background</div>
-              <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: '#c0392b', letterSpacing: -0.5 }}>Investigator</div>
+              <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: -0.5 }}>Investigator</div>
             </div>
           </div>
 
@@ -442,7 +426,7 @@ function Header({ currentPage, setPage, highlightIds }) {
             </form>
 
             <button onClick={() => setPage('subscribe')} style={{
-              background: '#c0392b', color: '#fff', border: 'none', fontFamily: 'var(--f-ui)',
+              background: 'var(--color-accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-ui)',
               fontSize: 'var(--text-xs)', fontWeight: 700, padding: '9px 20px', borderRadius: 3,
               marginLeft: 6, cursor: 'pointer', letterSpacing: 0.8, textTransform: 'uppercase',
             }}>Stay Informed</button>
@@ -455,32 +439,6 @@ function Header({ currentPage, setPage, highlightIds }) {
         </div>
       </div>
 
-      {/* Highlights bar — desktop only */}
-      {!scrolled && currentPage === 'home' && highlights.length > 0 && (
-        <div className="desktop-only" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
-          <div className="wrap" style={{ display: 'flex', gap: 0, overflow: 'hidden' }}>
-            {highlights.map((h, i) => (
-              <button key={h.id} onClick={() => setPage('article-' + h.id, h.slug)} style={{
-                flex: 1, background: 'none', border: 'none', borderRight: i < highlights.length - 1 ? '1px solid var(--color-border)' : 'none',
-                padding: '10px 16px', cursor: 'pointer', textAlign: 'left', minWidth: 0,
-                display: 'flex', alignItems: 'center', gap: 10,
-              }}>
-                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 9, fontWeight: 800, color: '#c0392b', textTransform: 'uppercase', letterSpacing: 1.2, whiteSpace: 'nowrap' }}>{h.category?.name || ''}</span>
-                <span style={{
-                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
-                  color: 'var(--color-text-primary)', lineHeight: 1.3,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>{h.title}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Mobile ticker — rotating headlines */}
-      {!scrolled && currentPage === 'home' && highlights.length > 0 && (
-        <MobileTicker highlights={highlights} setPage={setPage} />
-      )}
 
       {/* Mobile nav dropdown */}
       {menuOpen && (
@@ -494,7 +452,7 @@ function Header({ currentPage, setPage, highlightIds }) {
                 placeholder="Search articles…"
                 style={{ flex: 1, padding: '9px 12px', border: 'none', fontFamily: 'var(--f-ui)', fontSize: 14, outline: 'none' }}
               />
-              <button type="submit" style={{ background: '#c0392b', border: 'none', color: '#fff', padding: '0 14px', cursor: 'pointer' }}>
+              <button type="submit" style={{ background: 'var(--color-accent)', border: 'none', color: '#fff', padding: '0 14px', cursor: 'pointer' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
@@ -521,12 +479,13 @@ function HeroZone({ setPage, hero: heroProp }) {
   const hero = heroProp;
   if (!hero) return null;
   return (
-    <section aria-label="Lead story" style={{ background: '#0d1b2a', position: 'relative', overflow: 'hidden' }}>
-      <div className="wrap" style={{ display: 'flex', gap: 0, minHeight: 420, flexWrap: 'wrap' }}>
+    <section aria-label="Lead story" style={{ background: 'var(--color-bg)', position: 'relative' }}>
+      <div className="wrap" style={{ padding: '0 24px' }}>
+        <div style={{ display: 'flex', gap: 0, minHeight: 420, flexWrap: 'wrap', background: 'var(--color-primary)', overflow: 'hidden', borderRadius: '0 0 8px 8px' }}>
         {/* Image — 60% on desktop */}
         <div className="hero-img-col" style={{ flex: '1 1 58%', minHeight: 300, position: 'relative' }}>
           <ArticleImage aspect="unset" style={{ height: '100%', borderRadius: 0 }} seed={hero.id} category={hero.category?.name || hero.category} src={hero.featured_image} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent 50%, #0d1b2a 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent 50%, var(--color-primary) 100%)' }} />
         </div>
         {/* Text — 40% */}
         <div style={{
@@ -537,7 +496,7 @@ function HeroZone({ setPage, hero: heroProp }) {
           <h1 onClick={() => setPage('article-' + hero.id, hero.slug)} style={{
             fontFamily: 'var(--f-display)', fontSize: 'clamp(1.75rem, 3vw, 2.75rem)',
             fontWeight: 700, color: '#fff', lineHeight: 1.15, marginTop: 14, cursor: 'pointer',
-            letterSpacing: -0.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            letterSpacing: -0.5,
           }}>{hero.title}</h1>
           <p style={{
             fontFamily: 'var(--f-body)', fontSize: 'var(--text-base)', color: 'rgba(255,255,255,0.65)',
@@ -549,10 +508,11 @@ function HeroZone({ setPage, hero: heroProp }) {
             <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.3)' }}>{hero.publish_date ? new Date(hero.publish_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : hero.date}</span>
           </div>
           <button onClick={() => setPage('article-' + hero.id, hero.slug)} style={{
-            background: 'none', border: 'none', color: '#c0392b', fontFamily: 'var(--f-ui)',
+            background: 'none', border: 'none', color: 'var(--color-accent)', fontFamily: 'var(--f-ui)',
             fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', marginTop: 24,
             display: 'flex', alignItems: 'center', gap: 6, padding: 0,
           }}>Read full story <span style={{ fontSize: 16 }}>→</span></button>
+        </div>
         </div>
       </div>
     </section>
@@ -732,9 +692,9 @@ function ContainerD({ title, articles, sectionKey, color, setPage }) {
       </div>
       <div style={{ textAlign: 'center', marginTop: 24 }}>
         <button onClick={() => setPage(sectionKey)} style={{
-          background: 'none', border: '1px solid #c0392b', borderRadius: 4,
+          background: 'none', border: '1px solid var(--color-accent)', borderRadius: 4,
           fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 600,
-          color: '#c0392b', cursor: 'pointer', padding: '7px 20px',
+          color: 'var(--color-accent)', cursor: 'pointer', padding: '7px 20px',
         }}>More {title} →</button>
       </div>
     </section>
@@ -788,7 +748,7 @@ function SearchPage({ query, setPage, partners }) {
             }}
           />
           <button type="submit" style={{
-            background: '#c0392b', color: '#fff', border: 'none', borderRadius: 4,
+            background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: 4,
             padding: '0 22px', fontFamily: 'var(--f-ui)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
           }}>Search</button>
         </form>
@@ -887,7 +847,7 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
         <h3 style={{
           fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800,
           textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--color-text-secondary)',
-          paddingBottom: 10, borderBottom: '2px solid #c0392b', marginBottom: 0,
+          paddingBottom: 10, borderBottom: '2px solid var(--color-accent)', marginBottom: 0,
         }}>Most Read</h3>
         {mostReadList.slice(0, 7).map((a, i) => (
           <div key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
@@ -910,16 +870,13 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
 
       <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
 
-      {/* Newsletter signup */}
-      <SidebarSubscribe />
-
       {/* Partners */}
       {partners.length > 0 && (
         <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
           <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
           {partners.map((p, i) => (
             <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
-              style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: '#c0392b', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
+              style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-accent)', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
               {p.name}
             </a>
           ))}
@@ -958,7 +915,7 @@ function useSubscribeForm(source) {
 function SidebarSubscribe() {
   const { email, setEmail, status, msg, handleSubmit } = useSubscribeForm('sidebar');
   return (
-    <div style={{ background: '#0d1b2a', borderRadius: 6, padding: '28px 24px', marginBottom: 28 }}>
+    <div style={{ background: 'var(--color-primary)', borderRadius: 6, padding: '28px 24px', marginBottom: 28 }}>
       <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-lg)', color: '#fff', fontWeight: 700, marginBottom: 6 }}>
         Get the day's top stories.
       </h3>
@@ -973,7 +930,7 @@ function SidebarSubscribe() {
             style={{ width: '100%', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', marginBottom: 10, boxSizing: 'border-box', outline: 'none' }} />
           {status === 'error' && <p style={{ fontFamily: 'var(--f-ui)', fontSize: 11, color: '#f87171', marginBottom: 8 }}>{msg}</p>}
           <button type="submit" disabled={status === 'loading'}
-            style={{ width: '100%', padding: 10, background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+            style={{ width: '100%', padding: 10, background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
             {status === 'loading' ? 'Subscribing…' : 'Subscribe'}
           </button>
         </form>
@@ -995,7 +952,7 @@ function FooterSubscribe() {
           <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" type="email" required
             style={{ flex: 1, padding: '9px 12px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', outline: 'none' }} />
           <button type="submit" disabled={status === 'loading'}
-            style={{ padding: '9px 16px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, cursor: 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
+            style={{ padding: '9px 16px', background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, cursor: 'pointer', opacity: status === 'loading' ? 0.7 : 1 }}>
             {status === 'loading' ? '…' : 'Go'}
           </button>
         </form>
@@ -1009,7 +966,7 @@ function InlineNewsletter() {
   const [ref, vis] = useScrollReveal();
   return (
     <div ref={ref} className="wrap" style={{ padding: '0 24px', opacity: vis ? 1 : 0, transition: 'opacity 500ms ease' }}>
-      <div style={{ background: 'linear-gradient(135deg, #0d1b2a, #1a3a4a)', borderRadius: 8, padding: '32px 40px', display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap', justifyContent: 'space-between', margin: '20px 0' }}>
+      <div style={{ background: 'var(--color-primary)', borderRadius: 8, padding: '32px 40px', display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap', justifyContent: 'space-between', margin: '20px 0' }}>
         <div style={{ flex: '1 1 300px' }}>
           <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', color: '#fff', fontWeight: 700, marginBottom: 4 }}>Stay ahead of compliance changes.</h3>
           <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'rgba(255,255,255,0.5)' }}>Join thousands of screening professionals who read BKI daily.</p>
@@ -1021,7 +978,7 @@ function InlineNewsletter() {
             <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" required
               style={{ flex: '1 1 180px', minWidth: 0, padding: '11px 14px', border: `1px solid ${status === 'error' ? '#f87171' : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', outline: 'none' }} />
             <button type="submit" disabled={status === 'loading'}
-              style={{ padding: '11px 22px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto', opacity: status === 'loading' ? 0.7 : 1 }}>
+              style={{ padding: '11px 22px', background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto', opacity: status === 'loading' ? 0.7 : 1 }}>
               {status === 'loading' ? '…' : 'Subscribe'}
             </button>
           </form>
@@ -1045,6 +1002,13 @@ function HomePage({ setPage, onHighlightIds, partners }) {
   useMeta({});
   const [hpData, setHpData] = useState(null);
   const [hpLoading, setHpLoading] = useState(true);
+  const [latestArticles, setLatestArticles] = useState([]);
+
+  useEffect(() => {
+    getArticles({ limit: 5, page: 1 })
+      .then(res => setLatestArticles(res.data || []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     getHomepage()
@@ -1078,6 +1042,7 @@ function HomePage({ setPage, onHighlightIds, partners }) {
 
   return (
     <>
+      {latestArticles.length > 0 && <NewsTicker highlights={latestArticles} setPage={setPage} />}
       <HeroZone setPage={setPage} hero={heroArticle} />
 
       <div className="wrap" style={{ display: 'flex', gap: 40, flexWrap: 'wrap', padding: '0 24px' }}>
@@ -1293,9 +1258,9 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
         <article style={{ flex: '1 1 600px', minWidth: 0, maxWidth: 720, paddingTop: 32, overflow: 'hidden' }}>
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
-            <span onClick={() => setPage('home')} style={{ cursor: 'pointer', color: '#c0392b' }}>Home</span>
+            <span onClick={() => setPage('home')} style={{ cursor: 'pointer', color: 'var(--color-accent)' }}>Home</span>
             <span style={{ margin: '0 6px', color: '#ccc' }}>/</span>
-            <span onClick={() => setPage(catKey)} style={{ cursor: 'pointer', color: '#c0392b' }}>{catName}</span>
+            <span onClick={() => setPage(catKey)} style={{ cursor: 'pointer', color: 'var(--color-accent)' }}>{catName}</span>
             <span style={{ margin: '0 6px', color: '#ccc' }}>/</span>
             <span>{article.title.substring(0, 40)}…</span>
           </nav>
@@ -1461,10 +1426,10 @@ function EventsPage({ setPage }) {
     <div className="wrap" style={{ padding: '32px 24px 60px' }}>
       <button onClick={() => setSelected(null)} style={{
         background: 'none', border: 'none', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)',
-        color: '#c0392b', cursor: 'pointer', padding: 0, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6,
+        color: 'var(--color-accent)', cursor: 'pointer', padding: 0, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6,
       }}>← Back to Events</button>
       <div style={{ borderTop: '4px solid #c0392b', paddingTop: 28 }}>
-        <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: 1 }}>
+        <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
           {selected.event_date || selected.date}
         </span>
         <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginTop: 12, marginBottom: 8, lineHeight: 1.2 }}>{selected.title}</h1>
@@ -1478,7 +1443,7 @@ function EventsPage({ setPage }) {
         </div>
         {selected.url && (
           <a href={selected.url} target="_blank" rel="noopener noreferrer" style={{
-            display: 'inline-block', padding: '12px 28px', background: '#c0392b', color: '#fff',
+            display: 'inline-block', padding: '12px 28px', background: 'var(--color-accent)', color: '#fff',
             fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', fontWeight: 700, borderRadius: 4, textDecoration: 'none',
           }}>Learn more →</a>
         )}
@@ -1494,17 +1459,17 @@ function EventsPage({ setPage }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
         {events.map((e, i) => (
           <div key={e.id || i} onClick={() => setSelected(e)} style={{
-            border: '1px solid var(--color-border)', borderRadius: 6, padding: 28, borderTop: '3px solid #c0392b',
+            border: '1px solid var(--color-border)', borderRadius: 6, padding: 28, borderTop: '3px solid var(--color-accent)',
             cursor: 'pointer', transition: 'box-shadow 150ms ease',
           }}
             onMouseEnter={ev => ev.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'}
             onMouseLeave={ev => ev.currentTarget.style.boxShadow = 'none'}
           >
-            <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: 1 }}>{e.event_date || e.date}</span>
+            <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: 1 }}>{e.event_date || e.date}</span>
             <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: 8, lineHeight: 1.3 }}>{e.title}</h2>
             <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginTop: 6 }}>{e.location}</p>
             <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginTop: 10, lineHeight: 1.6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{e.description}</p>
-            <span style={{ display: 'inline-block', marginTop: 12, fontSize: 'var(--text-xs)', color: '#c0392b', fontFamily: 'var(--f-ui)', fontWeight: 600 }}>View details →</span>
+            <span style={{ display: 'inline-block', marginTop: 12, fontSize: 'var(--text-xs)', color: 'var(--color-accent)', fontFamily: 'var(--f-ui)', fontWeight: 600 }}>View details →</span>
           </div>
         ))}
       </div>
@@ -1531,13 +1496,13 @@ function AdvertisePage() {
             <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', fontWeight: 600 }}>{ad.name}</h3>
             <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>{ad.pos}</p>
           </div>
-          <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: '#c0392b', background: '#fdecea', padding: '4px 12px', borderRadius: 3 }}>{ad.size}</span>
+          <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-accent)', background: '#fdecea', padding: '4px 12px', borderRadius: 3 }}>{ad.size}</span>
         </div>
       ))}
-      <div style={{ background: '#0d1b2a', borderRadius: 6, padding: 32, textAlign: 'center', marginTop: 32 }}>
+      <div style={{ background: 'var(--color-primary)', borderRadius: 6, padding: 32, textAlign: 'center', marginTop: 32 }}>
         <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', color: '#fff', marginBottom: 8 }}>Ready to reach our audience?</h2>
         <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>Contact us for rates and availability</p>
-        <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', color: '#c0392b', fontWeight: 600 }}>866-909-6678</p>
+        <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', color: 'var(--color-accent)', fontWeight: 600 }}>866-909-6678</p>
       </div>
     </div>
   );
@@ -1592,7 +1557,7 @@ function ContactPage() {
             <textarea required rows={5} value={form.message} onChange={e => setF('message', e.target.value)}
               placeholder="Your message..." style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: 4, fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', boxSizing: 'border-box', resize: 'vertical', outline: 'none' }} />
           </div>
-          <button type="submit" disabled={status === 'sending'} style={{ padding: '12px 28px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start', opacity: status === 'sending' ? .7 : 1 }}>
+          <button type="submit" disabled={status === 'sending'} style={{ padding: '12px 28px', background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start', opacity: status === 'sending' ? .7 : 1 }}>
             {status === 'sending' ? 'Sending…' : 'Send Message'}
           </button>
         </form>
@@ -1617,7 +1582,7 @@ function SubscribePage() {
   const { email, setEmail, status, msg, handleSubmit } = useSubscribeForm('subscribe-page');
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
-      <div style={{ width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg, #0d1b2a, #1a3a4a)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#c0392b', fontFamily: 'var(--f-display)', fontSize: 28, fontWeight: 700 }}>B</div>
+      <div style={{ width: 56, height: 56, borderRadius: 12, background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: 'var(--color-accent)', fontFamily: 'var(--f-display)', fontSize: 28, fontWeight: 700 }}>B</div>
       <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: 12 }}>Stay Informed</h1>
       <p style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-secondary)', lineHeight: 1.7, marginBottom: 36 }}>Background screening news, court record updates, and compliance analysis — delivered to your inbox.</p>
       {status === 'ok' ? (
@@ -1631,7 +1596,7 @@ function SubscribePage() {
           <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" required
             style={{ flex: '1 1 240px', padding: '14px 18px', border: `1px solid ${status === 'error' ? '#fca5a5' : 'var(--color-border)'}`, borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', outline: 'none' }} />
           <button type="submit" disabled={status === 'loading'}
-            style={{ padding: '14px 24px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', opacity: status === 'loading' ? 0.7 : 1 }}>
+            style={{ padding: '14px 24px', background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: 4, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', opacity: status === 'loading' ? 0.7 : 1 }}>
             {status === 'loading' ? 'Subscribing…' : 'Subscribe'}
           </button>
           {status === 'error' && <p style={{ width: '100%', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: '#dc2626', marginTop: 4 }}>{msg}</p>}
@@ -1718,7 +1683,7 @@ function ArchivesPage() {
         {months.map((m, i) => (
           <div key={i} style={{
             border: '1px solid var(--color-border)', borderRadius: 6, padding: '24px 16px', textAlign: 'center', cursor: 'pointer',
-            background: i === 0 ? '#0d1b2a' : '#fff', borderTop: i === 0 ? '3px solid #c0392b' : '1px solid var(--color-border)',
+            background: i === 0 ? 'var(--color-primary)' : '#fff', borderTop: i === 0 ? '3px solid var(--color-accent)' : '1px solid var(--color-border)',
           }}>
             <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700, color: i === 0 ? '#c0392b' : 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 6 }}>{i === 0 ? 'Latest' : 'Archive'}</span>
             <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700, color: i === 0 ? '#fff' : 'var(--color-text-primary)' }}>{m}</h2>
@@ -1757,7 +1722,7 @@ function CookieBanner({ settings, privacySlug, setPage }) {
   return (
     <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9000,
-      background: '#0d1b2a', color: 'rgba(255,255,255,0.85)',
+      background: 'var(--color-primary)', color: 'rgba(255,255,255,0.85)',
       boxShadow: '0 -4px 24px rgba(0,0,0,0.25)',
       fontFamily: 'var(--f-ui)',
       animation: 'cookieSlideUp .3s ease',
@@ -1773,7 +1738,7 @@ function CookieBanner({ settings, privacySlug, setPage }) {
             <> {' '}
               <button
                 onClick={() => { respond('accepted'); setPage('page-' + privacySlug); }}
-                style={{ background: 'none', border: 'none', color: '#c0392b', cursor: 'pointer', fontSize: 13, padding: 0, textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: 13, padding: 0, textDecoration: 'underline' }}
               >Learn more</button>
             </>
           )}
@@ -1790,7 +1755,7 @@ function CookieBanner({ settings, privacySlug, setPage }) {
             onClick={() => respond(true)}
             style={{
               padding: '8px 20px', borderRadius: 5, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              background: '#c0392b', border: 'none', color: '#fff',
+              background: 'var(--color-accent)', border: 'none', color: '#fff',
             }}
           >Accept</button>
         </div>
@@ -1805,7 +1770,7 @@ function Footer({ setPage, footerSlugs = {} }) {
   const privacySlug = footerSlugs.privacy || '';
   const termsSlug   = footerSlugs.terms   || '';
   return (
-    <footer style={{ background: '#0d1b2a', color: 'rgba(255,255,255,0.55)', marginTop: 0 }}>
+    <footer style={{ background: 'var(--color-primary)', color: 'rgba(255,255,255,0.55)', marginTop: 0 }}>
       {/* Banner ad */}
       <AdSlot position="footer-banner" w="100%" maxW={9999} h={60} style={{ background: 'rgba(0,0,0,0.15)', padding: '0' }} />
 
@@ -1814,7 +1779,7 @@ function Footer({ setPage, footerSlugs = {} }) {
           {/* About */}
           <div style={{ flex: '1 1 260px' }}>
             <div style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', color: '#fff', fontWeight: 700, marginBottom: 12 }}>
-              The Background<br /><span style={{ color: '#c0392b' }}>Investigator</span>
+              The Background<br /><span style={{ color: 'var(--color-accent)' }}>Investigator</span>
             </div>
             <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', lineHeight: 1.6 }}>Your information resource for the background investigation industry. Dedicated to pre-employment screenings everywhere.</p>
           </div>
@@ -1953,6 +1918,10 @@ export default function App() {
         privacy: map['footer_privacy_slug'] || '',
         terms:   map['footer_terms_slug']   || '',
       });
+      // Apply brand colors as CSS variables on <html>
+      const root = document.documentElement;
+      if (map['brand_primary_color']) root.style.setProperty('--color-primary', map['brand_primary_color']);
+      if (map['brand_accent_color'])  root.style.setProperty('--color-accent',  map['brand_accent_color']);
       setCookieSettings({
         enabled: map['cookie_consent_enabled'] === '1',
         message: map['cookie_consent_message'] || '',
@@ -2060,7 +2029,7 @@ export default function App() {
           --text-3xl: 2rem;
           --text-4xl: 2.5rem;
 
-          --color-primary: #0d1b2a;
+          --color-primary: #1c3362;
           --color-accent: #c0392b;
           --color-bg: #f9f8f6;
           --color-surface: #f3f2ef;

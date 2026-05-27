@@ -104,6 +104,8 @@ export default function SiteSettings() {
         { key: 'footer_terms_slug',      value: values['footer_terms_slug']      || '', type: 'string' },
         { key: 'cookie_consent_enabled', value: values['cookie_consent_enabled'] === '1' ? '1' : '0', type: 'boolean' },
         { key: 'cookie_consent_message', value: values['cookie_consent_message'] || '', type: 'string' },
+        { key: 'brand_primary_color',    value: values['brand_primary_color'] || '#0d1b2a', type: 'string' },
+        { key: 'brand_accent_color',     value: values['brand_accent_color']  || '#c0392b', type: 'string' },
       ];
       await api.saveSettings(items);
       toast('Settings saved');
@@ -126,6 +128,37 @@ export default function SiteSettings() {
               <Input value={values[f.key] || ''} onChange={e => set(f.key, e.target.value)} />
             </Field>
           ))}
+
+          {/* Brand Colors */}
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 20, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 16 }}>Brand Colors</div>
+            {[
+              { key: 'brand_primary_color', label: 'Primary color', hint: 'Header, hero, footer background', default: '#1c3362' },
+              { key: 'brand_accent_color',  label: 'Accent color',  hint: 'Buttons, links, category tags',   default: '#c0392b' },
+            ].map(({ key, label, hint, default: def }) => (
+              <Field key={key} label={label} hint={hint}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={values[key] || def}
+                    onChange={e => set(key, e.target.value)}
+                    style={{ width: 40, height: 36, border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer', padding: 2 }}
+                  />
+                  <Input
+                    value={values[key] || def}
+                    onChange={e => set(key, e.target.value)}
+                    style={{ fontFamily: 'monospace', flex: 1 }}
+                    placeholder={def}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => set(key, def)}
+                    style={{ padding: '0 10px', height: 36, background: '#fff', border: '1px solid var(--border)', borderRadius: 4, fontSize: 11, cursor: 'pointer', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
+                  >Reset</button>
+                </div>
+              </Field>
+            ))}
+          </div>
 
           {/* OG Image — upload or URL */}
           <Field label="Default OG Image">
