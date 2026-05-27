@@ -39,9 +39,8 @@ export default function HomepageConfig() {
   const [deleting, setDeleting] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Settings: most_read and highlights — stored as arrays of {value, label} for react-select
+  // Settings: most_read — stored as array of {value, label} for react-select
   const [mostRead, setMostRead] = useState([]);   // [{value: id, label: title}, ...]
-  const [highlights, setHighlights] = useState([]); // same
   const [settingsSaving, setSettingsSaving] = useState(false);
 
   useEffect(() => { load(); }, []);
@@ -58,16 +57,11 @@ export default function HomepageConfig() {
 
       // Resolve saved IDs into {value, label} options for react-select
       const mrSetting = st.find(x => x.setting_key === 'most_read_article_ids');
-      const hiSetting = st.find(x => x.setting_key === 'highlight_items');
-
       const mrIds = safeParseIds(mrSetting?.setting_value);
-      const hiIds = safeParseIds(hiSetting?.setting_value);
 
-      // Fetch titles for any saved IDs
-      const allIds = [...new Set([...mrIds, ...hiIds])];
       const resolved = {};
-      if (allIds.length > 0) {
-        await Promise.all(allIds.map(async id => {
+      if (mrIds.length > 0) {
+        await Promise.all(mrIds.map(async id => {
           try {
             const a = await api.getArticle(id);
             resolved[id] = `[${id}] ${a.title}`;
@@ -76,7 +70,6 @@ export default function HomepageConfig() {
       }
 
       setMostRead(mrIds.map(id => ({ value: id, label: resolved[id] || `[${id}]` })));
-      setHighlights(hiIds.map(id => ({ value: id, label: resolved[id] || `[${id}]` })));
     } catch { toast('Load failed', 'error'); }
   }
 
@@ -122,7 +115,6 @@ export default function HomepageConfig() {
     try {
       await api.saveSettings([
         { key: 'most_read_article_ids', value: JSON.stringify(mostRead.map(o => o.value)), type: 'json' },
-        { key: 'highlight_items',       value: JSON.stringify(highlights.map(o => o.value)), type: 'json' },
       ]);
       toast('Settings saved');
     } catch (err) {
@@ -168,7 +160,6 @@ export default function HomepageConfig() {
                   <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Layout:</label>
                   <select value={sec.layout} onChange={e => updateSection(sec.id, 'layout', e.target.value)}
                     style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12 }}>
-                    <option value="band">Band</option>
                     <option value="grid">Grid</option>
                     <option value="featured">Featured</option>
                   </select>
@@ -218,9 +209,9 @@ export default function HomepageConfig() {
         )}
       </Card>
 
-      {/* Most Read + Highlights */}
+      {/* Most Read */}
       <Card>
-        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Sidebar &amp; Highlights</h3>
+        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Sidebar</h3>
         <Field label="Most Read Articles" hint="Search and select up to 7 articles to show in the sidebar Most Read list">
           <AsyncSelect
             isMulti
@@ -229,19 +220,6 @@ export default function HomepageConfig() {
             loadOptions={searchArticles}
             value={mostRead}
             onChange={setMostRead}
-            placeholder="Search articles…"
-            styles={selectStyles}
-            noOptionsMessage={({ inputValue }) => inputValue ? 'No articles found' : 'Type to search…'}
-          />
-        </Field>
-        <Field label="Highlight Bar Articles" hint="Search and select up to 4 articles shown in the header highlight bar">
-          <AsyncSelect
-            isMulti
-            cacheOptions
-            defaultOptions
-            loadOptions={searchArticles}
-            value={highlights}
-            onChange={setHighlights}
             placeholder="Search articles…"
             styles={selectStyles}
             noOptionsMessage={({ inputValue }) => inputValue ? 'No articles found' : 'Type to search…'}

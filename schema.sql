@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS homepage_sections (
   category_id   INT UNSIGNED    NOT NULL,
   display_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   article_count TINYINT UNSIGNED  NOT NULL DEFAULT 4,
-  layout        ENUM('band','grid','featured') NOT NULL DEFAULT 'band',
+  layout        ENUM('grid','featured') NOT NULL DEFAULT 'grid',
   is_active     TINYINT(1)      NOT NULL DEFAULT 1,
   created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -323,7 +323,7 @@ function NewsTicker({ highlights, setPage }) {
 
 // ─── HEADER ──────────────────────────────────────────────
 
-function Header({ currentPage, setPage, highlightIds }) {
+function Header({ currentPage, setPage }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -653,10 +653,11 @@ function ContainerC({ large, small, setPage }) {
   );
 }
 
-// ─── CONTAINER D — Section Band ──────────────────────────
+// ─── CONTAINER D — Section (Grid or Featured) ────────────
 
-function ContainerD({ title, articles, sectionKey, color, setPage }) {
+function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
   const [ref, vis] = useScrollReveal();
+  const isGrid = layout === 'grid';
   return (
     <section ref={ref} aria-label={title} style={{
       background: 'var(--color-surface)', borderTop: `3px solid ${color}`,
@@ -668,28 +669,75 @@ function ContainerD({ title, articles, sectionKey, color, setPage }) {
         fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
         color, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 20,
       }}>{title}</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
-        {articles.slice(0, 4).map((a, i) => (
-          <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
-            cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'flex-start',
-            transitionDelay: `${i * 60}ms`,
-            opacity: vis ? 1 : 0, transform: vis ? 'translateY(0)' : 'translateY(8px)',
-            transition: 'all 350ms ease',
-          }}>
-            <div style={{ flexShrink: 0, width: 72, borderRadius: 4, overflow: 'hidden' }}>
-              <ArticleImage aspect="1/1" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <h3 style={{
-                fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
-                color: 'var(--color-text-primary)', lineHeight: 1.3,
-                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-              }}>{a.title}</h3>
-              <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>{a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}</span>
-            </div>
-          </article>
-        ))}
-      </div>
+
+      {isGrid ? (
+        <>
+          <style>{`
+            .section-grid-${sectionKey} {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 24px;
+            }
+            @media (max-width: 900px) {
+              .section-grid-${sectionKey} { grid-template-columns: repeat(2, 1fr); }
+            }
+            @media (max-width: 540px) {
+              .section-grid-${sectionKey} { grid-template-columns: 1fr; }
+            }
+          `}</style>
+          <div className={`section-grid-${sectionKey}`}>
+            {articles.map((a, i) => (
+              <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
+                cursor: 'pointer',
+                transitionDelay: `${i * 60}ms`,
+                opacity: vis ? 1 : 0, transform: vis ? 'translateY(0)' : 'translateY(8px)',
+                transition: 'all 350ms ease',
+              }}>
+                <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
+                  <div style={{ transition: 'transform 300ms ease' }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+                  </div>
+                </div>
+                <h3 style={{
+                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
+                  color: 'var(--color-text-primary)', lineHeight: 1.3,
+                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                }}>{a.title}</h3>
+                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
+                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                </span>
+              </article>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
+          {articles.slice(0, 4).map((a, i) => (
+            <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
+              cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'flex-start',
+              transitionDelay: `${i * 60}ms`,
+              opacity: vis ? 1 : 0, transform: vis ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'all 350ms ease',
+            }}>
+              <div style={{ flexShrink: 0, width: 72, borderRadius: 4, overflow: 'hidden' }}>
+                <ArticleImage aspect="1/1" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h3 style={{
+                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
+                  color: 'var(--color-text-primary)', lineHeight: 1.3,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                }}>{a.title}</h3>
+                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>{a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
       <div style={{ textAlign: 'center', marginTop: 24 }}>
         <button onClick={() => setPage(sectionKey)} style={{
           background: 'none', border: '1px solid var(--color-accent)', borderRadius: 4,
@@ -998,7 +1046,7 @@ const SLUG_TO_PAGE = {
   'press-releases':     'pressReleases',
 };
 
-function HomePage({ setPage, onHighlightIds, partners }) {
+function HomePage({ setPage, partners }) {
   useMeta({});
   const [hpData, setHpData] = useState(null);
   const [hpLoading, setHpLoading] = useState(true);
@@ -1014,11 +1062,9 @@ function HomePage({ setPage, onHighlightIds, partners }) {
     getHomepage()
       .then(data => {
         setHpData(data);
-        if (onHighlightIds) onHighlightIds(data?.highlights || []);
       })
       .catch(() => {
         setHpData({ sections: [], mostRead: [], highlights: [] });
-        if (onHighlightIds) onHighlightIds([]);
       })
       .finally(() => setHpLoading(false));
   }, []);
@@ -1051,42 +1097,18 @@ function HomePage({ setPage, onHighlightIds, partners }) {
             const pageKey = SLUG_TO_PAGE[sec.category.slug] || sec.category.slug;
             const arts = sec.articles;
             if (arts.length === 0) return null;
-            const layout = sec.layout || 'band';
+            const layout = sec.layout || 'grid';
             return (
               <div key={sec.category.id}>
-                {layout === 'featured' && (
-                  <>
-                    <ContainerD
-                      title={sec.category.name}
-                      articles={arts}
-                      sectionKey={pageKey}
-                      color={sec.category.color_hex}
-                      setPage={setPage}
-                    />
-                    {arts[0] && <ContainerA article={arts[0]} setPage={setPage} />}
-                  </>
-                )}
-                {layout === 'grid' && (
-                  <>
-                    <ContainerD
-                      title={sec.category.name}
-                      articles={arts}
-                      sectionKey={pageKey}
-                      color={sec.category.color_hex}
-                      setPage={setPage}
-                    />
-                    <ContainerB articles={arts} setPage={setPage} />
-                  </>
-                )}
-                {layout === 'band' && (
-                  <ContainerD
-                    title={sec.category.name}
-                    articles={arts}
-                    sectionKey={pageKey}
-                    color={sec.category.color_hex}
-                    setPage={setPage}
-                  />
-                )}
+                <ContainerD
+                  title={sec.category.name}
+                  articles={arts}
+                  sectionKey={pageKey}
+                  color={sec.category.color_hex}
+                  setPage={setPage}
+                  layout={layout}
+                />
+                {layout === 'featured' && arts[0] && <ContainerA article={arts[0]} setPage={setPage} />}
                 {idx === 1 && <InlineNewsletter />}
               </div>
             );
@@ -1900,7 +1922,6 @@ function pageToPath(p, articleSlug) {
 export default function App() {
   const [page, setPage] = useState(() => parsePathToPage(window.location.pathname));
   const articleSlugs = useRef({});
-  const [highlightIds, setHighlightIds] = useState(null); // null = not yet loaded
   const [partners, setPartners] = useState([]);
   const [footerSlugs, setFooterSlugs] = useState({ privacy: '', terms: '' });
   const [cookieSettings, setCookieSettings] = useState({ enabled: false, message: '' });
@@ -1976,7 +1997,7 @@ export default function App() {
   };
 
   let content;
-  if (page === 'home') content = <HomePage setPage={nav} onHighlightIds={setHighlightIds} partners={partners} />;
+  if (page === 'home') content = <HomePage setPage={nav} partners={partners} />;
   else if (page === 'topStories') content = <CategoryPage category="topStories" title="Top Stories" setPage={nav} partners={partners} />;
   else if (page === 'internationalNews') content = <CategoryPage category="internationalNews" title="International News" setPage={nav} partners={partners} />;
   else if (page === 'nationalNews') content = <CategoryPage category="nationalNews" title="National News" setPage={nav} partners={partners} />;
@@ -2001,7 +2022,7 @@ export default function App() {
       if (window.location.pathname !== path) window.history.replaceState({ page }, '', path);
     }} />;
   }
-  else content = <HomePage setPage={nav} onHighlightIds={setHighlightIds} partners={partners} />;
+  else content = <HomePage setPage={nav} partners={partners} />;
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -2061,7 +2082,7 @@ export default function App() {
         borderRadius: '0 0 8px 8px',
       }}>Skip to main content</a>
 
-      <Header currentPage={page} setPage={nav} highlightIds={highlightIds} />
+      <Header currentPage={page} setPage={nav} />
       <main id="main-content">{content}</main>
       <Footer setPage={nav} footerSlugs={footerSlugs} />
       <CookieBanner settings={cookieSettings} privacySlug={footerSlugs.privacy} setPage={nav} />
