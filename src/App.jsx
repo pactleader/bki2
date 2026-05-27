@@ -323,7 +323,7 @@ function NewsTicker({ highlights, setPage }) {
 
 // ─── HEADER ──────────────────────────────────────────────
 
-function Header({ currentPage, setPage }) {
+function Header({ currentPage, setPage, logoUrl }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -376,16 +376,26 @@ function Header({ currentPage, setPage }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Logo */}
           <div onClick={() => setPage('home')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 6,
-              background: 'var(--color-primary)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--color-accent)', fontFamily: 'var(--f-display)', fontSize: 21, fontWeight: 700,
-            }}>B</div>
-            <div style={{ lineHeight: 1.1 }}>
-              <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-primary)', letterSpacing: -0.5 }}>The Background</div>
-              <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: -0.5 }}>Investigator</div>
-            </div>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt="Site logo"
+                style={{ height: scrolled ? 36 : 44, maxWidth: 220, objectFit: 'contain', transition: 'height 250ms ease' }}
+              />
+            ) : (
+              <>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 6,
+                  background: 'var(--color-primary)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--color-accent)', fontFamily: 'var(--f-display)', fontSize: 21, fontWeight: 700,
+                }}>B</div>
+                <div style={{ lineHeight: 1.1 }}>
+                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-primary)', letterSpacing: -0.5 }}>The Background</div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: -0.5 }}>Investigator</div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Desktop nav */}
@@ -1950,6 +1960,7 @@ export default function App() {
   const [partners, setPartners] = useState([]);
   const [footerSlugs, setFooterSlugs] = useState({ privacy: '', terms: '' });
   const [cookieSettings, setCookieSettings] = useState({ enabled: false, message: '' });
+  const [logoUrl, setLogoUrl] = useState('');
 
   // Inject custom scripts from site settings
   useEffect(() => {
@@ -1968,6 +1979,7 @@ export default function App() {
       const root = document.documentElement;
       if (map['brand_primary_color']) root.style.setProperty('--color-primary', map['brand_primary_color']);
       if (map['brand_accent_color'])  root.style.setProperty('--color-accent',  map['brand_accent_color']);
+      if (map['logo_url']) setLogoUrl(map['logo_url']);
       setCookieSettings({
         enabled: map['cookie_consent_enabled'] === '1',
         message: map['cookie_consent_message'] || '',
@@ -2107,7 +2119,7 @@ export default function App() {
         borderRadius: '0 0 8px 8px',
       }}>Skip to main content</a>
 
-      <Header currentPage={page} setPage={nav} />
+      <Header currentPage={page} setPage={nav} logoUrl={logoUrl} />
       <main id="main-content">{content}</main>
       <Footer setPage={nav} footerSlugs={footerSlugs} />
       <CookieBanner settings={cookieSettings} privacySlug={footerSlugs.privacy} setPage={nav} />

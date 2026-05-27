@@ -18,10 +18,12 @@ export default function SiteSettings() {
   const [values, setValues]     = useState({});
   const [saving, setSaving]     = useState(false);
   const [uploading, setUploading]       = useState(false);
+  const [uploadingLogo, setUploadingLogo]       = useState(false);
   const [uploadingArticle, setUploadingArticle] = useState(false);
   const [partners, setPartners] = useState([]); // [{name, url}]
   const [pages, setPages]       = useState([]); // published static pages
   const fileRef        = useRef(null);
+  const logoFileRef    = useRef(null);
   const articleFileRef = useRef(null);
 
   useEffect(() => {
@@ -66,6 +68,26 @@ export default function SiteSettings() {
     finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
   }
 
+  async function handleLogoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const data = new FormData();
+      data.append('image', file);
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: data,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed');
+      set('logo_url', json.url);
+      toast('Logo uploaded');
+    } catch (err) { toast(err.message, 'error'); }
+    finally { setUploadingLogo(false); if (logoFileRef.current) logoFileRef.current.value = ''; }
+  }
+
   async function handleArticleImageUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -92,6 +114,7 @@ export default function SiteSettings() {
     try {
       const items = [
         ...FIELDS.map(f => ({ key: f.key, value: values[f.key] || '', type: f.type })),
+        { key: 'logo_url',               value: values['logo_url']          || '',       type: 'string' },
         { key: 'og_image_default',       value: values['og_image_default'] || '',       type: 'string' },
         { key: 'default_article_image', value: values['default_article_image'] || '',  type: 'string' },
         { key: 'openai_api_key',         value: values['openai_api_key'] || '',         type: 'string' },
@@ -158,6 +181,42 @@ export default function SiteSettings() {
                 </div>
               </Field>
             ))}
+          </div>
+
+          {/* Site Logo */}
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 20, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Site Logo</div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              Replaces the text logo in the navigation bar. Use a PNG or SVG with transparent background for best results. Recommended max height: 60px.
+            </p>
+            <Field label="Logo Image">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input ref={logoFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
+                  <button type="button" onClick={() => logoFileRef.current?.click()} disabled={uploadingLogo}
+                    style={{ padding: '7px 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: uploadingLogo ? 0.6 : 1 }}>
+                    {uploadingLogo ? 'Uploading…' : '↑ Upload Logo'}
+                  </button>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>or paste a URL below</span>
+                </div>
+                <Input
+                  value={values['logo_url'] || ''}
+                  onChange={e => set('logo_url', e.target.value)}
+                  placeholder="https://… or /uploads/logo.png"
+                />
+                {values['logo_url'] && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#1c3362', borderRadius: 6 }}>
+                    <img src={values['logo_url']} alt="Logo preview"
+                      onError={e => e.target.style.display = 'none'}
+                      style={{ height: 44, maxWidth: 200, objectFit: 'contain' }} />
+                    <button type="button" onClick={() => set('logo_url', '')}
+                      style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Field>
           </div>
 
           {/* OG Image — upload or URL */}
