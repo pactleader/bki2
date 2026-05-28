@@ -1350,13 +1350,13 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
           <AdSlot position="in-feed" style={{ margin: '0 0 28px' }} />
 
-          <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8, overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8, overflowWrap: 'break-word', minWidth: 0 }}>
             <style>{`
               .article-body img        { max-width: 100%; height: auto; }
-              .article-body table      { width: 100%; max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
-              .article-body td, .article-body th { overflow-wrap: break-word; word-break: break-word; }
-              .article-body pre        { white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word; overflow-x: auto; }
-              .article-body a          { overflow-wrap: break-word; word-break: break-word; }
+              .article-body table      { width: 100%; max-width: 100%; table-layout: fixed; overflow-wrap: break-word; }
+              .article-body td, .article-body th { overflow-wrap: break-word; }
+              .article-body pre        { white-space: pre-wrap; overflow-wrap: break-word; overflow-x: auto; }
+              .article-body a          { overflow-wrap: break-word; }
               .article-body iframe, .article-body video, .article-body embed { max-width: 100%; }
             `}</style>
             {article.body ? (
