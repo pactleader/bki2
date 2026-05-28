@@ -1095,6 +1095,7 @@ function HomePage({ setPage, partners }) {
     <>
       {latestArticles.length > 0 && <NewsTicker highlights={latestArticles} setPage={setPage} />}
       <HeroZone setPage={setPage} hero={heroArticle} />
+      <AdSlot position="leaderboard-top" style={{ margin: '24px 0 8px' }} />
 
       <div className="wrap" style={{ display: 'flex', gap: 40, flexWrap: 'wrap', padding: '0 24px' }}>
         <div style={{ flex: '1 1 600px', minWidth: 0 }}>
@@ -1877,9 +1878,9 @@ function Footer({ setPage, footerSlugs = {} }) {
   const privacySlug = footerSlugs.privacy || '';
   const termsSlug   = footerSlugs.terms   || '';
   return (
-    <footer style={{ background: 'var(--color-primary)', color: 'rgba(255,255,255,0.55)', marginTop: 0 }}>
+    <footer style={{ background: 'var(--color-primary)', color: 'rgba(255,255,255,0.55)', marginTop: 0, paddingTop: 10 }}>
       {/* Banner ad */}
-      <AdSlot position="footer-banner" w="100%" maxW={9999} h={60} style={{ background: 'rgba(0,0,0,0.15)', padding: '0' }} />
+      <AdSlot position="footer-banner" w="100%" maxW={9999} h={60} style={{ background: 'var(--color-primary)', padding: '0' }} />
 
       <div className="wrap" style={{ padding: '48px 24px 24px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 48, marginBottom: 40 }}>
