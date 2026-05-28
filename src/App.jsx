@@ -332,13 +332,39 @@ function NewsTicker({ highlights, setPage }) {
 
 // ─── HEADER ──────────────────────────────────────────────
 
+const URL_TO_PAGE = {
+  '/':                  'home',
+  '/top-stories':       'topStories',
+  '/international-news':'internationalNews',
+  '/national-news':     'nationalNews',
+  '/press-releases':    'pressReleases',
+  '/events':            'events',
+  '/advertise':         'advertise',
+  '/contact':           'contact',
+  '/subscribe':         'subscribe',
+  '/archives':          'archives',
+};
+
+function urlToPageKey(url) {
+  if (!url) return null;
+  const clean = url.replace(/\/$/, '') || '/';
+  if (URL_TO_PAGE[clean]) return URL_TO_PAGE[clean];
+  if (clean.startsWith('/page/')) return 'page-' + clean.replace('/page/', '');
+  return null;
+}
+
 function Header({ currentPage, setPage, logoUrl }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    getMenu().then(items => setMenuItems(items)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus();
@@ -362,15 +388,12 @@ function Header({ currentPage, setPage, logoUrl }) {
 
   useEffect(() => setMenuOpen(false), [currentPage]);
 
-  const navItems = [
-    { key: 'home', label: 'Home' },
-    { key: 'topStories', label: 'Top Stories' },
-    { key: 'internationalNews', label: 'International' },
-    { key: 'nationalNews', label: 'National' },
-    { key: 'events', label: 'Events' },
-    { key: 'advertise', label: 'Advertise' },
-    { key: 'contact', label: 'Contact' },
-  ];
+  const navItems = menuItems.map(item => ({
+    key: urlToPageKey(item.url) || item.url,
+    label: item.label,
+    url: item.url,
+    newTab: !!item.open_in_new,
+  }));
 
   return (
     <header style={{
@@ -395,7 +418,14 @@ function Header({ currentPage, setPage, logoUrl }) {
 
           {/* Desktop nav */}
           <nav className="desktop-only" aria-label="Primary navigation" style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-            {navItems.map(n => (
+            {navItems.map(n => n.newTab ? (
+              <a key={n.key} href={n.url} target="_blank" rel="noopener noreferrer" style={{
+                fontFamily: 'var(--f-ui)', fontSize: 'var(--text-base)', fontWeight: 500,
+                color: 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)',
+                padding: '8px 14px', letterSpacing: 0.2, textDecoration: 'none',
+                borderBottom: '2px solid transparent', transition: 'all 150ms ease',
+              }}>{n.label}</a>
+            ) : (
               <button key={n.key} onClick={() => setPage(n.key)} style={{
                 background: 'none', border: 'none', fontFamily: 'var(--f-ui)',
                 fontSize: 'var(--text-base)', fontWeight: currentPage === n.key ? 700 : 500,
@@ -464,7 +494,13 @@ function Header({ currentPage, setPage, logoUrl }) {
               </button>
             </div>
           </form>
-          {navItems.map(n => (
+          {navItems.map(n => n.newTab ? (
+            <a key={n.key} href={n.url} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={{
+              display: 'block', fontFamily: 'var(--f-ui)', fontSize: 15, fontWeight: 400,
+              color: 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)',
+              padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none',
+            }}>{n.label}</a>
+          ) : (
             <button key={n.key} onClick={() => { setPage(n.key); setMenuOpen(false); }} style={{
               display: 'block', width: '100%', background: 'none', border: 'none', textAlign: 'left',
               fontFamily: 'var(--f-ui)', fontSize: 15, fontWeight: currentPage === n.key ? 700 : 400,
