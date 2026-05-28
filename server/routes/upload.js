@@ -21,22 +21,27 @@ const storage = multer.diskStorage({
   },
 });
 
+const ALLOWED_EXT  = /\.(jpeg|jpg|png|gif|webp|svg)$/;
+const ALLOWED_MIME = /^image\/(jpeg|png|gif|webp|svg\+xml)$/;
+
 const upload = multer({
   storage,
   limits: { fileSize: 400 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|webp/;
-    const ok = allowed.test(path.extname(file.originalname).toLowerCase())
-            && allowed.test(file.mimetype);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const ok  = ALLOWED_EXT.test(ext) && ALLOWED_MIME.test(file.mimetype);
     cb(ok ? null : new Error('Only image files are allowed'), ok);
   },
 });
 
 // POST /api/admin/upload
-router.post('/', upload.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const url = `/uploads/${req.file.filename}`;
-  res.json({ url });
+router.post('/', (req, res, next) => {
+  upload.single('image')(req, res, err => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
 });
 
 // DELETE /api/admin/upload  (optional cleanup)
