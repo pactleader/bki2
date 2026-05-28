@@ -49,7 +49,7 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
     const featuredImg = a.featured_image || '';
 
     // Sanitise body — strip scripts for safety before inserting into SSR HTML
-    const safeBody = (a.body || '').replace(/<script[\s\S]*?<\/script>/gi, '');
+    const safeBody = normalizeArticleBody(a.body || '');
 
     const html = `<!doctype html>
 <html lang="en">
@@ -156,6 +156,8 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
       overflow-wrap: normal;
       word-break: normal;
       hyphens: manual;
+      max-width: 100%;
+      min-width: 0;
     }
     .article-body p  { margin-bottom: 1.4em; }
     .article-body h2 { font-family: 'Libre Baskerville', serif; font-size: 1.4rem; font-weight: 700; margin: 2em 0 0.6em; }
@@ -174,6 +176,14 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
       word-wrap: normal !important;
       hyphens: manual;
       max-width: 100%;
+      min-width: 0;
+    }
+    .article-body p, .article-body li, .article-body h1, .article-body h2,
+    .article-body h3, .article-body h4, .article-body blockquote {
+      width: 100%;
+    }
+    .article-body span {
+      display: inline !important;
     }
     .article-body * { box-sizing: border-box; max-width: 100%; }
     .article-body table {
@@ -285,6 +295,15 @@ function esc(str) {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+function normalizeArticleBody(html = '') {
+  return String(html)
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/&nbsp;|&#160;|&#xA0;|\u00a0/gi, ' ')
+    .replace(/white-space\s*:\s*nowrap\s*;?/gi, '')
+    .replace(/word-break\s*:\s*break-all\s*;?/gi, '')
+    .replace(/overflow-wrap\s*:\s*anywhere\s*;?/gi, '');
 }
 
 module.exports = router;

@@ -110,6 +110,15 @@ function useScrollReveal() {
   return [ref, visible];
 }
 
+function normalizeArticleBody(html = '') {
+  return String(html)
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/&nbsp;|&#160;|&#xA0;|\u00a0/gi, ' ')
+    .replace(/white-space\s*:\s*nowrap\s*;?/gi, '')
+    .replace(/word-break\s*:\s*break-all\s*;?/gi, '')
+    .replace(/overflow-wrap\s*:\s*anywhere\s*;?/gi, '');
+}
+
 // ─── ARTICLE IMAGES — Stock photos matched to each headline ──
 
 const ARTICLE_IMAGES = {
@@ -1357,6 +1366,8 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
                 overflow-wrap: normal;
                 word-break: normal;
                 hyphens: manual;
+                max-width: 100%;
+                min-width: 0;
               }
               .article-body p, .article-body li, .article-body h1, .article-body h2,
               .article-body h3, .article-body h4, .article-body blockquote, .article-body span {
@@ -1366,6 +1377,14 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
                 word-wrap: normal !important;
                 hyphens: manual;
                 max-width: 100%;
+                min-width: 0;
+              }
+              .article-body p, .article-body li, .article-body h1, .article-body h2,
+              .article-body h3, .article-body h4, .article-body blockquote {
+                width: 100%;
+              }
+              .article-body span {
+                display: inline !important;
               }
               .article-body * { box-sizing: border-box; max-width: 100%; }
               .article-body img { height: auto; display: block; }
@@ -1397,7 +1416,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
               .article-body .ql-indent-3 { padding-left: 4.5em !important; }
             `}</style>
             {article.body ? (
-              <div className="article-body" dangerouslySetInnerHTML={{ __html: article.body }} />
+              <div className="article-body" dangerouslySetInnerHTML={{ __html: normalizeArticleBody(article.body) }} />
             ) : (
               article.excerpt?.split('. ').map((s, i) => (
                 <p key={i} style={{ marginBottom: 20 }}>{s.trim()}{s.endsWith('.') ? '' : '.'}</p>
