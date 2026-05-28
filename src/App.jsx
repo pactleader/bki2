@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, getAds, subscribe, submitContact, getSettings } from "./api.js";
+import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, getAds, getMenu, subscribe, submitContact, getSettings } from "./api.js";
 
 // ─── DATA ────────────────────────────────────────────────
 const ARTICLES = {
