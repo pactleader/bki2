@@ -1353,13 +1353,25 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
           <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8 }}>
             <style>{`
-              .article-body *      { max-width: 100%; box-sizing: border-box; }
-              .article-body img    { height: auto; display: block; }
-              .article-body table  { width: 100%; table-layout: fixed; }
+              .article-body { overflow-wrap: break-word; word-wrap: break-word; }
+              .article-body p, .article-body li, .article-body h1, .article-body h2,
+              .article-body h3, .article-body h4, .article-body blockquote, .article-body span {
+                white-space: normal !important;
+                overflow-wrap: break-word;
+                word-wrap: break-word;
+                max-width: 100%;
+              }
+              .article-body * { box-sizing: border-box; max-width: 100%; }
+              .article-body img { height: auto; display: block; }
+              .article-body table { width: 100%; table-layout: fixed; }
               .article-body td, .article-body th { overflow-wrap: break-word; }
-              .article-body pre    { white-space: pre-wrap; overflow-x: auto; }
-              .article-body a      { overflow-wrap: break-word; }
+              .article-body pre { white-space: pre-wrap; overflow-x: auto; }
+              .article-body a { overflow-wrap: break-word; }
               .article-body iframe, .article-body video, .article-body embed { width: 100%; }
+              .article-body ol, .article-body ul { padding-left: 1.5em; }
+              .article-body .ql-indent-1 { padding-left: 1.5em !important; }
+              .article-body .ql-indent-2 { padding-left: 3em !important; }
+              .article-body .ql-indent-3 { padding-left: 4.5em !important; }
             `}</style>
             {article.body ? (
               <div className="article-body" dangerouslySetInnerHTML={{ __html: article.body }} />
