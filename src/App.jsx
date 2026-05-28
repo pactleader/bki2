@@ -1312,7 +1312,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   return (
     <div className="wrap" style={{ padding: '0 24px' }}>
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <article style={{ flex: '1 1 600px', minWidth: 0, maxWidth: 720, paddingTop: 32, overflow: 'hidden' }}>
+        <article style={{ flex: '1 1 600px', minWidth: 0, maxWidth: 720, paddingTop: 32 }}>
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
             <span onClick={() => setPage('home')} style={{ cursor: 'pointer', color: 'var(--color-accent)' }}>Home</span>
