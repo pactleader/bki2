@@ -1312,7 +1312,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   return (
     <div className="wrap" style={{ padding: '0 24px' }}>
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <article style={{ flex: '1 1 600px', minWidth: 0, maxWidth: 720, paddingTop: 32 }}>
+        <article style={{ flex: '1 1 600px', minWidth: 0, maxWidth: 720, paddingTop: 32, width: 0 }}>
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
             <span onClick={() => setPage('home')} style={{ cursor: 'pointer', color: 'var(--color-accent)' }}>Home</span>
@@ -1350,14 +1350,16 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
           <AdSlot position="in-feed" style={{ margin: '0 0 28px' }} />
 
-          <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8, overflowWrap: 'break-word', minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8 }}>
             <style>{`
-              .article-body img        { max-width: 100%; height: auto; }
-              .article-body table      { width: 100%; max-width: 100%; table-layout: fixed; overflow-wrap: break-word; }
+              .article-body        { overflow: hidden; }
+              .article-body *      { max-width: 100%; }
+              .article-body img    { height: auto; }
+              .article-body table  { width: 100%; table-layout: fixed; }
               .article-body td, .article-body th { overflow-wrap: break-word; }
-              .article-body pre        { white-space: pre-wrap; overflow-wrap: break-word; overflow-x: auto; }
-              .article-body a          { overflow-wrap: break-word; }
-              .article-body iframe, .article-body video, .article-body embed { max-width: 100%; }
+              .article-body pre    { white-space: pre-wrap; overflow-x: auto; }
+              .article-body a      { overflow-wrap: break-word; }
+              .article-body iframe, .article-body video, .article-body embed { width: 100%; }
             `}</style>
             {article.body ? (
               <div className="article-body" dangerouslySetInnerHTML={{ __html: article.body }} />
