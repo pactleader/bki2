@@ -1312,7 +1312,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   return (
     <div className="wrap">
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <article style={{ flex: '1 1 600px', minWidth: 0, maxWidth: 720, paddingTop: 32, width: 0 }}>
+        <article style={{ flex: '1 1 600px', minWidth: 0, maxWidth: 720, paddingTop: 32 }}>
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
             <span onClick={() => setPage('home')} style={{ cursor: 'pointer', color: 'var(--color-accent)' }}>Home</span>
@@ -2075,8 +2075,8 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700&family=Source+Serif+4:ital,wght@0,400;0,600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <style>{`
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body { background: var(--color-bg); }
+        html { scroll-behavior: smooth; overflow-x: hidden; }
+        body { background: var(--color-bg); overflow-x: hidden; }
         ::selection { background: #c0392b; color: #fff; }
         img { max-width: 100%; height: auto; display: block; }
         input:focus, textarea:focus { border-color: #c0392b !important; }
