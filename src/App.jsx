@@ -451,7 +451,7 @@ function Header({ currentPage, setPage, logoUrl }) {
                   }}
                 />
               )}
-              <button type={searchOpen ? 'submit' : 'button'} onClick={() => !searchOpen && setSearchOpen(true)}
+              <button type="button" onClick={() => { if (searchOpen && !searchQuery.trim()) { setSearchOpen(false); } else if (!searchOpen) { setSearchOpen(true); } else { submitSearch(); } }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 8px', color: 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)', display: 'flex', alignItems: 'center' }}
                 aria-label="Search">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
