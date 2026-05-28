@@ -153,6 +153,9 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
     .article-body {
       font-family: 'Source Serif 4', Georgia, serif;
       font-size: 1.125rem; line-height: 1.85; color: #1a1a1a;
+      overflow-wrap: normal;
+      word-break: normal;
+      hyphens: manual;
     }
     .article-body p  { margin-bottom: 1.4em; }
     .article-body h2 { font-family: 'Libre Baskerville', serif; font-size: 1.4rem; font-weight: 700; margin: 2em 0 0.6em; }
@@ -163,7 +166,39 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
     }
     .article-body ul, .article-body ol { padding-left: 1.6em; margin-bottom: 1.4em; }
     .article-body li { margin-bottom: 0.4em; }
-    .article-body a  { color: #c0392b; }
+    .article-body p, .article-body li, .article-body h1, .article-body h2,
+    .article-body h3, .article-body h4, .article-body blockquote, .article-body span {
+      white-space: normal !important;
+      overflow-wrap: normal !important;
+      word-break: normal !important;
+      word-wrap: normal !important;
+      hyphens: manual;
+      max-width: 100%;
+    }
+    .article-body * { box-sizing: border-box; max-width: 100%; }
+    .article-body table {
+      display: block;
+      width: max-content;
+      min-width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      table-layout: auto;
+    }
+    .article-body td, .article-body th {
+      overflow-wrap: normal;
+      word-break: normal;
+    }
+    .article-body pre {
+      white-space: pre-wrap;
+      overflow-x: auto;
+      overflow-wrap: anywhere;
+    }
+    .article-body a  {
+      color: #c0392b;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+    .article-body iframe, .article-body video, .article-body embed { width: 100%; }
 
     /* ── Footer ── */
     .site-footer {

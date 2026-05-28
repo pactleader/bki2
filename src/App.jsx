@@ -1353,20 +1353,43 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
           <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8 }}>
             <style>{`
-              .article-body { overflow-wrap: break-word; word-wrap: break-word; }
+              .article-body {
+                overflow-wrap: normal;
+                word-break: normal;
+                hyphens: manual;
+              }
               .article-body p, .article-body li, .article-body h1, .article-body h2,
               .article-body h3, .article-body h4, .article-body blockquote, .article-body span {
                 white-space: normal !important;
-                overflow-wrap: break-word;
-                word-wrap: break-word;
+                overflow-wrap: normal !important;
+                word-break: normal !important;
+                word-wrap: normal !important;
+                hyphens: manual;
                 max-width: 100%;
               }
               .article-body * { box-sizing: border-box; max-width: 100%; }
               .article-body img { height: auto; display: block; }
-              .article-body table { width: 100%; table-layout: fixed; }
-              .article-body td, .article-body th { overflow-wrap: break-word; }
-              .article-body pre { white-space: pre-wrap; overflow-x: auto; }
-              .article-body a { overflow-wrap: break-word; }
+              .article-body table {
+                display: block;
+                width: max-content;
+                min-width: 100%;
+                max-width: 100%;
+                overflow-x: auto;
+                table-layout: auto;
+              }
+              .article-body td, .article-body th {
+                overflow-wrap: normal;
+                word-break: normal;
+              }
+              .article-body pre {
+                white-space: pre-wrap;
+                overflow-x: auto;
+                overflow-wrap: anywhere;
+              }
+              .article-body a {
+                overflow-wrap: anywhere;
+                word-break: normal;
+              }
               .article-body iframe, .article-body video, .article-body embed { width: 100%; }
               .article-body ol, .article-body ul { padding-left: 1.5em; }
               .article-body .ql-indent-1 { padding-left: 1.5em !important; }
