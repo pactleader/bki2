@@ -375,9 +375,8 @@ function Header({ currentPage, setPage, logoUrl }) {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 200,
-      background: scrolled ? 'rgba(255,255,255,0.98)' : '#fff',
-      boxShadow: scrolled ? '0 1px 12px rgba(0,0,0,0.06)' : 'none',
-      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      background: 'var(--color-primary)',
+      boxShadow: scrolled ? '0 1px 12px rgba(0,0,0,0.18)' : 'none',
       transition: 'all 250ms ease',
     }}>
       {/* Main bar */}
@@ -400,7 +399,7 @@ function Header({ currentPage, setPage, logoUrl }) {
                   color: 'var(--color-accent)', fontFamily: 'var(--f-display)', fontSize: 21, fontWeight: 700,
                 }}>B</div>
                 <div style={{ lineHeight: 1.1 }}>
-                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-primary)', letterSpacing: -0.5 }}>The Background</div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-nav-link)', letterSpacing: -0.5 }}>The Background</div>
                   <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: -0.5 }}>Investigator</div>
                 </div>
               </>
@@ -413,9 +412,9 @@ function Header({ currentPage, setPage, logoUrl }) {
               <button key={n.key} onClick={() => setPage(n.key)} style={{
                 background: 'none', border: 'none', fontFamily: 'var(--f-ui)',
                 fontSize: 'var(--text-sm)', fontWeight: currentPage === n.key ? 700 : 500,
-                color: currentPage === n.key ? '#c0392b' : 'var(--color-text-secondary)',
+                color: currentPage === n.key ? 'var(--color-nav-link)' : 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)',
                 padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.2,
-                borderBottom: currentPage === n.key ? '2px solid #c0392b' : '2px solid transparent',
+                borderBottom: currentPage === n.key ? '2px solid var(--color-accent)' : '2px solid transparent',
                 transition: 'all 150ms ease',
               }}>{n.label}</button>
             ))}
@@ -436,7 +435,7 @@ function Header({ currentPage, setPage, logoUrl }) {
                 />
               )}
               <button type={searchOpen ? 'submit' : 'button'} onClick={() => !searchOpen && setSearchOpen(true)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 8px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 8px', color: 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)', display: 'flex', alignItems: 'center' }}
                 aria-label="Search">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -453,7 +452,7 @@ function Header({ currentPage, setPage, logoUrl }) {
 
           {/* Mobile menu toggle */}
           <button className="mobile-only" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}
-            style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--color-primary)', padding: 8, cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--color-nav-link)', padding: 8, cursor: 'pointer' }}
           >{menuOpen ? '✕' : '☰'}</button>
         </div>
       </div>
@@ -461,10 +460,10 @@ function Header({ currentPage, setPage, logoUrl }) {
 
       {/* Mobile nav dropdown */}
       {menuOpen && (
-        <nav className="mobile-only" style={{ background: '#fff', borderTop: '1px solid var(--color-border)', padding: '8px 0', flexDirection: 'column' }}>
+        <nav className="mobile-only" style={{ background: 'var(--color-primary)', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px 0', flexDirection: 'column' }}>
           {/* Mobile search */}
           <form onSubmit={e => { submitSearch(e); setMenuOpen(false); }} style={{ padding: '10px 16px 6px' }}>
-            <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 4, overflow: 'hidden' }}>
               <input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -482,8 +481,8 @@ function Header({ currentPage, setPage, logoUrl }) {
             <button key={n.key} onClick={() => { setPage(n.key); setMenuOpen(false); }} style={{
               display: 'block', width: '100%', background: 'none', border: 'none', textAlign: 'left',
               fontFamily: 'var(--f-ui)', fontSize: 15, fontWeight: currentPage === n.key ? 700 : 400,
-              color: currentPage === n.key ? '#c0392b' : '#333',
-              padding: '12px 24px', borderBottom: '1px solid #f3f3f3', cursor: 'pointer',
+              color: currentPage === n.key ? 'var(--color-nav-link)' : 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)',
+              padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer',
             }}>{n.label}</button>
           ))}
         </nav>
@@ -2041,8 +2040,9 @@ export default function App() {
       });
       // Apply brand colors as CSS variables on <html>
       const root = document.documentElement;
-      if (map['brand_primary_color']) root.style.setProperty('--color-primary', map['brand_primary_color']);
-      if (map['brand_accent_color'])  root.style.setProperty('--color-accent',  map['brand_accent_color']);
+      if (map['brand_primary_color'])  root.style.setProperty('--color-primary',   map['brand_primary_color']);
+      if (map['brand_accent_color'])   root.style.setProperty('--color-accent',    map['brand_accent_color']);
+      if (map['brand_nav_link_color']) root.style.setProperty('--color-nav-link',  map['brand_nav_link_color']);
       if (map['logo_url']) setLogoUrl(map['logo_url']);
       setCookieSettings({
         enabled: map['cookie_consent_enabled'] === '1',
@@ -2153,6 +2153,7 @@ export default function App() {
 
           --color-primary: #1c3362;
           --color-accent: #c0392b;
+          --color-nav-link: #ffffff;
           --color-bg: #f9f8f6;
           --color-surface: #f3f2ef;
           --color-text-primary: #1a1a1a;
