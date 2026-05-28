@@ -1095,7 +1095,6 @@ function HomePage({ setPage, partners }) {
     <>
       {latestArticles.length > 0 && <NewsTicker highlights={latestArticles} setPage={setPage} />}
       <HeroZone setPage={setPage} hero={heroArticle} />
-      <AdSlot position="leaderboard-top" style={{ margin: '24px 0 8px' }} />
 
       <div className="wrap" style={{ display: 'flex', gap: 40, flexWrap: 'wrap', padding: '0 24px' }}>
         <div style={{ flex: '1 1 600px', minWidth: 0 }}>
@@ -1115,6 +1114,7 @@ function HomePage({ setPage, partners }) {
                   layout={layout}
                 />
                 {layout === 'featured' && arts[0] && <ContainerA article={arts[0]} setPage={setPage} />}
+                {idx === 0 && <AdSlot position="leaderboard-top" style={{ margin: '20px 0' }} />}
                 {idx === 1 && <InlineNewsletter />}
               </div>
             );
