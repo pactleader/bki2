@@ -1310,7 +1310,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   if (loading && !article) return <div className="wrap" style={{ padding: 60, textAlign: 'center' }}><p style={{ color: 'var(--color-text-secondary)' }}>Loading…</p></div>;
   if (!article) return <div className="wrap" style={{ padding: 60, textAlign: 'center' }}><p>Article not found.</p></div>;
   return (
-    <div className="wrap" style={{ padding: '0 24px' }}>
+    <div className="wrap">
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <article style={{ flex: '1 1 600px', minWidth: 0, maxWidth: 720, paddingTop: 32, width: 0 }}>
           {/* Breadcrumb */}
@@ -1352,9 +1352,8 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
           <div style={{ fontFamily: 'var(--f-body)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', lineHeight: 1.8 }}>
             <style>{`
-              .article-body        { overflow: hidden; }
-              .article-body *      { max-width: 100%; }
-              .article-body img    { height: auto; }
+              .article-body *      { max-width: 100%; box-sizing: border-box; }
+              .article-body img    { height: auto; display: block; }
               .article-body table  { width: 100%; table-layout: fixed; }
               .article-body td, .article-body th { overflow-wrap: break-word; }
               .article-body pre    { white-space: pre-wrap; overflow-x: auto; }
