@@ -384,25 +384,12 @@ function Header({ currentPage, setPage, logoUrl }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Logo */}
           <div onClick={() => setPage('home')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-            {logoUrl ? (
+            {logoUrl && (
               <img
                 src={logoUrl}
                 alt="Site logo"
-                style={{ height: scrolled ? 36 : 44, maxWidth: 220, objectFit: 'contain', transition: 'height 250ms ease' }}
+                style={{ height: scrolled ? 48 : 60, maxWidth: 280, objectFit: 'contain', transition: 'height 250ms ease' }}
               />
-            ) : (
-              <>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 6,
-                  background: 'var(--color-primary)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--color-accent)', fontFamily: 'var(--f-display)', fontSize: 21, fontWeight: 700,
-                }}>B</div>
-                <div style={{ lineHeight: 1.1 }}>
-                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-nav-link)', letterSpacing: -0.5 }}>The Background</div>
-                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 17, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: -0.5 }}>Investigator</div>
-                </div>
-              </>
             )}
           </div>
 
@@ -411,7 +398,7 @@ function Header({ currentPage, setPage, logoUrl }) {
             {navItems.map(n => (
               <button key={n.key} onClick={() => setPage(n.key)} style={{
                 background: 'none', border: 'none', fontFamily: 'var(--f-ui)',
-                fontSize: 'var(--text-sm)', fontWeight: currentPage === n.key ? 700 : 500,
+                fontSize: 'var(--text-base)', fontWeight: currentPage === n.key ? 700 : 500,
                 color: currentPage === n.key ? 'var(--color-nav-link)' : 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)',
                 padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.2,
                 borderBottom: currentPage === n.key ? '2px solid var(--color-accent)' : '2px solid transparent',
