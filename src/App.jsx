@@ -1041,6 +1041,80 @@ function InlineNewsletter() {
   );
 }
 
+// ─── MORE ARTICLES (lazy-loaded) ─────────────────────────
+
+function MoreArticles({ setPage }) {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading]   = useState(false);
+  const [loaded, setLoaded]     = useState(false);
+  const sentinelRef = useRef(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !loaded && !loading) {
+        setLoading(true);
+        getArticles({ limit: 150, page: 1 })
+          .then(res => setArticles(res.data || []))
+          .catch(() => {})
+          .finally(() => { setLoading(false); setLoaded(true); });
+      }
+    }, { rootMargin: '200px' });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [loaded, loading]);
+
+  return (
+    <div className="wrap" style={{ padding: '0 24px 48px' }}>
+      <div ref={sentinelRef} />
+      {loading && (
+        <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '32px 0' }}>Loading more articles…</p>
+      )}
+      {articles.length > 0 && (
+        <>
+          <h2 style={{
+            fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
+            color: 'var(--color-text-primary)', textTransform: 'uppercase', letterSpacing: 1,
+            borderTop: '3px solid var(--color-border)', paddingTop: 24, marginBottom: 20,
+          }}>More Articles</h2>
+          <style>{`
+            .more-articles-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 24px;
+            }
+            @media (max-width: 900px) { .more-articles-grid { grid-template-columns: repeat(3, 1fr); } }
+            @media (max-width: 600px) { .more-articles-grid { grid-template-columns: repeat(2, 1fr); } }
+          `}</style>
+          <div className="more-articles-grid">
+            {articles.map(a => (
+              <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
+                <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 10 }}>
+                  <div style={{ transition: 'transform 300ms ease' }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+                  </div>
+                </div>
+                <h3 style={{
+                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 700,
+                  color: 'var(--color-text-primary)', lineHeight: 1.3,
+                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                }}>{a.title}</h3>
+                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
+                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                </span>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── HOME PAGE ───────────────────────────────────────────
 
 // Map category slug → page key used by the existing navigation
@@ -1124,6 +1198,7 @@ function HomePage({ setPage, partners }) {
 
         <Sidebar setPage={setPage} mostReadOverride={mostRead} partners={partners} />
       </div>
+      <MoreArticles setPage={setPage} />
     </>
   );
 }
