@@ -1442,8 +1442,8 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   }, [articleId]);
 
   const swipe = useSwipeNav(
-    useCallback(() => { if (prevArticle) setPage('article-' + prevArticle.id, prevArticle.slug); }, [prevArticle, setPage]),
     useCallback(() => { if (nextArticle) setPage('article-' + nextArticle.id, nextArticle.slug); }, [nextArticle, setPage]),
+    useCallback(() => { if (prevArticle) setPage('article-' + prevArticle.id, prevArticle.slug); }, [prevArticle, setPage]),
   );
 
   const catName = article?.category?.name || article?.category || '';
