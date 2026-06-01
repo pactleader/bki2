@@ -1094,13 +1094,14 @@ function MoreArticles({ setPage }) {
         (async () => {
           try {
             const all = [];
+            const fallbackUrl = FALLBACK_IMAGE?.url || '';
             let p = 1;
             while (true) {
               const res = await getArticles({ limit: 500, page: p, has_thumbnail: 1 });
-              const fallbackUrl = FALLBACK_IMAGE?.url || '';
-              const chunk = (res.data || []).filter(a => a.featured_image && a.featured_image.trim() !== '' && a.featured_image !== fallbackUrl);
+              const raw = res.data || [];
+              const chunk = raw.filter(a => a.featured_image && a.featured_image.trim() !== '' && a.featured_image !== fallbackUrl);
               all.push(...chunk);
-              if (all.length >= (res.meta?.total || 0) || (res.data || []).length < 500) break;
+              if (raw.length < 500) break;
               p++;
             }
             setArticles(all);
