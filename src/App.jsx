@@ -1289,36 +1289,52 @@ function MoreArticles({ setPage }) {
             borderTop: '3px solid var(--color-border)', paddingTop: 24, marginBottom: 20,
           }}>More Articles</h2>
           <style>{`
-            .more-articles-grid {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 24px;
+            .ma-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px; }
+            .ma-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+            @media (max-width: 700px) {
+              .ma-row-3, .ma-row-4 { grid-template-columns: repeat(2, 1fr); }
             }
-            @media (max-width: 700px) { .more-articles-grid { grid-template-columns: repeat(2, 1fr); } }
-            @media (max-width: 480px) { .more-articles-grid { grid-template-columns: 1fr; } }
+            @media (max-width: 480px) {
+              .ma-row-3, .ma-row-4 { grid-template-columns: 1fr; }
+            }
           `}</style>
-          <div className="more-articles-grid">
-            {articles.map(a => (
-              <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
-                <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
-                  <div style={{ transition: 'transform 300ms ease' }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                  >
-                    <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
-                  </div>
-                </div>
-                <h3 style={{
-                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
-                  color: 'var(--color-text-primary)', lineHeight: 1.3,
-                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                }}>{a.title}</h3>
-                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
-                </span>
-              </article>
-            ))}
-          </div>
+          {(() => {
+            const pattern = [3, 3, 4, 4];
+            const rows = [];
+            let i = 0, rowIdx = 0;
+            while (i < articles.length) {
+              const cols = pattern[rowIdx % pattern.length];
+              const chunk = articles.slice(i, i + cols);
+              if (chunk.length === 0) break;
+              rows.push({ cols, chunk });
+              i += cols;
+              rowIdx++;
+            }
+            return rows.map(({ cols, chunk }, ri) => (
+              <div key={ri} className={cols === 3 ? 'ma-row-3' : 'ma-row-4'}>
+                {chunk.map(a => (
+                  <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
+                    <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
+                      <div style={{ transition: 'transform 300ms ease' }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+                      </div>
+                    </div>
+                    <h3 style={{
+                      fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
+                      color: 'var(--color-text-primary)', lineHeight: 1.3,
+                      display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                    }}>{a.title}</h3>
+                    <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
+                      {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                    </span>
+                  </article>
+                ))}
+              </div>
+            ));
+          })()}
         </>
       )}
     </div>
