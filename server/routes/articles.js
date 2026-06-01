@@ -33,13 +33,14 @@ const pub = express.Router();
 pub.get('/', async (req, res) => {
   try {
     const { page, limit, offset } = paginate(req.query);
-    const { category, search } = req.query;
+    const { category, search, has_thumbnail } = req.query;
 
     const conds = [`a.status = 'published'`, `(a.publish_date IS NULL OR a.publish_date <= NOW())`];
     const params = [];
 
-    if (category) { conds.push('c.slug = ?'); params.push(category); }
-    if (search)   { conds.push('MATCH(a.title, a.excerpt) AGAINST(? IN BOOLEAN MODE)'); params.push(`${search}*`); }
+    if (category)      { conds.push('c.slug = ?'); params.push(category); }
+    if (search)        { conds.push('MATCH(a.title, a.excerpt) AGAINST(? IN BOOLEAN MODE)'); params.push(`${search}*`); }
+    if (has_thumbnail) { conds.push("a.featured_image IS NOT NULL AND a.featured_image != ''"); }
 
     const where = 'WHERE ' + conds.join(' AND ');
 

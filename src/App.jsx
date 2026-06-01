@@ -1091,10 +1091,22 @@ function MoreArticles({ setPage }) {
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !loaded && !loading) {
         setLoading(true);
-        getArticles({ limit: 150, page: 1 })
-          .then(res => setArticles(res.data || []))
-          .catch(() => {})
-          .finally(() => { setLoading(false); setLoaded(true); });
+        (async () => {
+          try {
+            const all = [];
+            let p = 1;
+            while (true) {
+              const res = await getArticles({ limit: 500, page: p, has_thumbnail: 1 });
+              const chunk = res.data || [];
+              all.push(...chunk);
+              if (all.length >= (res.meta?.total || 0) || chunk.length < 500) break;
+              p++;
+            }
+            setArticles(all);
+          } catch {}
+          setLoading(false);
+          setLoaded(true);
+        })();
       }
     }, { rootMargin: '200px' });
     obs.observe(el);
