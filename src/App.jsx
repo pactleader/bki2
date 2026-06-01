@@ -755,58 +755,85 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
           </div>
         </>
 
-      ) : layout === 'style1' ? (
-        /* Style 1 — 1 big article left + 2 stacked on right */
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-          {/* Left: big featured article */}
-          {articles[0] && (
-            <article onClick={() => setPage('article-' + articles[0].id, articles[0].slug)} style={{ cursor: 'pointer' }}>
+      ) : layout === 'style1' || layout === 'style4' ? (
+        /* Style 1 — big left + 2 small right | Style 4 — 2 small left + big right */
+        <div style={{ display: 'grid', gridTemplateColumns: layout === 'style1' ? '2fr 1fr' : '1fr 2fr', gap: 20 }}>
+          {/* Small stack (left for style4, right for style1) */}
+          {layout === 'style4' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {articles.slice(0, 2).map(a => (
+                <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
+                  <div style={{ borderRadius: 5, overflow: 'hidden', marginBottom: 8 }}>
+                    <div style={{ transition: 'transform 300ms ease' }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+                    </div>
+                  </div>
+                  <h3 style={{
+                    fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
+                    color: 'var(--color-text-primary)', lineHeight: 1.3,
+                    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                  }}>{a.title}</h3>
+                  <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
+                    {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                  </span>
+                </article>
+              ))}
+            </div>
+          )}
+          {/* Big article */}
+          {(() => { const a = articles[layout === 'style4' ? 2 : 0]; return a && (
+            <article onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
               <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
                 <div style={{ transition: 'transform 300ms ease' }}
                   onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
                   onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                 >
-                  <ArticleImage aspect="4/3" seed={articles[0].id} category={articles[0].category?.name || articles[0].category} src={articles[0].featured_image} />
+                  <ArticleImage aspect="4/3" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
                 </div>
               </div>
               <h3 style={{
                 fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
                 color: 'var(--color-text-primary)', lineHeight: 1.2,
                 display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-              }}>{articles[0].title}</h3>
+              }}>{a.title}</h3>
               <p style={{
                 fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
                 lineHeight: 1.6, marginTop: 8,
                 display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-              }}>{articles[0].excerpt}</p>
+              }}>{a.excerpt}</p>
               <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                {articles[0].publish_date ? new Date(articles[0].publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : articles[0].date}
+                {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
               </span>
             </article>
-          )}
-          {/* Right: 2 stacked articles */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {articles.slice(1, 3).map(a => (
-              <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
-                <div style={{ borderRadius: 5, overflow: 'hidden', marginBottom: 8 }}>
-                  <div style={{ transition: 'transform 300ms ease' }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                  >
-                    <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+          ); })()}
+          {/* Small stack right (style1 only) */}
+          {layout === 'style1' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {articles.slice(1, 3).map(a => (
+                <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
+                  <div style={{ borderRadius: 5, overflow: 'hidden', marginBottom: 8 }}>
+                    <div style={{ transition: 'transform 300ms ease' }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+                    </div>
                   </div>
-                </div>
-                <h3 style={{
-                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
-                  color: 'var(--color-text-primary)', lineHeight: 1.3,
-                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                }}>{a.title}</h3>
-                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
-                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
-                </span>
-              </article>
-            ))}
-          </div>
+                  <h3 style={{
+                    fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
+                    color: 'var(--color-text-primary)', lineHeight: 1.3,
+                    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                  }}>{a.title}</h3>
+                  <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
+                    {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                  </span>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
 
       ) : layout === 'style2' ? (
