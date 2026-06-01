@@ -1102,7 +1102,7 @@ function MoreArticles({ setPage }) {
   }, [loaded, loading]);
 
   return (
-    <div className="wrap" style={{ padding: '0 24px 48px' }}>
+    <div style={{ paddingBottom: 48 }}>
       <div ref={sentinelRef} />
       {loading && (
         <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '32px 0' }}>Loading more articles…</p>
@@ -1230,11 +1230,11 @@ function HomePage({ setPage, partners }) {
             );
           })}
           <AdSlot position="leaderboard-mid" style={{ margin: '20px 0 40px' }} />
+          <MoreArticles setPage={setPage} />
         </div>
 
         <Sidebar setPage={setPage} mostReadOverride={mostRead} partners={partners} />
       </div>
-      <MoreArticles setPage={setPage} />
     </>
   );
 }
