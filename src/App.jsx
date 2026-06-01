@@ -787,20 +787,23 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
           {/* Right: 2 stacked articles */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {articles.slice(1, 3).map(a => (
-              <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <div style={{ flexShrink: 0, width: 100, borderRadius: 5, overflow: 'hidden' }}>
-                  <ArticleImage aspect="4/3" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+              <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
+                <div style={{ borderRadius: 5, overflow: 'hidden', marginBottom: 8 }}>
+                  <div style={{ transition: 'transform 300ms ease' }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+                  </div>
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <h3 style={{
-                    fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
-                    color: 'var(--color-text-primary)', lineHeight: 1.3,
-                    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                  }}>{a.title}</h3>
-                  <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
-                    {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
-                  </span>
-                </div>
+                <h3 style={{
+                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
+                  color: 'var(--color-text-primary)', lineHeight: 1.3,
+                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                }}>{a.title}</h3>
+                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
+                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                </span>
               </article>
             ))}
           </div>
@@ -881,30 +884,28 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
             ))}
           </div>
           {articles[3] && (
-            <article onClick={() => setPage('article-' + articles[3].id, articles[3].slug)} style={{ cursor: 'pointer', display: 'flex', gap: 20, alignItems: 'flex-start', borderTop: '1px solid var(--color-border)', paddingTop: 20 }}>
-              <div style={{ flex: '0 0 55%', borderRadius: 6, overflow: 'hidden' }}>
+            <article onClick={() => setPage('article-' + articles[3].id, articles[3].slug)} style={{ cursor: 'pointer', borderTop: '1px solid var(--color-border)', paddingTop: 20 }}>
+              <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
                 <div style={{ transition: 'transform 300ms ease' }}
                   onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
                   onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                 >
-                  <ArticleImage aspect="16/9" seed={articles[3].id} category={articles[3].category?.name || articles[3].category} src={articles[3].featured_image} />
+                  <ArticleImage aspect="21/9" seed={articles[3].id} category={articles[3].category?.name || articles[3].category} src={articles[3].featured_image} />
                 </div>
               </div>
-              <div style={{ minWidth: 0 }}>
-                <h3 style={{
-                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
-                  color: 'var(--color-text-primary)', lineHeight: 1.2,
-                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                }}>{articles[3].title}</h3>
-                <p style={{
-                  fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
-                  lineHeight: 1.6, marginTop: 8,
-                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                }}>{articles[3].excerpt}</p>
-                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                  {articles[3].publish_date ? new Date(articles[3].publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : articles[3].date}
-                </span>
-              </div>
+              <h3 style={{
+                fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
+                color: 'var(--color-text-primary)', lineHeight: 1.2,
+                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>{articles[3].title}</h3>
+              <p style={{
+                fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
+                lineHeight: 1.6, marginTop: 8,
+                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>{articles[3].excerpt}</p>
+              <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
+                {articles[3].publish_date ? new Date(articles[3].publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : articles[3].date}
+              </span>
             </article>
           )}
         </div>
