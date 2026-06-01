@@ -148,9 +148,10 @@ export default function HomepageConfig() {
                 <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: 2, background: sec.color_hex, flexShrink: 0 }} />
                 <span style={{ flex: 1, fontWeight: 500, fontSize: 13 }}>{sec.cat_name}</span>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: sec.layout !== 'grid' ? 0.4 : 1 }}>
                   <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Articles:</label>
                   <select value={sec.article_count} onChange={e => updateSection(sec.id, 'article_count', parseInt(e.target.value))}
+                    disabled={sec.layout !== 'grid'}
                     style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12 }}>
                     {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
@@ -161,7 +162,9 @@ export default function HomepageConfig() {
                   <select value={sec.layout} onChange={e => updateSection(sec.id, 'layout', e.target.value)}
                     style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12 }}>
                     <option value="grid">Grid</option>
-                    <option value="featured">Featured</option>
+                    <option value="style1">Style 1</option>
+                    <option value="style2">Style 2</option>
+                    <option value="style3">Style 3</option>
                   </select>
                 </div>
 
