@@ -1097,9 +1097,10 @@ function MoreArticles({ setPage }) {
             let p = 1;
             while (true) {
               const res = await getArticles({ limit: 500, page: p, has_thumbnail: 1 });
-              const chunk = res.data || [];
+              const fallbackUrl = FALLBACK_IMAGE?.url || '';
+              const chunk = (res.data || []).filter(a => a.featured_image && a.featured_image.trim() !== '' && a.featured_image !== fallbackUrl);
               all.push(...chunk);
-              if (all.length >= (res.meta?.total || 0) || chunk.length < 500) break;
+              if (all.length >= (res.meta?.total || 0) || (res.data || []).length < 500) break;
               p++;
             }
             setArticles(all);
