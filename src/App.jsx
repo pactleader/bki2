@@ -1126,7 +1126,7 @@ function MoreArticles({ setPage }) {
           <div className="more-articles-grid">
             {articles.map(a => (
               <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
-                <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 10 }}>
+                <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
                   <div style={{ transition: 'transform 300ms ease' }}
                     onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
                     onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -1135,11 +1135,11 @@ function MoreArticles({ setPage }) {
                   </div>
                 </div>
                 <h3 style={{
-                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 700,
+                  fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
                   color: 'var(--color-text-primary)', lineHeight: 1.3,
                   display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{a.title}</h3>
-                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
+                <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
                   {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
                 </span>
               </article>
