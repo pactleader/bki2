@@ -1442,8 +1442,8 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   }, [articleId]);
 
   const swipe = useSwipeNav(
-    useCallback(() => { if (nextArticle) setPage('article-' + nextArticle.id, nextArticle.slug); }, [nextArticle, setPage]),
     useCallback(() => { if (prevArticle) setPage('article-' + prevArticle.id, prevArticle.slug); }, [prevArticle, setPage]),
+    useCallback(() => { if (nextArticle) setPage('article-' + nextArticle.id, nextArticle.slug); }, [nextArticle, setPage]),
   );
 
   const catName = article?.category?.name || article?.category || '';
@@ -1464,13 +1464,15 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
       <style>{`.article-col { flex: 1 1 600px; min-width: 0; max-width: 720px; padding-top: 32px; } @media (max-width: 768px) { .article-col { flex-basis: 100%; max-width: 100%; } } .swipe-nav { display: none; } @media (max-width: 768px) { .swipe-nav { display: flex; } }`}</style>
       {(prevArticle || nextArticle) && (
         <div className="swipe-nav" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)', marginBottom: 4, fontFamily: 'var(--f-ui)', fontSize: 12, color: 'var(--color-text-secondary)' }}>
-          <div style={{ flex: 1, opacity: prevArticle ? 1 : 0.3 }}>
+          <button onClick={() => prevArticle && setPage('article-' + prevArticle.id, prevArticle.slug)}
+            style={{ flex: 1, background: 'none', border: 'none', textAlign: 'left', padding: 0, cursor: prevArticle ? 'pointer' : 'default', opacity: prevArticle ? 1 : 0.3 }}>
             ← {prevArticle ? <span style={{ color: 'var(--color-accent)' }}>{prevArticle.title?.substring(0, 30)}…</span> : 'No previous'}
-          </div>
+          </button>
           <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', opacity: 0.5, padding: '0 8px', whiteSpace: 'nowrap' }}>swipe to navigate</div>
-          <div style={{ flex: 1, textAlign: 'right', opacity: nextArticle ? 1 : 0.3 }}>
+          <button onClick={() => nextArticle && setPage('article-' + nextArticle.id, nextArticle.slug)}
+            style={{ flex: 1, background: 'none', border: 'none', textAlign: 'right', padding: 0, cursor: nextArticle ? 'pointer' : 'default', opacity: nextArticle ? 1 : 0.3 }}>
             {nextArticle ? <span style={{ color: 'var(--color-accent)' }}>{nextArticle.title?.substring(0, 30)}…</span> : 'No next'} →
-          </div>
+          </button>
         </div>
       )}
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
