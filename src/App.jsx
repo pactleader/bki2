@@ -1392,23 +1392,47 @@ const CAT_NAME_TO_PAGE = {
   'Press Releases': 'pressReleases',
 };
 
+function useSwipeNav(onSwipeLeft, onSwipeRight) {
+  const touchStartX = useRef(null);
+  const onTouchStart = useCallback(e => { touchStartX.current = e.touches[0].clientX; }, []);
+  const onTouchEnd   = useCallback(e => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(diff) < 60) return;
+    if (diff < 0) onSwipeLeft?.();
+    else          onSwipeRight?.();
+  }, [onSwipeLeft, onSwipeRight]);
+  return { onTouchStart, onTouchEnd };
+}
+
 function ArticlePage({ articleId, setPage, onSlug, partners }) {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState([]);
+  const [prevArticle, setPrevArticle] = useState(null);
+  const [nextArticle, setNextArticle] = useState(null);
 
   useEffect(() => {
     setLoading(true);
     setRelated([]);
+    setPrevArticle(null);
+    setNextArticle(null);
     getArticle(articleId)
       .then(a => {
         setArticle(a);
         if (a?.slug && onSlug) onSlug(a.slug);
         if (a?.category?.slug) {
-          getArticles({ category: a.category.slug, limit: 4 })
+          getArticles({ category: a.category.slug, limit: 500 })
             .then(res => {
-              const items = (res?.data || []).filter(r => r.id !== articleId).slice(0, 3);
+              const all = res?.data || [];
+              const items = all.filter(r => r.id !== articleId).slice(0, 3);
               setRelated(items);
+              const idx = all.findIndex(r => r.id === articleId);
+              if (idx !== -1) {
+                setPrevArticle(all[idx + 1] || null);
+                setNextArticle(all[idx - 1] || null);
+              }
             })
             .catch(() => {});
         }
@@ -1416,6 +1440,11 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [articleId]);
+
+  const swipe = useSwipeNav(
+    useCallback(() => { if (nextArticle) setPage('article-' + nextArticle.id, nextArticle.slug); }, [nextArticle, setPage]),
+    useCallback(() => { if (prevArticle) setPage('article-' + prevArticle.id, prevArticle.slug); }, [prevArticle, setPage]),
+  );
 
   const catName = article?.category?.name || article?.category || '';
   const catKey = CAT_NAME_TO_PAGE[catName] || 'topStories';
@@ -1431,8 +1460,19 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   if (loading && !article) return <div className="wrap" style={{ padding: 60, textAlign: 'center' }}><p style={{ color: 'var(--color-text-secondary)' }}>Loading…</p></div>;
   if (!article) return <div className="wrap" style={{ padding: 60, textAlign: 'center' }}><p>Article not found.</p></div>;
   return (
-    <div className="wrap">
-      <style>{`.article-col { flex: 1 1 600px; min-width: 0; max-width: 720px; padding-top: 32px; } @media (max-width: 768px) { .article-col { flex-basis: 100%; max-width: 100%; } }`}</style>
+    <div className="wrap" {...swipe}>
+      <style>{`.article-col { flex: 1 1 600px; min-width: 0; max-width: 720px; padding-top: 32px; } @media (max-width: 768px) { .article-col { flex-basis: 100%; max-width: 100%; } } .swipe-nav { display: none; } @media (max-width: 768px) { .swipe-nav { display: flex; } }`}</style>
+      {(prevArticle || nextArticle) && (
+        <div className="swipe-nav" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)', marginBottom: 4, fontFamily: 'var(--f-ui)', fontSize: 12, color: 'var(--color-text-secondary)' }}>
+          <div style={{ flex: 1, opacity: prevArticle ? 1 : 0.3 }}>
+            ← {prevArticle ? <span style={{ color: 'var(--color-accent)' }}>{prevArticle.title?.substring(0, 30)}…</span> : 'No previous'}
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', opacity: 0.5, padding: '0 8px', whiteSpace: 'nowrap' }}>swipe to navigate</div>
+          <div style={{ flex: 1, textAlign: 'right', opacity: nextArticle ? 1 : 0.3 }}>
+            {nextArticle ? <span style={{ color: 'var(--color-accent)' }}>{nextArticle.title?.substring(0, 30)}…</span> : 'No next'} →
+          </div>
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <article className="article-col">
           {/* Breadcrumb */}
