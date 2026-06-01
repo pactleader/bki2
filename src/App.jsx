@@ -1117,11 +1117,11 @@ function MoreArticles({ setPage }) {
           <style>{`
             .more-articles-grid {
               display: grid;
-              grid-template-columns: repeat(4, 1fr);
+              grid-template-columns: repeat(3, 1fr);
               gap: 24px;
             }
-            @media (max-width: 900px) { .more-articles-grid { grid-template-columns: repeat(3, 1fr); } }
-            @media (max-width: 600px) { .more-articles-grid { grid-template-columns: repeat(2, 1fr); } }
+            @media (max-width: 700px) { .more-articles-grid { grid-template-columns: repeat(2, 1fr); } }
+            @media (max-width: 480px) { .more-articles-grid { grid-template-columns: 1fr; } }
           `}</style>
           <div className="more-articles-grid">
             {articles.map(a => (
