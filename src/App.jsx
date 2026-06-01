@@ -1311,7 +1311,9 @@ function MoreArticles({ setPage }) {
               rowIdx++;
             }
             return rows.map(({ cols, chunk }, ri) => (
-              <div key={ri} className={cols === 3 ? 'ma-row-3' : 'ma-row-4'}>
+              <div key={ri}>
+              {ri > 0 && ri % 2 === 0 && <AdSlot position="in-feed" style={{ margin: '8px 0 24px' }} />}
+              <div className={cols === 3 ? 'ma-row-3' : 'ma-row-4'}>
                 {chunk.map(a => (
                   <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
                     <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
@@ -1332,6 +1334,7 @@ function MoreArticles({ setPage }) {
                     </span>
                   </article>
                 ))}
+              </div>
               </div>
             ));
           })()}
