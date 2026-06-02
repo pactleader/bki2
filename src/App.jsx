@@ -533,7 +533,7 @@ function HeroZone({ setPage, hero: heroProp }) {
           flex: '1 1 38%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
           padding: '48px 40px 48px 32px', position: 'relative', zIndex: 2, minWidth: 280,
         }}>
-          <CatTag category={hero.category?.name || hero.category} onClick={() => setPage('topStories')} />
+          <CatTag category={hero.category?.name || hero.category} onClick={() => setPage(catNameToPage(hero.category?.name || hero.category))} />
           <h1 onClick={() => setPage('article-' + hero.id, hero.slug)} style={{
             fontFamily: 'var(--f-display)', fontSize: 'clamp(1.75rem, 3vw, 2.75rem)',
             fontWeight: 700, color: '#fff', lineHeight: 1.15, marginTop: 14, cursor: 'pointer',
@@ -584,7 +584,7 @@ function ContainerA({ article, reverse = false, setPage }) {
           </div>
         </div>
         <div style={{ flex: '1 1 38%', minWidth: 260 }}>
-          <CatTag category={article.category?.name || article.category} onClick={() => setPage(CAT_NAME_TO_PAGE[article.category?.name || article.category] || 'topStories')} />
+          <CatTag category={article.category?.name || article.category} onClick={() => setPage(catNameToPage(article.category?.name || article.category))} />
           <h2 onClick={() => setPage('article-' + article.id, article.slug)} style={{
             fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700,
             color: 'var(--color-text-primary)', lineHeight: 1.2, marginTop: 12, cursor: 'pointer',
@@ -1403,7 +1403,9 @@ function HomePage({ setPage, partners }) {
         <div style={{ flex: '1 1 600px', minWidth: 0 }}>
           {sections.map((sec, idx) => {
             const pageKey = SLUG_TO_PAGE[sec.category.slug] || sec.category.slug;
-            const arts = sec.articles;
+            const arts = idx === 0 && heroArticle
+              ? sec.articles.filter(a => a.id !== heroArticle.id)
+              : sec.articles;
             if (arts.length === 0) return null;
             const layout = sec.layout || 'grid';
             return (
@@ -1563,12 +1565,17 @@ function CategoryPage({ category, title, setPage, partners }) {
 
 // ─── ARTICLE PAGE ────────────────────────────────────────
 
-const CAT_NAME_TO_PAGE = {
-  'Top Stories': 'topStories',
-  'International News': 'internationalNews',
-  'National News': 'nationalNews',
-  'Press Releases': 'pressReleases',
-};
+// Populated from site settings (category_page_map); falls back to slug-derived key
+let catPageMap = {};
+
+function catNameToPage(nameOrSlug) {
+  if (!nameOrSlug) return 'topStories';
+  if (catPageMap[nameOrSlug]) return catPageMap[nameOrSlug];
+  // Derive from slug: 'top-stories' → 'topStories'
+  const slug = nameOrSlug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const camel = slug.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  return camel || 'topStories';
+}
 
 function useSwipeNav(onSwipeLeft, onSwipeRight) {
   const touchStartX = useRef(null);
@@ -1625,7 +1632,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   );
 
   const catName = article?.category?.name || article?.category || '';
-  const catKey = CAT_NAME_TO_PAGE[catName] || 'topStories';
+  const catKey = catNameToPage(catName);
   const articleImg = article ? (article.featured_image ? { url: article.featured_image, alt: article.title } : (ARTICLE_IMAGES[article.id] || FALLBACK_IMAGE)) : FALLBACK_IMAGE;
 
   useMeta(article ? {
@@ -2361,6 +2368,9 @@ export default function App() {
   // Inject custom scripts from site settings
   useEffect(() => {
     getSettings().then(map => {
+      if (map['category_page_map'] && typeof map['category_page_map'] === 'object') {
+        catPageMap = map['category_page_map'];
+      }
       if (map['default_article_image']) {
         FALLBACK_IMAGE = { url: map['default_article_image'], alt: 'Article image' };
       }
