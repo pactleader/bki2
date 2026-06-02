@@ -22,8 +22,6 @@ export default function SiteSettings() {
   const [uploadingArticle, setUploadingArticle] = useState(false);
   const [partners, setPartners] = useState([]); // [{name, url}]
   const [pages, setPages]       = useState([]); // published static pages
-  const [categories, setCategories] = useState([]); // all categories
-  const [catPageMap, setCatPageMap] = useState({}); // { catName: pageKey }
   const fileRef        = useRef(null);
   const logoFileRef    = useRef(null);
   const articleFileRef = useRef(null);
@@ -35,14 +33,10 @@ export default function SiteSettings() {
         rows.forEach(r => { map[r.setting_key] = r.setting_value; });
         setValues(map);
         try { setPartners(JSON.parse(map['partners'] || '[]')); } catch { setPartners([]); }
-        try { setCatPageMap(JSON.parse(map['category_page_map'] || '{}')); } catch { setCatPageMap({}); }
       })
       .catch(() => toast('Load failed', 'error'));
     api.listPages()
       .then(all => setPages(all.filter(p => p.is_published)))
-      .catch(() => {});
-    api.listCategories()
-      .then(cats => setCategories(cats))
       .catch(() => {});
   }, []);
 
@@ -136,7 +130,6 @@ export default function SiteSettings() {
         { key: 'brand_primary_color',    value: values['brand_primary_color']    || '#0d1b2a', type: 'string' },
         { key: 'brand_accent_color',     value: values['brand_accent_color']     || '#c0392b', type: 'string' },
         { key: 'brand_nav_link_color',   value: values['brand_nav_link_color']   || '#ffffff', type: 'string' },
-        { key: 'category_page_map',      value: JSON.stringify(catPageMap),                   type: 'json' },
       ];
       await api.saveSettings(items);
       toast('Settings saved');
@@ -191,28 +184,6 @@ export default function SiteSettings() {
               </Field>
             ))}
           </div>
-
-          {/* Category Navigation Map */}
-          {categories.length > 0 && (
-            <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 20, marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Category Navigation</div>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 16px' }}>
-                Map each category to the page key used in navigation. Leave blank to auto-derive from the category slug.
-              </p>
-              {categories.map(cat => {
-                const autoKey = cat.slug.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-                return (
-                  <Field key={cat.id} label={cat.name} hint={`slug: ${cat.slug} — auto key: ${autoKey}`}>
-                    <Input
-                      value={catPageMap[cat.name] || ''}
-                      onChange={e => setCatPageMap(m => ({ ...m, [cat.name]: e.target.value }))}
-                      placeholder={autoKey}
-                    />
-                  </Field>
-                );
-              })}
-            </div>
-          )}
 
           {/* Site Logo */}
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 20, marginBottom: 20 }}>

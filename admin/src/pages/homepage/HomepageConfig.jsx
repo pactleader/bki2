@@ -39,8 +39,9 @@ export default function HomepageConfig() {
   const [deleting, setDeleting] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Settings: most_read — stored as array of {value, label} for react-select
+  // Settings
   const [mostRead, setMostRead] = useState([]);   // [{value: id, label: title}, ...]
+  const [heroCatId, setHeroCatId] = useState(''); // category_id whose top article shows in hero
   const [settingsSaving, setSettingsSaving] = useState(false);
 
   useEffect(() => { load(); }, []);
@@ -70,6 +71,9 @@ export default function HomepageConfig() {
       }
 
       setMostRead(mrIds.map(id => ({ value: id, label: resolved[id] || `[${id}]` })));
+
+      const heroCat = st.find(x => x.setting_key === 'hero_category_id');
+      if (heroCat?.setting_value) setHeroCatId(heroCat.setting_value);
     } catch { toast('Load failed', 'error'); }
   }
 
@@ -115,6 +119,7 @@ export default function HomepageConfig() {
     try {
       await api.saveSettings([
         { key: 'most_read_article_ids', value: JSON.stringify(mostRead.map(o => o.value)), type: 'json' },
+        { key: 'hero_category_id',      value: heroCatId || '',                            type: 'string' },
       ]);
       toast('Settings saved');
     } catch (err) {
@@ -211,6 +216,25 @@ export default function HomepageConfig() {
             <Btn variant="outline" onClick={() => setAdding(false)}>Cancel</Btn>
           </div>
         )}
+      </Card>
+
+      {/* Hero Section */}
+      <Card style={{ marginBottom: 20 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Hero Section</h3>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+          Choose which category's most recent article appears in the large hero area at the top of the homepage.
+        </p>
+        <Field label="Hero Category">
+          <select
+            value={heroCatId}
+            onChange={e => setHeroCatId(e.target.value)}
+            style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}
+          >
+            <option value="">— Use first section's top article (default) —</option>
+            {categories.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+          </select>
+        </Field>
+        <Btn variant="accent" onClick={saveSettings} disabled={settingsSaving}>{settingsSaving ? 'Saving…' : 'Save Settings'}</Btn>
       </Card>
 
       {/* Most Read */}

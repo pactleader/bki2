@@ -45,7 +45,7 @@ pub.get('/', async (req, res) => {
     }));
 
     const [settingRows] = await db.execute(
-      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_article_ids', 'highlight_items')`
+      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_article_ids', 'highlight_items', 'hero_category_id')`
     );
     const settings = {};
     settingRows.forEach(r => { settings[r.setting_key] = r.setting_value; });
@@ -71,7 +71,9 @@ pub.get('/', async (req, res) => {
     let highlights = [];
     try { highlights = JSON.parse(settings.highlight_items || '[]'); } catch {}
 
-    res.json({ sections: sectionsWithArticles, mostRead, highlights });
+    const heroCategoryId = settings.hero_category_id || null;
+
+    res.json({ sections: sectionsWithArticles, mostRead, highlights, heroCategoryId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

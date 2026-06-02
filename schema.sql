@@ -207,7 +207,7 @@ INSERT INTO site_settings (setting_key, setting_value, setting_type, description
   ('brand_primary_color',      '#1c3362',                                                           'string',  'Primary brand color — used for header, hero, footer backgrounds'),
   ('brand_accent_color',       '#c0392b',                                                           'string',  'Accent brand color — used for links, buttons, category tags'),
   ('logo_url',                 '',                                                                   'string',  'Custom logo image URL — replaces the text logo in the nav bar'),
-  ('category_page_map',        '{}',                                                                  'json',    'Maps category names to frontend page keys for navigation')
+  ('hero_category_id',         '',                                                                    'string',  'Category ID whose top article is shown in the homepage hero section')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
 
 -- ─── STATIC PAGES ────────────────────────────────────────────

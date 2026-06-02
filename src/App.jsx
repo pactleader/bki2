@@ -1379,7 +1379,11 @@ function HomePage({ setPage, partners }) {
 
   const sections  = hpData?.sections  || [];
   const mostRead  = hpData?.mostRead  || [];
-  const heroArticle = sections[0]?.articles?.[0] || null;
+  const heroCatId = hpData?.heroCategoryId || null;
+  const heroSection = heroCatId
+    ? (sections.find(s => String(s.category.id) === String(heroCatId)) || sections[0])
+    : sections[0];
+  const heroArticle = heroSection?.articles?.[0] || null;
 
   if (hpLoading) return (
     <div style={{ minHeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', fontFamily: 'var(--f-ui)' }}>
