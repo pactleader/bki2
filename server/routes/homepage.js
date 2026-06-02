@@ -71,9 +71,35 @@ pub.get('/', async (req, res) => {
     let highlights = [];
     try { highlights = JSON.parse(settings.highlight_items || '[]'); } catch {}
 
-    const heroCategoryId = settings.hero_category_id || null;
+    // Fetch hero article: from configured category, or fall back to first section's top article
+    let heroArticle = null;
+    const heroCategoryId = settings.hero_category_id ? parseInt(settings.hero_category_id, 10) : null;
+    if (heroCategoryId) {
+      const [heroRows] = await db.execute(
+        `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.publish_date, a.view_count,
+                u.display_name AS author_name,
+                c.id AS cat_id, c.name AS cat_name, c.slug AS cat_slug, c.color_hex
+         FROM articles a
+         JOIN users u ON a.author_id = u.id
+         JOIN categories c ON a.category_id = c.id
+         WHERE a.category_id = ? AND a.status = 'published'
+           AND (a.publish_date IS NULL OR a.publish_date <= NOW())
+         ORDER BY a.publish_date DESC, a.created_at DESC
+         LIMIT 1`,
+        [heroCategoryId]
+      );
+      if (heroRows[0]) {
+        const r = heroRows[0];
+        heroArticle = {
+          id: r.id, title: r.title, slug: r.slug, excerpt: r.excerpt,
+          featured_image: r.featured_image, publish_date: r.publish_date, view_count: r.view_count,
+          author: { display_name: r.author_name },
+          category: { id: r.cat_id, name: r.cat_name, slug: r.cat_slug, color_hex: r.color_hex },
+        };
+      }
+    }
 
-    res.json({ sections: sectionsWithArticles, mostRead, highlights, heroCategoryId });
+    res.json({ sections: sectionsWithArticles, mostRead, highlights, heroCategoryId, heroArticle });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

@@ -1377,13 +1377,11 @@ function HomePage({ setPage, partners }) {
       .finally(() => setHpLoading(false));
   }, []);
 
-  const sections  = hpData?.sections  || [];
-  const mostRead  = hpData?.mostRead  || [];
-  const heroCatId = hpData?.heroCategoryId || null;
-  const heroSection = heroCatId
-    ? (sections.find(s => String(s.category.id) === String(heroCatId)) || sections[0])
-    : sections[0];
-  const heroArticle = heroSection?.articles?.[0] || null;
+  const sections    = hpData?.sections  || [];
+  const mostRead    = hpData?.mostRead  || [];
+  const heroCatId   = hpData?.heroCategoryId || null;
+  // Use server-resolved heroArticle when a hero category is configured
+  const heroArticle = hpData?.heroArticle || sections[0]?.articles?.[0] || null;
 
   if (hpLoading) return (
     <div style={{ minHeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', fontFamily: 'var(--f-ui)' }}>
@@ -1407,7 +1405,8 @@ function HomePage({ setPage, partners }) {
         <div style={{ flex: '1 1 600px', minWidth: 0 }}>
           {sections.map((sec, idx) => {
             const pageKey = SLUG_TO_PAGE[sec.category.slug] || sec.category.slug;
-            const arts = idx === 0 && heroArticle
+            const isHeroSection = heroArticle && sec.category.id === heroArticle.category?.id;
+            const arts = isHeroSection
               ? sec.articles.filter(a => a.id !== heroArticle.id)
               : sec.articles;
             if (arts.length === 0) return null;

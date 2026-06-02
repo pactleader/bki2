@@ -218,13 +218,11 @@ export default function HomepageConfig() {
         )}
       </Card>
 
-      {/* Hero Section */}
-      <Card style={{ marginBottom: 20 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Hero Section</h3>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-          Choose which category's most recent article appears in the large hero area at the top of the homepage.
-        </p>
-        <Field label="Hero Category">
+      {/* Settings: Hero + Sidebar */}
+      <Card>
+        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Settings</h3>
+
+        <Field label="Hero Category" hint="The most recent article from this category appears in the large hero area at the top of the homepage">
           <select
             value={heroCatId}
             onChange={e => setHeroCatId(e.target.value)}
@@ -234,12 +232,7 @@ export default function HomepageConfig() {
             {categories.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
           </select>
         </Field>
-        <Btn variant="accent" onClick={saveSettings} disabled={settingsSaving}>{settingsSaving ? 'Saving…' : 'Save Settings'}</Btn>
-      </Card>
 
-      {/* Most Read */}
-      <Card>
-        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Sidebar</h3>
         <Field label="Most Read Articles" hint="Search and select up to 7 articles to show in the sidebar Most Read list">
           <AsyncSelect
             isMulti
@@ -253,6 +246,7 @@ export default function HomepageConfig() {
             noOptionsMessage={({ inputValue }) => inputValue ? 'No articles found' : 'Type to search…'}
           />
         </Field>
+
         <Btn variant="accent" onClick={saveSettings} disabled={settingsSaving}>{settingsSaving ? 'Saving…' : 'Save Settings'}</Btn>
       </Card>
 
