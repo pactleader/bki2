@@ -1636,7 +1636,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
   const catName = article?.category?.name || article?.category || '';
   const catKey = catNameToPage(catName);
-  const articleImg = article ? (article.featured_image ? { url: article.featured_image, alt: article.title } : (ARTICLE_IMAGES[article.id] || FALLBACK_IMAGE)) : FALLBACK_IMAGE;
+  const articleImg = article ? (article.featured_image ? { url: article.featured_image, alt: article.featured_image_alt || article.title } : (ARTICLE_IMAGES[article.id] || FALLBACK_IMAGE)) : FALLBACK_IMAGE;
 
   useMeta(article ? {
     title: article.seo_title || article.title,
@@ -1697,7 +1697,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
           </div>
 
           <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 28 }}>
-            <ArticleImage aspect="16/8" seed={article.id} category={catName} src={articleImg.url} />
+            <ArticleImage aspect="16/8" seed={article.id} category={catName} src={articleImg.url} alt={articleImg.alt} />
           </div>
 
           <AdSlot position="in-feed" style={{ margin: '0 0 28px' }} />
