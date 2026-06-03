@@ -2100,7 +2100,7 @@ function StaticPage({ slug }) {
   );
 
   return (
-    <div style={{ maxWidth: 780, width: '100%', margin: '0 auto', padding: '48px 24px 80px', boxSizing: 'border-box' }}>
+    <div className="wrap" style={{ padding: '48px 0 80px', maxWidth: 780 }}>
       <h1 style={{
         fontFamily: 'var(--f-display)', fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)',
         fontWeight: 700, lineHeight: 1.2, color: 'var(--color-primary)',
