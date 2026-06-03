@@ -5,6 +5,7 @@ const https   = require('https');
 const http    = require('http');
 const { verifyToken } = require('../middleware/auth');
 const db      = require('../db');
+const { writeImageMetadata } = require('../utils/imageMetadata');
 
 const router = express.Router();
 router.use(verifyToken);
@@ -65,7 +66,7 @@ async function generateWithGoogle(prompt, apiKey) {
 // POST /api/admin/generate-image
 router.post('/', async (req, res) => {
   try {
-    const { prompt, provider = 'openai' } = req.body;
+    const { prompt, provider = 'openai', title, description, author, copyright } = req.body;
     if (!prompt?.trim()) return res.status(400).json({ error: 'Prompt is required' });
 
     const keyName = provider === 'google' ? 'google_ai_api_key' : 'openai_api_key';
@@ -84,6 +85,11 @@ router.post('/', async (req, res) => {
     } else {
       url = await generateWithOpenAI(prompt, apiKey);
     }
+
+    try {
+      const filePath = path.join(UPLOAD_DIR, path.basename(url));
+      await writeImageMetadata(filePath, { title, description, author, copyright });
+    } catch (e) { console.warn('metadata write skipped:', e.message); }
 
     res.json({ url });
   } catch (err) {

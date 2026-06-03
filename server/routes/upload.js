@@ -3,6 +3,7 @@ const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
 const { verifyToken } = require('../middleware/auth');
+const { writeImageMetadata } = require('../utils/imageMetadata');
 
 const router = express.Router();
 router.use(verifyToken);
@@ -36,10 +37,15 @@ const upload = multer({
 
 // POST /api/admin/upload
 router.post('/', (req, res, next) => {
-  upload.single('image')(req, res, err => {
+  upload.single('image')(req, res, async err => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const filePath = req.file.path;
     const url = `/uploads/${req.file.filename}`;
+    try {
+      const { title, description, author, copyright } = req.body;
+      await writeImageMetadata(filePath, { title, description, author, copyright });
+    } catch (e) { console.warn('metadata write skipped:', e.message); }
     res.json({ url });
   });
 });

@@ -97,8 +97,8 @@ export const listMedia   = () => apiFetch('/admin/media');
 export const deleteMedia = (filename) => apiFetch(`/admin/media/${encodeURIComponent(filename)}`, { method: 'DELETE' });
 
 // ── AI Image Generation ───────────────────────────────────────
-export const generateImage = (prompt, provider = 'openai') =>
-  apiFetch('/admin/generate-image', { method: 'POST', body: JSON.stringify({ prompt, provider }) });
+export const generateImage = (prompt, provider = 'openai', metadata = {}) =>
+  apiFetch('/admin/generate-image', { method: 'POST', body: JSON.stringify({ prompt, provider, ...metadata }) });
 
 // ── Import ────────────────────────────────────────────────────
 export function importPreview(file) {

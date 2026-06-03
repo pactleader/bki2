@@ -16,11 +16,25 @@ const EMPTY = {
   seo_title: '', seo_description: '', seo_keywords: '', og_image: '',
 };
 
-function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '' }) {
+function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '', authorName = '' }) {
   const fileRef  = useRef();
   const [uploading, setUploading] = useState(false);
   const [error,     setError]     = useState('');
   const [aiOpen,    setAiOpen]    = useState(false);
+  const [meta, setMeta] = useState({ title: '', description: '', author: '', copyright: '' });
+  const [metaOpen, setMetaOpen] = useState(false);
+
+  function setM(k, v) { setMeta(m => ({ ...m, [k]: v })); }
+
+  // Effective metadata: use field value or fall back to auto values
+  function effectiveMeta() {
+    return {
+      title:       meta.title       || articleTitle,
+      description: meta.description || articleTitle,
+      author:      meta.author      || authorName,
+      copyright:   meta.copyright,
+    };
+  }
 
   async function handleFile(e) {
     const file = e.target.files[0];
@@ -31,6 +45,11 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
       const { getToken } = await import('../../auth.js');
       const fd = new FormData();
       fd.append('image', file);
+      const em = effectiveMeta();
+      if (em.title)       fd.append('title',       em.title);
+      if (em.description) fd.append('description', em.description);
+      if (em.author)      fd.append('author',      em.author);
+      if (em.copyright)   fd.append('copyright',   em.copyright);
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
         headers: { Authorization: `Bearer ${getToken()}` },
@@ -76,6 +95,46 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
         {error && <p style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{error}</p>}
       </Field>
 
+      {/* Image Metadata */}
+      <div style={{ marginTop: 6, border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
+        <button
+          type="button"
+          onClick={() => setMetaOpen(o => !o)}
+          style={{
+            width: '100%', padding: '6px 10px', background: '#f8f9fa', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', cursor: 'pointer',
+            textTransform: 'uppercase', letterSpacing: '.04em',
+          }}
+        >
+          <span>Image Metadata <span style={{ fontWeight: 400, textTransform: 'none' }}>(embedded into file)</span></span>
+          <span>{metaOpen ? '▲' : '▼'}</span>
+        </button>
+        {metaOpen && (
+          <div style={{ padding: '10px 10px 4px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {[
+              { key: 'title',       label: 'Title',       placeholder: articleTitle || 'Image title…' },
+              { key: 'description', label: 'Description', placeholder: articleTitle || 'Brief description…' },
+              { key: 'author',      label: 'Author',      placeholder: authorName   || 'Photographer / creator…' },
+              { key: 'copyright',   label: 'Copyright',   placeholder: `© ${new Date().getFullYear()}…` },
+            ].map(({ key, label, placeholder }) => (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={{ fontSize: 11, color: 'var(--text-muted)', width: 76, flexShrink: 0 }}>{label}</label>
+                <Input
+                  value={meta[key]}
+                  onChange={e => setM(key, e.target.value)}
+                  placeholder={placeholder}
+                  style={{ flex: 1, fontSize: 12 }}
+                />
+              </div>
+            ))}
+            <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '4px 0 6px' }}>
+              Leave blank to auto-fill from article title / author. Embedded on upload or AI generate.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Generate with AI button */}
       <button
         type="button"
@@ -111,7 +170,7 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
           </div>
           <div style={{ marginTop: 6 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-              Image Alt Text / Caption <span style={{ fontWeight: 400 }}>(auto-filled from title if blank)</span>
+              Alt Text <span style={{ fontWeight: 400 }}>(auto-filled from title if blank)</span>
             </label>
             <Input
               value={altValue || ''}
@@ -125,6 +184,7 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
       {aiOpen && (
         <AiGenerateModal
           initialPrompt={articleTitle}
+          metadata={effectiveMeta()}
           onAccept={url => { onChange(url); if (!altValue && articleTitle) onAltChange?.(articleTitle); setAiOpen(false); }}
           onClose={() => setAiOpen(false)}
         />
@@ -133,7 +193,7 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
   );
 }
 
-function AiGenerateModal({ initialPrompt, onAccept, onClose }) {
+function AiGenerateModal({ initialPrompt, metadata = {}, onAccept, onClose }) {
   const [prompt,      setPrompt]      = useState(
     initialPrompt
       ? `A high-quality, Newspaper headline image for a news article titled: "${initialPrompt}". Professional, no text.`
@@ -150,7 +210,7 @@ function AiGenerateModal({ initialPrompt, onAccept, onClose }) {
     setError('');
     setPreviewUrl(null);
     try {
-      const res = await api.generateImage(prompt, provider);
+      const res = await api.generateImage(prompt, provider, metadata);
       setPreviewUrl(res.url);
     } catch (err) {
       setError(err.message);
@@ -476,6 +536,7 @@ export default function ArticleEdit() {
                 altValue={form.featured_image_alt}
                 onAltChange={v => set('featured_image_alt', v)}
                 articleTitle={form.title}
+                authorName={authors.find(a => String(a.id) === String(form.author_id || user?.id))?.display_name || user?.display_name || ''}
               />
             </Card>
           </div>
