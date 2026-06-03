@@ -158,8 +158,8 @@ const ARTICLE_IMAGES = {
 
 let FALLBACK_IMAGE = { url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=450&fit=crop', alt: 'Background screening industry' };
 
-function ArticleImage({ aspect = '16/9', height, style = {}, seed = 1, category = 'Top Stories', src }) {
-  const img = src ? { url: src, alt: '' } : (ARTICLE_IMAGES[seed] || FALLBACK_IMAGE);
+function ArticleImage({ aspect = '16/9', height, style = {}, seed = 1, category = 'Top Stories', src, alt }) {
+  const img = src ? { url: src, alt: alt || '' } : (ARTICLE_IMAGES[seed] || FALLBACK_IMAGE);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 

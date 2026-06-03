@@ -5,7 +5,7 @@ const { uniqueSlug }                = require('../utils/slugify');
 const { paginate, paginateMeta }    = require('../utils/paginate');
 
 const ARTICLE_SELECT = `
-  a.id, a.title, a.slug, a.excerpt, a.featured_image, a.status,
+  a.id, a.title, a.slug, a.excerpt, a.featured_image, a.featured_image_alt, a.status,
   a.publish_date, a.view_count, a.seo_title, a.seo_description,
   a.seo_keywords, a.og_image, a.created_at, a.updated_at,
   u.id AS author_id, u.display_name AS author_name,
@@ -16,7 +16,7 @@ const ARTICLE_SELECT = `
 function fmt(row) {
   return {
     id: row.id, title: row.title, slug: row.slug, excerpt: row.excerpt,
-    featured_image: row.featured_image, status: row.status,
+    featured_image: row.featured_image, featured_image_alt: row.featured_image_alt, status: row.status,
     publish_date: row.publish_date, view_count: row.view_count,
     seo_title: row.seo_title, seo_description: row.seo_description,
     seo_keywords: row.seo_keywords, og_image: row.og_image,
@@ -151,17 +151,18 @@ adm.get('/detail/:id', async (req, res) => {
 // POST /api/admin/articles
 adm.post('/', async (req, res) => {
   try {
-    const { title, excerpt, body, featured_image, category_id, status,
+    const { title, excerpt, body, featured_image, featured_image_alt, category_id, status,
             publish_date, seo_title, seo_description, seo_keywords, og_image } = req.body;
     if (!title || !category_id) return res.status(400).json({ error: 'Title and category required' });
 
     const slug = await uniqueSlug('articles', title);
     const [result] = await db.execute(
       `INSERT INTO articles
-         (title, slug, excerpt, body, featured_image, author_id, category_id,
+         (title, slug, excerpt, body, featured_image, featured_image_alt, author_id, category_id,
           status, publish_date, seo_title, seo_description, seo_keywords, og_image)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [title, slug, excerpt || null, body || null, featured_image || null,
+       featured_image_alt || null,
        req.user.sub, category_id, status || 'draft',
        publish_date || null, seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null]
@@ -178,7 +179,7 @@ adm.put('/:id', async (req, res) => {
     if (req.user.role === 'author' && existing[0].author_id !== req.user.sub)
       return res.status(403).json({ error: 'Forbidden' });
 
-    const { title, excerpt, body, featured_image, category_id, status,
+    const { title, excerpt, body, featured_image, featured_image_alt, category_id, status,
             publish_date, seo_title, seo_description, seo_keywords, og_image } = req.body;
 
     let slug = existing[0].slug;
@@ -187,11 +188,12 @@ adm.put('/:id', async (req, res) => {
 
     await db.execute(
       `UPDATE articles SET
-         title=?, slug=?, excerpt=?, body=?, featured_image=?,
+         title=?, slug=?, excerpt=?, body=?, featured_image=?, featured_image_alt=?,
          category_id=?, status=?, publish_date=?,
          seo_title=?, seo_description=?, seo_keywords=?, og_image=?
        WHERE id=?`,
       [title, slug, excerpt || null, body || null, featured_image || null,
+       featured_image_alt || null,
        category_id, status || 'draft', publish_date || null,
        seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null, req.params.id]

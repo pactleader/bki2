@@ -11,12 +11,12 @@ function slugify(text) {
 }
 
 const EMPTY = {
-  title: '', slug: '', excerpt: '', body: '', featured_image: '',
+  title: '', slug: '', excerpt: '', body: '', featured_image: '', featured_image_alt: '',
   category_id: '', status: 'draft', publish_date: '',
   seo_title: '', seo_description: '', seo_keywords: '', og_image: '',
 };
 
-function FeaturedImageUpload({ value, onChange, articleTitle = '' }) {
+function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '' }) {
   const fileRef  = useRef();
   const [uploading, setUploading] = useState(false);
   const [error,     setError]     = useState('');
@@ -39,6 +39,7 @@ function FeaturedImageUpload({ value, onChange, articleTitle = '' }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload failed');
       onChange(data.url);
+      if (!altValue && articleTitle) onAltChange?.(articleTitle);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -91,28 +92,40 @@ function FeaturedImageUpload({ value, onChange, articleTitle = '' }) {
       </button>
 
       {value && (
-        <div style={{ position: 'relative', marginTop: 8 }}>
-          <img
-            src={value} alt="Preview"
-            onError={e => e.target.style.display = 'none'}
-            style={{ width: '100%', borderRadius: 4, maxHeight: 180, objectFit: 'cover', display: 'block' }}
-          />
-          <button
-            type="button"
-            onClick={() => onChange('')}
-            style={{
-              position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)',
-              color: '#fff', border: 'none', borderRadius: 3, padding: '2px 8px',
-              fontSize: 12, cursor: 'pointer',
-            }}
-          >Remove</button>
+        <div style={{ marginTop: 8 }}>
+          <div style={{ position: 'relative' }}>
+            <img
+              src={value} alt="Preview"
+              onError={e => e.target.style.display = 'none'}
+              style={{ width: '100%', borderRadius: 4, maxHeight: 180, objectFit: 'cover', display: 'block' }}
+            />
+            <button
+              type="button"
+              onClick={() => { onChange(''); onAltChange?.(''); }}
+              style={{
+                position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)',
+                color: '#fff', border: 'none', borderRadius: 3, padding: '2px 8px',
+                fontSize: 12, cursor: 'pointer',
+              }}
+            >Remove</button>
+          </div>
+          <div style={{ marginTop: 6 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+              Image Alt Text / Caption <span style={{ fontWeight: 400 }}>(auto-filled from title if blank)</span>
+            </label>
+            <Input
+              value={altValue || ''}
+              onChange={e => onAltChange?.(e.target.value)}
+              placeholder={articleTitle || 'Describe the image…'}
+            />
+          </div>
         </div>
       )}
 
       {aiOpen && (
         <AiGenerateModal
           initialPrompt={articleTitle}
-          onAccept={url => { onChange(url); setAiOpen(false); }}
+          onAccept={url => { onChange(url); if (!altValue && articleTitle) onAltChange?.(articleTitle); setAiOpen(false); }}
           onClose={() => setAiOpen(false)}
         />
       )}
@@ -315,6 +328,7 @@ export default function ArticleEdit() {
             excerpt: a.excerpt || '',
             body: a.body || '',
             featured_image: a.featured_image || '',
+            featured_image_alt: a.featured_image_alt || '',
             category_id: a.category?.id || '',
             author_id: a.author?.id || '',
             status: a.status || 'draft',
@@ -459,6 +473,8 @@ export default function ArticleEdit() {
               <FeaturedImageUpload
                 value={form.featured_image}
                 onChange={url => set('featured_image', url)}
+                altValue={form.featured_image_alt}
+                onAltChange={v => set('featured_image_alt', v)}
                 articleTitle={form.title}
               />
             </Card>
