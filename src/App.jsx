@@ -349,7 +349,7 @@ function urlToPageKey(url) {
   if (!url) return null;
   const clean = url.replace(/\/$/, '') || '/';
   if (URL_TO_PAGE[clean]) return URL_TO_PAGE[clean];
-  if (clean.startsWith('/page/')) return 'page-' + clean.replace('/page/', '');
+  if (clean.startsWith('/p/')) return 'page-' + clean.replace('/p/', '');
   return null;
 }
 
