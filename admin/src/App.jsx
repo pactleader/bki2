@@ -21,6 +21,7 @@ import MediaLibrary from './pages/media/MediaLibrary.jsx';
 import SubscriberList from './pages/subscribers/SubscriberList.jsx';
 import ImportTool from './pages/import/ImportTool.jsx';
 import RedirectList from './pages/redirects/RedirectList.jsx';
+import BulkAiImages from './pages/tools/BulkAiImages.jsx';
 import PageList from './pages/pages/PageList.jsx';
 import PageEdit from './pages/pages/PageEdit.jsx';
 
@@ -57,8 +58,9 @@ export default function App() {
           <Route path="media" element={<ProtectedRoute adminOnly><MediaLibrary /></ProtectedRoute>} />
           <Route path="subscribers" element={<ProtectedRoute adminOnly><SubscriberList /></ProtectedRoute>} />
           <Route path="settings" element={<ProtectedRoute adminOnly><SiteSettings /></ProtectedRoute>} />
-          <Route path="import" element={<ProtectedRoute adminOnly><ImportTool /></ProtectedRoute>} />
-          <Route path="redirects" element={<ProtectedRoute adminOnly><RedirectList /></ProtectedRoute>} />
+          <Route path="tools/import" element={<ProtectedRoute adminOnly><ImportTool /></ProtectedRoute>} />
+          <Route path="tools/redirects" element={<ProtectedRoute adminOnly><RedirectList /></ProtectedRoute>} />
+          <Route path="tools/bulk-ai-images" element={<ProtectedRoute adminOnly><BulkAiImages /></ProtectedRoute>} />
           <Route path="pages" element={<ProtectedRoute adminOnly><PageList /></ProtectedRoute>} />
           <Route path="pages/new" element={<ProtectedRoute adminOnly><PageEdit /></ProtectedRoute>} />
           <Route path="pages/:id/edit" element={<ProtectedRoute adminOnly><PageEdit /></ProtectedRoute>} />

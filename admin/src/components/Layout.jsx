@@ -1,4 +1,5 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { getUser, logout } from '../auth.js';
 import { apiLogout } from '../api.js';
 
@@ -14,15 +15,22 @@ const NAV = [
   { to: '/admin/users',     label: 'Users',      icon: '👤',  adminOnly: true },
   { to: '/admin/media',       label: 'Media',       icon: '🖼',  adminOnly: true },
   { to: '/admin/subscribers', label: 'Subscribers', icon: '📧',  adminOnly: true },
-  { to: '/admin/settings',  label: 'Settings',   icon: '⚙',  adminOnly: true },
-  { to: '/admin/import',     label: 'Import',     icon: '⇪',  adminOnly: true },
   { to: '/admin/pages',      label: 'Pages',      icon: '⊡',  adminOnly: true },
-  { to: '/admin/redirects',  label: 'Redirects',  icon: '↪',  adminOnly: true },
+  { to: '/admin/settings',  label: 'Settings',   icon: '⚙',  adminOnly: true },
+];
+
+const TOOLS = [
+  { to: '/admin/tools/import',         label: 'Import',               icon: '⇪' },
+  { to: '/admin/tools/redirects',      label: 'Redirects',            icon: '↪' },
+  { to: '/admin/tools/bulk-ai-images', label: 'Generate Bulk AI Images', icon: '✦' },
 ];
 
 export default function Layout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = getUser();
+  const toolsActive = location.pathname.startsWith('/admin/tools');
+  const [toolsOpen, setToolsOpen] = useState(toolsActive);
 
   async function handleLogout() {
     try { await apiLogout(); } catch {}
@@ -57,6 +65,41 @@ export default function Layout() {
               {n.label}
             </NavLink>
           ))}
+
+          {/* Tools group — admin only */}
+          {user?.role === 'admin' && (
+            <>
+              <button
+                onClick={() => setToolsOpen(o => !o)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px',
+                  width: '100%', background: toolsOpen ? 'rgba(255,255,255,.07)' : 'transparent',
+                  border: 'none', borderLeft: toolsActive ? '3px solid var(--accent)' : '3px solid transparent',
+                  color: toolsActive ? '#fff' : 'rgba(255,255,255,.65)',
+                  fontSize: 13, fontWeight: toolsActive ? 600 : 400, cursor: 'pointer',
+                  transition: 'all .15s', justifyContent: 'space-between',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 14 }}>🔧</span> Tools
+                </span>
+                <span style={{ fontSize: 10, opacity: 0.6 }}>{toolsOpen ? '▲' : '▼'}</span>
+              </button>
+              {toolsOpen && TOOLS.map(n => (
+                <NavLink key={n.to} to={n.to} style={({ isActive }) => ({
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 8px 36px',
+                  fontSize: 12, fontWeight: isActive ? 600 : 400,
+                  color: isActive ? '#fff' : 'rgba(255,255,255,.55)',
+                  background: isActive ? 'rgba(255,255,255,.12)' : 'transparent',
+                  borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
+                  transition: 'all .15s',
+                })}>
+                  <span style={{ fontSize: 13 }}>{n.icon}</span>
+                  {n.label}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
         <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,.1)' }}>
