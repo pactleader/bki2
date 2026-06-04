@@ -98,13 +98,7 @@ export default function BulkAiImages() {
 
           updateJob(article.id, { status: 'done', url: result.url });
         } catch (err) {
-          // Extract readable message from nested error objects
-          let msg = err.message || 'Unknown error';
-          try {
-            const parsed = JSON.parse(msg);
-            msg = parsed?.error?.message || parsed?.error || msg;
-          } catch {}
-          updateJob(article.id, { status: 'error', error: msg });
+          updateJob(article.id, { status: 'error', error: err.message });
         }
       }
     } catch (err) {
