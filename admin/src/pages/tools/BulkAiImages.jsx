@@ -68,11 +68,21 @@ export default function BulkAiImages() {
             description: article.title,
           });
 
-          // Save the image URL to the article
+          // Fetch full article (need body) then save with new image
+          const full = await api.getArticle(article.id);
           await api.updateArticle(article.id, {
-            ...article,
-            category_id: article.category?.id,
-            featured_image: result.url,
+            title:           full.title,
+            slug:            full.slug,
+            excerpt:         full.excerpt        || '',
+            body:            full.body           || '',
+            featured_image:  result.url,
+            category_id:     full.category?.id  || full.category_id,
+            status:          full.status,
+            publish_date:    full.publish_date   || '',
+            seo_title:       full.seo_title      || '',
+            seo_description: full.seo_description || '',
+            seo_keywords:    full.seo_keywords   || '',
+            og_image:        full.og_image       || '',
           });
 
           updateJob(article.id, { status: 'done', url: result.url });
@@ -116,7 +126,7 @@ export default function BulkAiImages() {
               onChange={e => setCount(Number(e.target.value))}
               style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}
             >
-              {[5, 10, 20, 30, 50].map(n => <option key={n} value={n}>{n} articles</option>)}
+              {[5, 10, 20, 30, 50, 100, 150, 200].map(n => <option key={n} value={n}>{n} articles</option>)}
             </select>
           </Field>
 
