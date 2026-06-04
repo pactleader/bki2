@@ -52,7 +52,7 @@ export default function BulkAiImages() {
       // Init job list
       setJobs(articles.map(a => ({ id: a.id, title: a.title, status: 'pending', url: null, error: null })));
 
-      const delay = provider === 'google' ? 5000 : 2000;
+      const delay = provider === 'google' ? 12000 : 3000;
 
       for (let i = 0; i < articles.length; i++) {
         const article = articles[i];
@@ -62,12 +62,12 @@ export default function BulkAiImages() {
           continue;
         }
 
-        // Delay between requests to avoid rate limiting
+        // Delay between requests to avoid rate limiting (wait BEFORE each request except first)
         if (i > 0) {
           updateJob(article.id, { status: 'waiting' });
           await new Promise(r => setTimeout(r, delay));
+          if (abortRef.current) { updateJob(article.id, { status: 'skipped' }); continue; }
         }
-        if (abortRef.current) { updateJob(article.id, { status: 'skipped' }); continue; }
 
         updateJob(article.id, { status: 'generating' });
 
@@ -98,7 +98,13 @@ export default function BulkAiImages() {
 
           updateJob(article.id, { status: 'done', url: result.url });
         } catch (err) {
-          updateJob(article.id, { status: 'error', error: err.message });
+          // Extract readable message from nested error objects
+          let msg = err.message || 'Unknown error';
+          try {
+            const parsed = JSON.parse(msg);
+            msg = parsed?.error?.message || parsed?.error || msg;
+          } catch {}
+          updateJob(article.id, { status: 'error', error: msg });
         }
       }
     } catch (err) {
@@ -253,7 +259,7 @@ export default function BulkAiImages() {
                 <span style={{
                   fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', flexShrink: 0,
                   color: job.status === 'done' ? '#16a34a' : job.status === 'error' ? '#c0392b' : job.status === 'generating' ? '#7c3aed' : job.status === 'waiting' ? '#f59e0b' : '#9ca3af',
-                }}>{job.status === 'waiting' ? `waiting ${provider === 'google' ? '5s' : '2s'}…` : job.status}</span>
+                }}>{job.status === 'waiting' ? `waiting ${provider === 'google' ? '12s' : '3s'}…` : job.status}</span>
               </div>
             ))}
           </div>

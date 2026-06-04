@@ -94,8 +94,10 @@ router.post('/', async (req, res) => {
     res.json({ url });
   } catch (err) {
     console.error('generate-image error:', err);
-    const msg = err?.error?.message || err?.message || 'Image generation failed';
-    res.status(500).json({ error: msg });
+    // Google SDK wraps errors as { error: { code, message, status } }
+    const msg = err?.error?.message || err?.response?.data?.error?.message || err?.message || 'Image generation failed';
+    const status = err?.error?.code === 429 ? 429 : 500;
+    res.status(status).json({ error: msg });
   }
 });
 
