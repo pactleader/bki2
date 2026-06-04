@@ -199,7 +199,7 @@ adm.put('/:id', async (req, res) => {
        seo_keywords || null, og_image || null, req.params.id]
     );
     res.json({ ok: true, slug });
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+  } catch (err) { console.error(err); res.status(500).json({ error: err.message || 'Server error' }); }
 });
 
 // POST /api/admin/articles/:id/publish
