@@ -155,6 +155,7 @@ adm.post('/', async (req, res) => {
             publish_date, seo_title, seo_description, seo_keywords, og_image } = req.body;
     if (!title || !category_id) return res.status(400).json({ error: 'Title and category required' });
 
+    const normalizeDate = d => d ? d.replace('T', ' ').replace('Z', '').split('.')[0] : null;
     const slug = await uniqueSlug('articles', title);
     const [result] = await db.execute(
       `INSERT INTO articles
@@ -164,7 +165,7 @@ adm.post('/', async (req, res) => {
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
        req.user.sub, category_id, status || 'draft',
-       publish_date || null, seo_title || null, seo_description || null,
+       normalizeDate(publish_date), seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null]
     );
     res.status(201).json({ id: result.insertId, slug });
@@ -186,6 +187,8 @@ adm.put('/:id', async (req, res) => {
     if (title && title !== existing[0].title)
       slug = await uniqueSlug('articles', title, parseInt(req.params.id));
 
+    const normalizeDate = d => d ? d.replace('T', ' ').replace('Z', '').split('.')[0] : null;
+
     await db.execute(
       `UPDATE articles SET
          title=?, slug=?, excerpt=?, body=?, featured_image=?, featured_image_alt=?,
@@ -194,7 +197,7 @@ adm.put('/:id', async (req, res) => {
        WHERE id=?`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
-       category_id, status || 'draft', publish_date || null,
+       category_id, status || 'draft', normalizeDate(publish_date),
        seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null, req.params.id]
     );
