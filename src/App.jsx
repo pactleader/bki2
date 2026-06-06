@@ -522,16 +522,16 @@ function HeroZone({ setPage, hero: heroProp }) {
   return (
     <section aria-label="Lead story" style={{ background: 'var(--color-bg)', position: 'relative' }}>
       <div className="wrap" style={{ padding: '0 24px' }}>
-        <div style={{ display: 'flex', gap: 0, minHeight: 420, flexWrap: 'wrap', background: 'var(--color-primary)', overflow: 'hidden', borderRadius: '0 0 8px 8px' }}>
+        <div style={{ display: 'flex', gap: 0, minHeight: 315, flexWrap: 'wrap', background: 'var(--color-primary)', overflow: 'hidden', borderRadius: '0 0 8px 8px' }}>
         {/* Image — 60% on desktop */}
-        <div className="hero-img-col" style={{ flex: '1 1 58%', minHeight: 300, position: 'relative' }}>
+        <div className="hero-img-col" style={{ flex: '1 1 58%', minHeight: 225, position: 'relative' }}>
           <ArticleImage aspect="unset" style={{ height: '100%', borderRadius: 0 }} seed={hero.id} category={hero.category?.name || hero.category} src={hero.featured_image} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent 50%, var(--color-primary) 100%)' }} />
         </div>
         {/* Text — 40% */}
         <div style={{
           flex: '1 1 38%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: '48px 40px 48px 32px', position: 'relative', zIndex: 2, minWidth: 280,
+          padding: '36px 40px 36px 32px', position: 'relative', zIndex: 2, minWidth: 280,
         }}>
           <CatTag category={hero.category?.name || hero.category} onClick={() => setPage(catNameToPage(hero.category?.name || hero.category))} />
           <h1 onClick={() => setPage('article-' + hero.id, hero.slug)} style={{
@@ -539,11 +539,6 @@ function HeroZone({ setPage, hero: heroProp }) {
             fontWeight: 700, color: '#fff', lineHeight: 1.15, marginTop: 14, cursor: 'pointer',
             letterSpacing: -0.5,
           }}>{hero.title}</h1>
-          <p style={{
-            fontFamily: 'var(--f-body)', fontSize: 'var(--text-base)', color: 'rgba(255,255,255,0.65)',
-            lineHeight: 1.7, marginTop: 16, maxWidth: 420,
-            display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-          }}>{hero.excerpt}</p>
           <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
             <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>By {hero.author?.display_name || hero.author}</span>
             <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.3)' }}>{hero.publish_date ? new Date(hero.publish_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : hero.date}</span>
