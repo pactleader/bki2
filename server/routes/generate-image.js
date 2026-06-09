@@ -47,7 +47,7 @@ async function generateWithOpenAI(prompt, apiKey) {
         model:  'gpt-image-1',
         prompt: prompt.trim(),
         n:      1,
-        size:   '1792x1024',
+        size:   '1536x1024',
       });
     } else {
       throw err;
