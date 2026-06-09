@@ -30,19 +30,42 @@ function downloadFile(url, dest) {
 async function generateWithOpenAI(prompt, apiKey) {
   const { default: OpenAI } = require('openai');
   const openai = new OpenAI({ apiKey });
-  const response = await openai.images.generate({
-    model:   'dall-e-3',
-    prompt:  prompt.trim(),
-    n:       1,
-    size:    '1792x1024',
-    quality: 'standard',
-  });
-  const imageUrl = response.data[0]?.url;
+
+  // Try dall-e-3 first; fall back to gpt-image-1 if the model is unavailable
+  let response;
+  try {
+    response = await openai.images.generate({
+      model:   'dall-e-3',
+      prompt:  prompt.trim(),
+      n:       1,
+      size:    '1792x1024',
+      quality: 'standard',
+    });
+  } catch (err) {
+    if (err?.status === 404 || /does not exist|model_not_found/i.test(err?.message || '')) {
+      response = await openai.images.generate({
+        model:  'gpt-image-1',
+        prompt: prompt.trim(),
+        n:      1,
+        size:   '1792x1024',
+      });
+    } else {
+      throw err;
+    }
+  }
+
+  const imageUrl = response.data[0]?.url || response.data[0]?.b64_json && `data:image/png;base64,${response.data[0].b64_json}`;
   if (!imageUrl) throw new Error('No image returned from OpenAI');
 
   const filename = `ai-${Date.now()}.png`;
   const dest = path.join(UPLOAD_DIR, filename);
-  await downloadFile(imageUrl, dest);
+
+  if (imageUrl.startsWith('data:')) {
+    const b64 = imageUrl.split(',')[1];
+    fs.writeFileSync(dest, Buffer.from(b64, 'base64'));
+  } else {
+    await downloadFile(imageUrl, dest);
+  }
   return `/uploads/${filename}`;
 }
 
