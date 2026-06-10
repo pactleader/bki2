@@ -93,6 +93,8 @@ app.use((err, req, res, _next) => {
 });
 
 const PORT = parseInt(process.env.PORT || '4000');
-app.listen(PORT, '127.0.0.1', () => {
+const server = app.listen(PORT, '127.0.0.1', () => {
   console.log(`BKI API running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
 });
+server.timeout = 120000;        // 2 min — covers slow AI image generation
+server.keepAliveTimeout = 120000;

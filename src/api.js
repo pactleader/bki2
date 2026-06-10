@@ -12,6 +12,7 @@ export const getArticles   = (params)     => get(`/articles?${new URLSearchParam
 export const getArticle    = (id)         => get(`/articles/${id}`);
 export const getArticleBySlug = (slug)    => get(`/articles/slug/${slug}`);
 export const getCategory   = (slug, page) => get(`/articles?category=${slug}&page=${page || 1}&limit=12`);
+export const getCategories = ()           => get('/categories');
 export const getEvents     = ()           => get('/events');
 export const getAds        = (position)   => get(`/ads?position=${position}`);
 export const getMenu       = ()           => get('/menu');

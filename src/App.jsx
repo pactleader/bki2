@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getEvents, getAds, getMenu, subscribe, submitContact, getSettings } from "./api.js";
+import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getCategories, getEvents, getAds, getMenu, subscribe, submitContact, getSettings } from "./api.js";
 
 // ─── DATA ────────────────────────────────────────────────
 const ARTICLES = {
@@ -51,6 +51,12 @@ const CAT_COLORS = {
   'National News': '#0d3b66',
   'Press Releases': '#6a1b9a',
 };
+
+// Populated at runtime from /api/categories — keyed by both name and slug
+let catColorMap = {};
+function getCatColor(nameOrSlug) {
+  return catColorMap[nameOrSlug] || CAT_COLORS[nameOrSlug] || '#444';
+}
 
 const HIGHLIGHTS = [
   { label: 'Opinion', title: 'Why Background Screening is the Hidden Backbone of Global HR', id: 3186 },
@@ -238,7 +244,7 @@ function CatTag({ category, onClick }) {
       onClick={onClick}
       style={{
         fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 700,
-        color: '#fff', background: CAT_COLORS[category] || '#444',
+        color: '#fff', background: getCatColor(category),
         padding: '3px 10px', borderRadius: 2, letterSpacing: '0.8px',
         textTransform: 'uppercase', cursor: onClick ? 'pointer' : 'default',
         display: 'inline-block', lineHeight: 1.5,
@@ -583,7 +589,6 @@ function ContainerA({ article, reverse = false, setPage }) {
           <h2 onClick={() => setPage('article-' + article.id, article.slug)} style={{
             fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700,
             color: 'var(--color-text-primary)', lineHeight: 1.2, marginTop: 12, cursor: 'pointer',
-            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             letterSpacing: -0.3,
           }}>{article.title}</h2>
           <p style={{
@@ -629,7 +634,6 @@ function ContainerB({ articles, setPage }) {
           <h3 style={{
             fontFamily: 'var(--f-display)', fontSize: 'var(--text-lg)', fontWeight: 700,
             color: 'var(--color-text-primary)', lineHeight: 1.25, marginTop: 8,
-            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{a.title}</h3>
           <div style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 8 }}>{a.author?.display_name || a.author}</div>
         </article>
@@ -661,7 +665,6 @@ function ContainerC({ large, small, setPage }) {
         <h3 style={{
           fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
           color: 'var(--color-text-primary)', lineHeight: 1.2, marginTop: 10,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>{large.title}</h3>
         <p style={{
           fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
@@ -682,7 +685,6 @@ function ContainerC({ large, small, setPage }) {
         <h3 style={{
           fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
           color: 'var(--color-text-primary)', lineHeight: 1.25, marginTop: 10,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>{small.title}</h3>
       </article>
     </div>
@@ -740,7 +742,6 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                 <h3 style={{
                   fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
                   color: 'var(--color-text-primary)', lineHeight: 1.3,
-                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
                   {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
@@ -769,7 +770,6 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                   <h3 style={{
                     fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
                     color: 'var(--color-text-primary)', lineHeight: 1.3,
-                    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                   }}>{a.title}</h3>
                   <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
                     {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
@@ -792,7 +792,6 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
               <h3 style={{
                 fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
                 color: 'var(--color-text-primary)', lineHeight: 1.2,
-                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}>{a.title}</h3>
               <p style={{
                 fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
@@ -820,7 +819,6 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                   <h3 style={{
                     fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
                     color: 'var(--color-text-primary)', lineHeight: 1.3,
-                    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                   }}>{a.title}</h3>
                   <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
                     {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
@@ -847,7 +845,6 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
               <h3 style={{
                 fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700,
                 color: 'var(--color-text-primary)', lineHeight: 1.2,
-                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}>{articles[0].title}</h3>
               <p style={{
                 fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
@@ -870,7 +867,6 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                 <h3 style={{
                   fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
                   color: 'var(--color-text-primary)', lineHeight: 1.3,
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
                   {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
@@ -897,7 +893,6 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                 <h3 style={{
                   fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
                   color: 'var(--color-text-primary)', lineHeight: 1.3,
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
                   {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
@@ -918,7 +913,6 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
               <h3 style={{
                 fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', fontWeight: 700,
                 color: 'var(--color-text-primary)', lineHeight: 1.2,
-                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}>{articles[3].title}</h3>
               <p style={{
                 fontFamily: 'var(--f-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)',
@@ -1106,7 +1100,6 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
             <h4 style={{
               fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
               color: 'var(--color-text-primary)', lineHeight: 1.3,
-              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}>{a.title}</h4>
           </div>
         ))}
@@ -1322,7 +1315,6 @@ function MoreArticles({ setPage }) {
                     <h3 style={{
                       fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
                       color: 'var(--color-text-primary)', lineHeight: 1.3,
-                      display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                     }}>{a.title}</h3>
                     <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
                       {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
@@ -1448,7 +1440,7 @@ function CategoryPage({ category, title, setPage, partners }) {
   const [page, setPageNum] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef(null);
-  const color = CAT_COLORS[title] || '#444';
+  const color = getCatColor(title);
   useMeta({ title, description: `Latest ${title.toLowerCase()} from The Background Investigator.` });
 
   // Reset when category changes
@@ -1532,7 +1524,6 @@ function CategoryPage({ category, title, setPage, partners }) {
                 <h3 style={{
                   fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
                   color: 'var(--color-text-primary)', lineHeight: 1.3, marginTop: 8,
-                  display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                 }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
                   {a.author?.display_name || a.author} · {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
@@ -2364,6 +2355,19 @@ export default function App() {
   const [logoUrl, setLogoUrl] = useState('');
 
   // Inject custom scripts from site settings
+  useEffect(() => {
+    getCategories().then(cats => {
+      if (Array.isArray(cats)) {
+        cats.forEach(c => {
+          if (c.color_hex) {
+            catColorMap[c.name] = c.color_hex;
+            catColorMap[c.slug] = c.color_hex;
+          }
+        });
+      }
+    }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     getSettings().then(map => {
       if (map['category_page_map'] && typeof map['category_page_map'] === 'object') {
