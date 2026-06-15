@@ -51,7 +51,7 @@ pub.get('/', async (req, res) => {
       `SELECT ${ARTICLE_SELECT} FROM articles a
        JOIN users u ON a.author_id = u.id
        JOIN categories c ON a.category_id = c.id
-       ${where} ORDER BY a.publish_date DESC, a.created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+       ${where} ORDER BY COALESCE(a.publish_date, a.created_at) DESC, a.created_at DESC LIMIT ${limit} OFFSET ${offset}`,
       params
     );
 
@@ -180,7 +180,7 @@ adm.put('/:id', async (req, res) => {
     if (req.user.role === 'author' && existing[0].author_id !== req.user.sub)
       return res.status(403).json({ error: 'Forbidden' });
 
-    const { title, excerpt, body, featured_image, featured_image_alt, category_id, status,
+    const { title, excerpt, body, featured_image, featured_image_alt, category_id, author_id, status,
             publish_date, seo_title, seo_description, seo_keywords, og_image } = req.body;
 
     let slug = existing[0].slug;
@@ -189,15 +189,17 @@ adm.put('/:id', async (req, res) => {
 
     const normalizeDate = d => d ? d.replace('T', ' ').replace('Z', '').split('.')[0] : null;
 
+    const resolvedAuthorId = (req.user.role === 'admin' && author_id) ? author_id : existing[0].author_id;
+
     await db.execute(
       `UPDATE articles SET
          title=?, slug=?, excerpt=?, body=?, featured_image=?, featured_image_alt=?,
-         category_id=?, status=?, publish_date=?,
+         category_id=?, author_id=?, status=?, publish_date=?,
          seo_title=?, seo_description=?, seo_keywords=?, og_image=?
        WHERE id=?`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
-       category_id, status || 'draft', normalizeDate(publish_date),
+       category_id, resolvedAuthorId, status || 'draft', normalizeDate(publish_date),
        seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null, req.params.id]
     );
