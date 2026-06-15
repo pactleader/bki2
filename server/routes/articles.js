@@ -39,7 +39,7 @@ pub.get('/', async (req, res) => {
     const params = [];
 
     if (category)      { conds.push('c.slug = ?'); params.push(category); }
-    if (search)        { conds.push('MATCH(a.title, a.excerpt) AGAINST(? IN BOOLEAN MODE)'); params.push(`${search}*`); }
+    if (search)        { conds.push('(a.title LIKE ? OR a.excerpt LIKE ?)'); params.push(`%${search}%`, `%${search}%`); }
     if (has_thumbnail) { conds.push("a.featured_image IS NOT NULL AND a.featured_image != ''"); }
 
     const where = 'WHERE ' + conds.join(' AND ');

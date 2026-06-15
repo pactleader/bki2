@@ -26,7 +26,7 @@ pub.get('/', async (req, res) => {
          JOIN categories c ON a.category_id = c.id
          WHERE a.category_id = ? AND a.status = 'published'
            AND (a.publish_date IS NULL OR a.publish_date <= NOW())
-         ORDER BY a.publish_date DESC, a.created_at DESC
+         ORDER BY COALESCE(a.publish_date, a.created_at) DESC, a.created_at DESC
          LIMIT ${parseInt(sec.article_count, 10)}`,
         [sec.category_id]
       );
@@ -84,7 +84,7 @@ pub.get('/', async (req, res) => {
          JOIN categories c ON a.category_id = c.id
          WHERE a.category_id = ? AND a.status = 'published'
            AND (a.publish_date IS NULL OR a.publish_date <= NOW())
-         ORDER BY a.publish_date DESC, a.created_at DESC
+         ORDER BY COALESCE(a.publish_date, a.created_at) DESC, a.created_at DESC
          LIMIT 1`,
         [heroCategoryId]
       );
