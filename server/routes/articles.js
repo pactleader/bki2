@@ -35,7 +35,7 @@ pub.get('/', async (req, res) => {
     const { page, limit, offset } = paginate(req.query);
     const { category, search, has_thumbnail } = req.query;
 
-    const conds = [`a.status = 'published'`, `(a.publish_date IS NULL OR a.publish_date <= NOW())`];
+    const conds = [`a.status = 'published'`];
     const params = [];
 
     if (category)      { conds.push('c.slug = ?'); params.push(category); }
