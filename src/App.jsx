@@ -1283,17 +1283,20 @@ function MoreArticles({ setPage }) {
             borderTop: '3px solid var(--color-border)', paddingTop: 24, marginBottom: 20,
           }}>More Articles</h2>
           <style>{`
-            .ma-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px; }
-            .ma-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
-            @media (max-width: 700px) {
-              .ma-row-3, .ma-row-4 { grid-template-columns: repeat(2, 1fr); }
+            .ma-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+            .ma-row-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 20px; }
+            @media (max-width: 900px) {
+              .ma-row-4, .ma-row-5 { grid-template-columns: repeat(3, 1fr); }
             }
-            @media (max-width: 480px) {
-              .ma-row-3, .ma-row-4 { grid-template-columns: 1fr; }
+            @media (max-width: 600px) {
+              .ma-row-4, .ma-row-5 { grid-template-columns: repeat(2, 1fr); }
+            }
+            @media (max-width: 400px) {
+              .ma-row-4, .ma-row-5 { grid-template-columns: 1fr; }
             }
           `}</style>
           {(() => {
-            const pattern = [3, 3, 4, 4];
+            const pattern = [4, 4, 5, 5];
             const rows = [];
             let i = 0, rowIdx = 0;
             while (i < articles.length) {
@@ -1306,8 +1309,8 @@ function MoreArticles({ setPage }) {
             }
             return rows.map(({ cols, chunk }, ri) => (
               <div key={ri}>
-              {ri > 0 && ri % 2 === 0 && <AdSlot position="in-feed" style={{ margin: '8px 0 24px' }} />}
-              <div className={cols === 3 ? 'ma-row-3' : 'ma-row-4'}>
+              {ri > 0 && ri % 2 === 0 && <AdSlot position="in-feed" style={{ margin: '8px 0 20px' }} />}
+              <div className={cols === 4 ? 'ma-row-4' : 'ma-row-5'}>
                 {chunk.map(a => (
                   <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
                     <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
@@ -1420,10 +1423,13 @@ function HomePage({ setPage, partners }) {
             );
           })}
           <AdSlot position="leaderboard-mid" style={{ margin: '20px 0 40px' }} />
-          <MoreArticles setPage={setPage} />
         </div>
 
         <Sidebar setPage={setPage} mostReadOverride={mostRead} partners={partners} />
+      </div>
+
+      <div className="wrap" style={{ padding: '0 24px' }}>
+        <MoreArticles setPage={setPage} />
       </div>
     </>
   );
