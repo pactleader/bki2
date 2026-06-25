@@ -2487,8 +2487,8 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700&family=Source+Serif+4:ital,wght@0,400;0,600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <style>{`
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; overflow-x: hidden; }
-        body { background: var(--color-bg); overflow-x: hidden; }
+        html { scroll-behavior: smooth; overflow-x: clip; }
+        body { background: var(--color-bg); overflow-x: clip; }
         ::selection { background: #c0392b; color: #fff; }
         img { max-width: 100%; height: auto; display: block; }
         input:focus, textarea:focus { border-color: #c0392b !important; }
