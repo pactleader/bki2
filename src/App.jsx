@@ -1079,38 +1079,38 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
   }, [mostReadOverride]);
 
   return (
-    <aside className="sidebar-col" aria-label="Sidebar" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36 }}>
-      {/* Sticky block 1: Most Read + sidebar-1 ad */}
-      <div style={{ position: 'sticky', top: 16 }}>
-        {/* Most Read */}
-        <div style={{ marginBottom: 32 }}>
-          <h3 style={{
-            fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800,
-            textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--color-text-secondary)',
-            paddingBottom: 10, borderBottom: '2px solid var(--color-accent)', marginBottom: 0,
-          }}>Most Read</h3>
-          {mostReadList.slice(0, 7).map((a, i) => (
-            <div key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
-              display: 'flex', gap: 12, padding: '12px 0',
-              borderBottom: '1px solid var(--color-border)', cursor: 'pointer',
-              alignItems: 'flex-start',
-            }}>
-              <span style={{
-                fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700,
-                color: i < 3 ? '#c0392b' : '#ddd', lineHeight: 1, minWidth: 28,
-              }}>{i + 1}</span>
-              <h4 style={{
-                fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
-                color: 'var(--color-text-primary)', lineHeight: 1.3,
-              }}>{a.title}</h4>
-            </div>
-          ))}
-        </div>
-
-        <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
+    <aside className="sidebar-col" aria-label="Sidebar" style={{
+      flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36,
+      position: 'sticky', top: 16, alignSelf: 'flex-start',
+    }}>
+      {/* Most Read */}
+      <div style={{ marginBottom: 32 }}>
+        <h3 style={{
+          fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800,
+          textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--color-text-secondary)',
+          paddingBottom: 10, borderBottom: '2px solid var(--color-accent)', marginBottom: 0,
+        }}>Most Read</h3>
+        {mostReadList.slice(0, 7).map((a, i) => (
+          <div key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
+            display: 'flex', gap: 12, padding: '12px 0',
+            borderBottom: '1px solid var(--color-border)', cursor: 'pointer',
+            alignItems: 'flex-start',
+          }}>
+            <span style={{
+              fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700,
+              color: i < 3 ? '#c0392b' : '#ddd', lineHeight: 1, minWidth: 28,
+            }}>{i + 1}</span>
+            <h4 style={{
+              fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
+              color: 'var(--color-text-primary)', lineHeight: 1.3,
+            }}>{a.title}</h4>
+          </div>
+        ))}
       </div>
 
-      {/* Partners (not sticky — scroll spacer between ads) */}
+      <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
+
+      {/* Partners */}
       {partners.length > 0 && (
         <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
           <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
@@ -1123,12 +1123,10 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
         </div>
       )}
 
-      {/* Sidebar slots 2–5: each sticky individually, stacks as user scrolls */}
-      {['sidebar-2', 'sidebar-3', 'sidebar-4', 'sidebar-5'].map(slot => (
-        <div key={slot} style={{ position: 'sticky', top: 16 }}>
-          <AdSlot position={slot} w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
-        </div>
-      ))}
+      <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
+      <AdSlot position="sidebar-3" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
+      <AdSlot position="sidebar-4" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
+      <AdSlot position="sidebar-5" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
     </aside>
   );
 }
