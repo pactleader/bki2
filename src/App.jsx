@@ -1279,7 +1279,7 @@ function MoreArticles({ setPage }) {
   }, [loaded, loading]);
 
   return (
-    <div style={{ paddingBottom: 48 }}>
+    <div style={{ paddingBottom: 48, padding: '0 24px 48px' }}>
       <div ref={sentinelRef} />
       {loading && (
         <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '32px 0' }}>Loading more articles…</p>
@@ -1437,9 +1437,7 @@ function HomePage({ setPage, partners }) {
         <Sidebar setPage={setPage} mostReadOverride={mostRead} partners={partners} />
       </div>
 
-      <div className="wrap" style={{ padding: '0 24px' }}>
-        <MoreArticles setPage={setPage} />
-      </div>
+      <MoreArticles setPage={setPage} />
     </>
   );
 }
