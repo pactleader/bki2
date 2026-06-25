@@ -1110,7 +1110,7 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
         <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
       </div>
 
-      {/* Partners (not sticky — acts as scroll spacer between the two ads) */}
+      {/* Partners (not sticky — scroll spacer between ads) */}
       {partners.length > 0 && (
         <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
           <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
@@ -1123,10 +1123,12 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
         </div>
       )}
 
-      {/* Sticky block 2: sidebar-2 ad sticks once sidebar-1 scrolls out */}
-      <div style={{ position: 'sticky', top: 16 }}>
-        <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
-      </div>
+      {/* Sidebar slots 2–5: each sticky individually, stacks as user scrolls */}
+      {['sidebar-2', 'sidebar-3', 'sidebar-4', 'sidebar-5'].map(slot => (
+        <div key={slot} style={{ position: 'sticky', top: 16 }}>
+          <AdSlot position={slot} w="100%" maxW={300} h={250} style={{ marginBottom: 28 }} />
+        </div>
+      ))}
     </aside>
   );
 }
@@ -1397,7 +1399,7 @@ function HomePage({ setPage, partners }) {
       {latestArticles.length > 0 && <NewsTicker highlights={latestArticles} setPage={setPage} />}
       <HeroZone setPage={setPage} hero={heroArticle} />
 
-      <div className="wrap" style={{ display: 'flex', gap: 40, flexWrap: 'wrap', padding: '0 24px' }}>
+      <div className="wrap" style={{ display: 'flex', gap: 40, flexWrap: 'wrap', padding: '0 24px', alignItems: 'flex-start' }}>
         <div style={{ flex: '1 1 600px', minWidth: 0 }}>
           {sections.map((sec, idx) => {
             const pageKey = SLUG_TO_PAGE[sec.category.slug] || sec.category.slug;
@@ -1511,7 +1513,7 @@ function CategoryPage({ category, title, setPage, partners }) {
         @media (max-width: 900px) { .cat-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 540px) { .cat-grid { grid-template-columns: 1fr; } }
       `}</style>
-      <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <div style={{ flex: '1 1 600px', minWidth: 0 }}>
           <div style={{ borderBottom: `3px solid ${color}`, paddingBottom: 8, marginTop: 32 }}>
             <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', fontWeight: 700, color }}>{title}</h1>

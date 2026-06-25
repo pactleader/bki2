@@ -8,8 +8,11 @@ import PageHeader, { Btn, Card, Field, Input, Select } from '../../components/Pa
 const POSITIONS = [
   { value: 'leaderboard-top', label: 'Leaderboard Top' },
   { value: 'leaderboard-mid', label: 'Leaderboard Mid' },
-  { value: 'sidebar-1',       label: 'Sidebar 1' },
-  { value: 'sidebar-2',       label: 'Sidebar 2' },
+  { value: 'sidebar-1',       label: 'Sidebar — Slot 1 (top)' },
+  { value: 'sidebar-2',       label: 'Sidebar — Slot 2' },
+  { value: 'sidebar-3',       label: 'Sidebar — Slot 3' },
+  { value: 'sidebar-4',       label: 'Sidebar — Slot 4' },
+  { value: 'sidebar-5',       label: 'Sidebar — Slot 5 (bottom)' },
   { value: 'in-feed',         label: 'In-Feed' },
   { value: 'footer-banner',   label: 'Footer Banner' },
 ];
@@ -161,10 +164,6 @@ export default function AdEdit() {
               </div>
             </div>
           </div>
-
-          <Field label="Display Order">
-            <Input type="number" value={form.display_order} onChange={e => set('display_order', parseInt(e.target.value) || 0)} />
-          </Field>
 
           <Field label="Status">
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
