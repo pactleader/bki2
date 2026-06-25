@@ -1081,8 +1081,9 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
   return (
     <aside className="sidebar-col" aria-label="Sidebar" style={{
       flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36,
+      position: 'sticky', top: 16, alignSelf: 'flex-start',
     }}>
-      {/* Most Read — scrolls normally */}
+      {/* Most Read — scrolls with sidebar */}
       <div style={{ marginBottom: 32 }}>
         <h3 style={{
           fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800,
@@ -1107,12 +1108,10 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
         ))}
       </div>
 
-      {/* Ad 1 — sticky at top */}
-      <div style={{ position: 'sticky', top: 16, zIndex: 10, marginBottom: 28 }}>
+      <div style={{ marginBottom: 28 }}>
         <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
       </div>
 
-      {/* Partners — scrolls normally, acts as spacer before ad 2 */}
       {partners.length > 0 && (
         <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
           <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
@@ -1125,17 +1124,16 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
         </div>
       )}
 
-      {/* Ad 2 — sticky below ad 1 once partners scroll past */}
-      <div style={{ position: 'sticky', top: 16, zIndex: 9, marginBottom: 28 }}>
+      <div style={{ marginBottom: 28 }}>
         <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} />
       </div>
-      <div style={{ position: 'sticky', top: 16, zIndex: 8, marginBottom: 28 }}>
+      <div style={{ marginBottom: 28 }}>
         <AdSlot position="sidebar-3" w="100%" maxW={300} h={250} />
       </div>
-      <div style={{ position: 'sticky', top: 16, zIndex: 7, marginBottom: 28 }}>
+      <div style={{ marginBottom: 28 }}>
         <AdSlot position="sidebar-4" w="100%" maxW={300} h={250} />
       </div>
-      <div style={{ position: 'sticky', top: 16, zIndex: 6, marginBottom: 28 }}>
+      <div style={{ marginBottom: 28 }}>
         <AdSlot position="sidebar-5" w="100%" maxW={300} h={250} />
       </div>
     </aside>
