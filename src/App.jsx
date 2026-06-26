@@ -1366,9 +1366,9 @@ function MoreArticles({ setPage }) {
                   </div>
                   {/* Sidebar slot — only for first N slots, then full-width */}
                   {slot && (
-                    <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
+                    <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 300 }}>
                       <div style={{ position: 'sticky', top: 72 }}>
-                        <AdSlot position={slot} w="100%" maxW={300} h={250} />
+                        <AdSlot position={slot} w={300} maxW={300} h={250} />
                       </div>
                     </div>
                   )}
@@ -1462,12 +1462,12 @@ function HomePage({ setPage, partners }) {
               {idx === 1 && <InlineNewsletter />}
             </div>
             {/* Sidebar column — alignItems:stretch so this div is as tall as the content beside it, enabling sticky */}
-            <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
+            <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 300 }}>
               <div style={{ position: 'sticky', top: 72, paddingTop: 36 }}>
                 {rowIdx === 0 && (
                   <>
                     <SidebarMostRead setPage={setPage} mostRead={mostRead} />
-                    <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
+                    <AdSlot position="sidebar-1" w={300} maxW={300} h={250} />
                   </>
                 )}
                 {rowIdx === 1 && (
@@ -1483,7 +1483,7 @@ function HomePage({ setPage, partners }) {
                         ))}
                       </div>
                     )}
-                    <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} />
+                    <AdSlot position="sidebar-2" w={300} maxW={300} h={250} />
                   </>
                 )}
               </div>
