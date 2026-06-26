@@ -1283,8 +1283,31 @@ function MoreArticles({ setPage }) {
     return () => obs.disconnect();
   }, [loaded, loading]);
 
+  // Group article rows into sections of 2 rows each, each section gets a sidebar slot
+  const MA_SIDEBAR_SLOTS = ['sidebar-3', 'sidebar-4', 'sidebar-5'];
+  const ROWS_PER_SECTION = 2;
+
+  function ArticleCard({ a }) {
+    return (
+      <article onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
+        <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
+          <div style={{ transition: 'transform 300ms ease' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+          </div>
+        </div>
+        <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>{a.title}</h3>
+        <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
+          {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+        </span>
+      </article>
+    );
+  }
+
   return (
-    <div style={{ paddingBottom: 48, padding: '0 24px 48px' }}>
+    <div style={{ padding: '0 24px 48px' }}>
       <div ref={sentinelRef} />
       {loading && (
         <p style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '32px 0' }}>Loading more articles…</p>
@@ -1310,6 +1333,7 @@ function MoreArticles({ setPage }) {
             }
           `}</style>
           {(() => {
+            // Build article rows first
             const pattern = [4, 4, 5, 5];
             const rows = [];
             let i = 0, rowIdx = 0;
@@ -1321,32 +1345,34 @@ function MoreArticles({ setPage }) {
               i += cols;
               rowIdx++;
             }
-            return rows.map(({ cols, chunk }, ri) => (
-              <div key={ri}>
-              {ri > 0 && ri % 2 === 0 && <AdSlot position="in-feed" style={{ margin: '8px 0 20px' }} />}
-              <div className={cols === 4 ? 'ma-row-4' : 'ma-row-5'}>
-                {chunk.map(a => (
-                  <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
-                    <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
-                      <div style={{ transition: 'transform 300ms ease' }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                      >
-                        <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+
+            // Group rows into sections of ROWS_PER_SECTION
+            const sections = [];
+            for (let s = 0; s < rows.length; s += ROWS_PER_SECTION) {
+              sections.push(rows.slice(s, s + ROWS_PER_SECTION));
+            }
+
+            return sections.map((sectionRows, si) => {
+              const slot = MA_SIDEBAR_SLOTS[si % MA_SIDEBAR_SLOTS.length];
+              return (
+                <div key={si} style={{ display: 'flex', gap: 40, alignItems: 'flex-start', marginBottom: 8 }}>
+                  {/* Article rows */}
+                  <div style={{ flex: '1 1 0', minWidth: 0 }}>
+                    {sectionRows.map(({ cols, chunk }, ri) => (
+                      <div key={ri} className={cols === 4 ? 'ma-row-4' : 'ma-row-5'}>
+                        {chunk.map(a => <ArticleCard key={a.id} a={a} />)}
                       </div>
+                    ))}
+                  </div>
+                  {/* Sidebar slot — sticky for this section */}
+                  <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
+                    <div style={{ position: 'sticky', top: 16 }}>
+                      <AdSlot position={slot} w="100%" maxW={300} h={250} />
                     </div>
-                    <h3 style={{
-                      fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700,
-                      color: 'var(--color-text-primary)', lineHeight: 1.3,
-                    }}>{a.title}</h3>
-                    <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                      {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
-                    </span>
-                  </article>
-                ))}
-              </div>
-              </div>
-            ));
+                  </div>
+                </div>
+              );
+            });
           })()}
         </>
       )}
@@ -1406,44 +1432,6 @@ function HomePage({ setPage, partners }) {
     </div>
   );
 
-  // Sidebar chunks: one per section, sticky per row
-  const sidebarChunks = [
-    // Row 0: Most Read + Ad 1
-    ({ setPage, mostRead, partners }) => (
-      <div style={{ position: 'sticky', top: 16 }}>
-        <SidebarMostRead setPage={setPage} mostRead={mostRead} />
-        <div style={{ marginBottom: 28 }}>
-          <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
-        </div>
-      </div>
-    ),
-    // Row 1: Partners + Ad 2
-    ({ partners }) => (
-      <div style={{ position: 'sticky', top: 16 }}>
-        {partners.length > 0 && (
-          <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
-            <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
-            {partners.map((p, i) => (
-              <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
-                style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-accent)', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
-                {p.name}
-              </a>
-            ))}
-          </div>
-        )}
-        <div style={{ marginBottom: 28 }}>
-          <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} />
-        </div>
-      </div>
-    ),
-    // Row 2: Ad 3
-    () => <div style={{ position: 'sticky', top: 16 }}><div style={{ marginBottom: 28 }}><AdSlot position="sidebar-3" w="100%" maxW={300} h={250} /></div></div>,
-    // Row 3: Ad 4
-    () => <div style={{ position: 'sticky', top: 16 }}><div style={{ marginBottom: 28 }}><AdSlot position="sidebar-4" w="100%" maxW={300} h={250} /></div></div>,
-    // Row 4+: Ad 5
-    () => <div style={{ position: 'sticky', top: 16 }}><div style={{ marginBottom: 28 }}><AdSlot position="sidebar-5" w="100%" maxW={300} h={250} /></div></div>,
-  ];
-
   const visibleSections = sections.map((sec, idx) => {
     const pageKey = SLUG_TO_PAGE[sec.category.slug] || sec.category.slug;
     const isHeroSection = heroArticle && sec.category.id === heroArticle.category?.id;
@@ -1457,28 +1445,47 @@ function HomePage({ setPage, partners }) {
       <HeroZone setPage={setPage} hero={heroArticle} />
 
       <div className="wrap" style={{ padding: '0 24px' }}>
-        {visibleSections.map(({ sec, idx, pageKey, arts }, rowIdx) => {
-          const ChunkComponent = sidebarChunks[Math.min(rowIdx, sidebarChunks.length - 1)];
-          return (
-            <div key={sec.category.id} style={{ display: 'flex', gap: 40, alignItems: 'flex-start' }}>
-              <div style={{ flex: '1 1 600px', minWidth: 0 }}>
-                <ContainerD
-                  title={sec.category.name}
-                  articles={arts}
-                  sectionKey={pageKey}
-                  color={sec.category.color_hex}
-                  setPage={setPage}
-                  layout={sec.layout || 'grid'}
-                />
-                {idx === 0 && <AdSlot position="leaderboard-top" style={{ margin: '20px 0' }} />}
-                {idx === 1 && <InlineNewsletter />}
-              </div>
-              <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36 }}>
-                <ChunkComponent setPage={setPage} mostRead={mostRead} partners={partners} />
-              </div>
+        {visibleSections.map(({ sec, idx, pageKey, arts }, rowIdx) => (
+          <div key={sec.category.id} style={{ display: 'flex', gap: 40, alignItems: 'flex-start' }}>
+            <div style={{ flex: '1 1 600px', minWidth: 0 }}>
+              <ContainerD
+                title={sec.category.name}
+                articles={arts}
+                sectionKey={pageKey}
+                color={sec.category.color_hex}
+                setPage={setPage}
+                layout={sec.layout || 'grid'}
+              />
+              {idx === 0 && <AdSlot position="leaderboard-top" style={{ margin: '20px 0' }} />}
+              {idx === 1 && <InlineNewsletter />}
             </div>
-          );
-        })}
+            <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36 }}>
+              {rowIdx === 0 && (
+                <div style={{ position: 'sticky', top: 16 }}>
+                  <SidebarMostRead setPage={setPage} mostRead={mostRead} />
+                  <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
+                </div>
+              )}
+              {rowIdx === 1 && (
+                <div style={{ position: 'sticky', top: 16 }}>
+                  {partners.length > 0 && (
+                    <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
+                      <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
+                      {partners.map((p, i) => (
+                        <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
+                          style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-accent)', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
+                          {p.name}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} />
+                </div>
+              )}
+              {rowIdx > 1 && <div style={{ position: 'sticky', top: 16 }} />}
+            </div>
+          </div>
+        ))}
         <AdSlot position="leaderboard-mid" style={{ margin: '20px 0 40px' }} />
       </div>
 
