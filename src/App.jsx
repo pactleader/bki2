@@ -1627,7 +1627,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
   async function fetchArticle(id) {
     if (isPreview) {
-      const token = localStorage.getItem('bki_token');
+      const token = localStorage.getItem('bki_admin_token');
       const res = await fetch(`/api/admin/articles/detail/${id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
