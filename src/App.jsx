@@ -1353,7 +1353,7 @@ function MoreArticles({ setPage }) {
             }
 
             return sections.map((sectionRows, si) => {
-              const slot = MA_SIDEBAR_SLOTS[si % MA_SIDEBAR_SLOTS.length];
+              const slot = si < MA_SIDEBAR_SLOTS.length ? MA_SIDEBAR_SLOTS[si] : null;
               return (
                 <div key={si} style={{ display: 'flex', gap: 40, alignItems: 'stretch', marginBottom: 8 }}>
                   {/* Article rows */}
@@ -1364,12 +1364,14 @@ function MoreArticles({ setPage }) {
                       </div>
                     ))}
                   </div>
-                  {/* Sidebar slot — sticky within this section's height */}
-                  <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
-                    <div style={{ position: 'sticky', top: 72 }}>
-                      <AdSlot position={slot} w="100%" maxW={300} h={250} />
+                  {/* Sidebar slot — only for first N slots, then full-width */}
+                  {slot && (
+                    <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
+                      <div style={{ position: 'sticky', top: 72 }}>
+                        <AdSlot position={slot} w="100%" maxW={300} h={250} />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             });
