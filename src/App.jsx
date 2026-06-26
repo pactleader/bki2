@@ -1623,12 +1623,26 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   const [prevArticle, setPrevArticle] = useState(null);
   const [nextArticle, setNextArticle] = useState(null);
 
+  const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
+
+  async function fetchArticle(id) {
+    if (isPreview) {
+      const token = localStorage.getItem('bki_token');
+      const res = await fetch(`/api/admin/articles/detail/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Not found');
+      return res.json();
+    }
+    return getArticle(id);
+  }
+
   useEffect(() => {
     setLoading(true);
     setRelated([]);
     setPrevArticle(null);
     setNextArticle(null);
-    getArticle(articleId)
+    fetchArticle(articleId)
       .then(a => {
         setArticle(a);
         if (a?.slug && onSlug) onSlug(a.slug);
@@ -1672,6 +1686,12 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
   return (
     <div className="wrap" {...swipe}>
       <style>{`.article-col { flex: 1 1 600px; min-width: 0; max-width: 720px; padding-top: 32px; } @media (max-width: 768px) { .article-col { flex-basis: 100%; max-width: 100%; } } .swipe-nav { display: none; } @media (max-width: 768px) { .swipe-nav { display: flex; } }`}</style>
+      {isPreview && (
+        <div style={{ background: '#f59e0b', color: '#000', padding: '8px 16px', borderRadius: 4, marginTop: 16, marginBottom: 4, fontFamily: 'var(--f-ui)', fontSize: 13, fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>⚠ Draft Preview — this article is not published</span>
+          <a href={`/admin/articles/${article.id}/edit`} style={{ color: '#000', textDecoration: 'underline', fontSize: 12 }}>← Back to Editor</a>
+        </div>
+      )}
       {(prevArticle || nextArticle) && (
         <div className="swipe-nav" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)', marginBottom: 4, fontFamily: 'var(--f-ui)', fontSize: 12, color: 'var(--color-text-secondary)' }}>
           <button onClick={() => prevArticle && setPage('article-' + prevArticle.id, prevArticle.slug)}

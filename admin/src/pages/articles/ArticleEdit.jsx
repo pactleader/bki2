@@ -452,8 +452,18 @@ export default function ArticleEdit() {
       <PageHeader
         title={isNew ? 'New Article' : 'Edit Article'}
         action={
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Link to="/admin/articles"><Btn variant="outline">← Back</Btn></Link>
+            {!isNew && form.status === 'published' && form.slug && (
+              <a href={`/Articles/${form.slug}/${id}/`} target="_blank" rel="noopener noreferrer">
+                <Btn variant="outline">View Article ↗</Btn>
+              </a>
+            )}
+            {!isNew && form.status === 'draft' && (
+              <a href={`/Articles/${form.slug || id}/${id}/?preview=1`} target="_blank" rel="noopener noreferrer">
+                <Btn variant="outline">Preview Draft ↗</Btn>
+              </a>
+            )}
             <Btn onClick={() => save(false)} disabled={saving} variant="outline">
               {saving ? 'Saving…' : 'Save Draft'}
             </Btn>
