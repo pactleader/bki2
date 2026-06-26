@@ -122,7 +122,8 @@ function normalizeArticleBody(html = '') {
     .replace(/&nbsp;|&#160;|&#xA0;|\u00a0/gi, ' ')
     .replace(/white-space\s*:\s*nowrap\s*;?/gi, '')
     .replace(/word-break\s*:\s*break-all\s*;?/gi, '')
-    .replace(/overflow-wrap\s*:\s*anywhere\s*;?/gi, '');
+    .replace(/overflow-wrap\s*:\s*anywhere\s*;?/gi, '')
+    .replace(/href="(?!https?:|mailto:|tel:|\/|#)([^"]+)"/gi, 'href="https://$1"');
 }
 
 // ─── ARTICLE IMAGES — Stock photos matched to each headline ──
