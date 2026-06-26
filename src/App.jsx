@@ -286,19 +286,20 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
 
   if (!tried || !ad) return null;
 
+  const autoHeight = h === 'auto' || !h;
   const inner = (
     <img
       src={ad.image_url}
       alt={ad.name}
-      style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+      style={{ width: '100%', height: autoHeight ? 'auto' : '100%', objectFit: autoHeight ? 'fill' : 'contain', display: 'block' }}
     />
   );
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', ...style }}>
-      <div style={{ width: w, maxWidth: maxW, height: h, overflow: 'hidden', lineHeight: 0 }}>
+      <div style={{ width: w, maxWidth: maxW, ...(autoHeight ? {} : { height: h }), overflow: 'hidden', lineHeight: 0 }}>
         {ad.link_url
-          ? <a href={ad.link_url} target="_blank" rel="noopener noreferrer sponsored" style={{ display: 'block', height: '100%' }}>{inner}</a>
+          ? <a href={ad.link_url} target="_blank" rel="noopener noreferrer sponsored" style={{ display: 'block', height: autoHeight ? 'auto' : '100%' }}>{inner}</a>
           : inner}
       </div>
     </div>
@@ -1124,7 +1125,7 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
     }}>
       <SidebarMostRead setPage={setPage} mostRead={mostReadOverride || []} />
       <div style={{ marginBottom: 28 }}>
-        <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
+        <AdSlot position="sidebar-1" w="100%" maxW={300} h="auto" />
       </div>
       {partners.length > 0 && (
         <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
@@ -1137,10 +1138,10 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
           ))}
         </div>
       )}
-      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-2" w="100%" maxW={300} h={250} /></div>
-      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-3" w="100%" maxW={300} h={250} /></div>
-      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-4" w="100%" maxW={300} h={250} /></div>
-      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-5" w="100%" maxW={300} h={250} /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-2" w="100%" maxW={300} h="auto" /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-3" w="100%" maxW={300} h="auto" /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-4" w="100%" maxW={300} h="auto" /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-5" w="100%" maxW={300} h="auto" /></div>
     </aside>
   );
 }
@@ -1368,7 +1369,7 @@ function MoreArticles({ setPage }) {
                   {slot && (
                     <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 300 }}>
                       <div style={{ position: 'sticky', top: 72 }}>
-                        <AdSlot position={slot} w={300} maxW={300} h={250} />
+                        <AdSlot position={slot} w="100%" maxW={300} h="auto" />
                       </div>
                     </div>
                   )}
@@ -1467,7 +1468,7 @@ function HomePage({ setPage, partners }) {
                 {rowIdx === 0 && (
                   <>
                     <SidebarMostRead setPage={setPage} mostRead={mostRead} />
-                    <AdSlot position="sidebar-1" w={300} maxW={300} h={250} />
+                    <AdSlot position="sidebar-1" w="100%" maxW={300} h="auto" />
                   </>
                 )}
                 {rowIdx === 1 && (
@@ -1483,7 +1484,7 @@ function HomePage({ setPage, partners }) {
                         ))}
                       </div>
                     )}
-                    <AdSlot position="sidebar-2" w={300} maxW={300} h={250} />
+                    <AdSlot position="sidebar-2" w="100%" maxW={300} h="auto" />
                   </>
                 )}
               </div>
