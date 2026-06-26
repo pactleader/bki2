@@ -1120,7 +1120,7 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
   return (
     <aside className="sidebar-col" aria-label="Sidebar" style={{
       flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36,
-      position: 'sticky', top: 16, alignSelf: 'flex-start',
+      position: 'sticky', top: 72, alignSelf: 'flex-start',
     }}>
       <SidebarMostRead setPage={setPage} mostRead={mostReadOverride || []} />
       <div style={{ marginBottom: 28 }}>
@@ -1366,7 +1366,7 @@ function MoreArticles({ setPage }) {
                   </div>
                   {/* Sidebar slot — sticky within this section's height */}
                   <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
-                    <div style={{ position: 'sticky', top: 16 }}>
+                    <div style={{ position: 'sticky', top: 72 }}>
                       <AdSlot position={slot} w="100%" maxW={300} h={250} />
                     </div>
                   </div>
@@ -1461,7 +1461,7 @@ function HomePage({ setPage, partners }) {
             </div>
             {/* Sidebar column — alignItems:stretch so this div is as tall as the content beside it, enabling sticky */}
             <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
-              <div style={{ position: 'sticky', top: 16, paddingTop: 36 }}>
+              <div style={{ position: 'sticky', top: 72, paddingTop: 36 }}>
                 {rowIdx === 0 && (
                   <>
                     <SidebarMostRead setPage={setPage} mostRead={mostRead} />
