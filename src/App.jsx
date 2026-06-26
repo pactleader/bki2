@@ -1082,53 +1082,50 @@ function SearchPage({ query, setPage, partners }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────
 
-function Sidebar({ setPage, mostReadOverride, partners = [] }) {
-  const [mostReadList, setMostReadList] = useState(mostReadOverride || []);
-
+function SidebarMostRead({ setPage, mostRead = [] }) {
+  const [list, setList] = useState(mostRead);
   useEffect(() => {
-    if (mostReadOverride && mostReadOverride.length > 0) {
-      setMostReadList(mostReadOverride);
-      return;
-    }
-    getMostRead()
-      .then(data => { if (data?.length) setMostReadList(data); })
-      .catch(() => {});
-  }, [mostReadOverride]);
+    if (mostRead.length > 0) { setList(mostRead); return; }
+    getMostRead().then(data => { if (data?.length) setList(data); }).catch(() => {});
+  }, [mostRead]);
 
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <h3 style={{
+        fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800,
+        textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--color-text-secondary)',
+        paddingBottom: 10, borderBottom: '2px solid var(--color-accent)', marginBottom: 0,
+      }}>Most Read</h3>
+      {list.slice(0, 7).map((a, i) => (
+        <div key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
+          display: 'flex', gap: 12, padding: '12px 0',
+          borderBottom: '1px solid var(--color-border)', cursor: 'pointer', alignItems: 'flex-start',
+        }}>
+          <span style={{
+            fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700,
+            color: i < 3 ? '#c0392b' : '#ddd', lineHeight: 1, minWidth: 28,
+          }}>{i + 1}</span>
+          <h4 style={{
+            fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
+            color: 'var(--color-text-primary)', lineHeight: 1.3,
+          }}>{a.title}</h4>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Used on article/category pages — single sticky sidebar with all content
+function Sidebar({ setPage, mostReadOverride, partners = [] }) {
   return (
     <aside className="sidebar-col" aria-label="Sidebar" style={{
       flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36,
       position: 'sticky', top: 16, alignSelf: 'flex-start',
     }}>
-      {/* Most Read — scrolls with sidebar */}
-      <div style={{ marginBottom: 32 }}>
-        <h3 style={{
-          fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800,
-          textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--color-text-secondary)',
-          paddingBottom: 10, borderBottom: '2px solid var(--color-accent)', marginBottom: 0,
-        }}>Most Read</h3>
-        {mostReadList.slice(0, 7).map((a, i) => (
-          <div key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{
-            display: 'flex', gap: 12, padding: '12px 0',
-            borderBottom: '1px solid var(--color-border)', cursor: 'pointer',
-            alignItems: 'flex-start',
-          }}>
-            <span style={{
-              fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700,
-              color: i < 3 ? '#c0392b' : '#ddd', lineHeight: 1, minWidth: 28,
-            }}>{i + 1}</span>
-            <h4 style={{
-              fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
-              color: 'var(--color-text-primary)', lineHeight: 1.3,
-            }}>{a.title}</h4>
-          </div>
-        ))}
-      </div>
-
+      <SidebarMostRead setPage={setPage} mostRead={mostReadOverride || []} />
       <div style={{ marginBottom: 28 }}>
         <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
       </div>
-
       {partners.length > 0 && (
         <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
           <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
@@ -1140,19 +1137,10 @@ function Sidebar({ setPage, mostReadOverride, partners = [] }) {
           ))}
         </div>
       )}
-
-      <div style={{ marginBottom: 28 }}>
-        <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} />
-      </div>
-      <div style={{ marginBottom: 28 }}>
-        <AdSlot position="sidebar-3" w="100%" maxW={300} h={250} />
-      </div>
-      <div style={{ marginBottom: 28 }}>
-        <AdSlot position="sidebar-4" w="100%" maxW={300} h={250} />
-      </div>
-      <div style={{ marginBottom: 28 }}>
-        <AdSlot position="sidebar-5" w="100%" maxW={300} h={250} />
-      </div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-2" w="100%" maxW={300} h={250} /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-3" w="100%" maxW={300} h={250} /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-4" w="100%" maxW={300} h={250} /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-5" w="100%" maxW={300} h={250} /></div>
     </aside>
   );
 }
@@ -1418,40 +1406,80 @@ function HomePage({ setPage, partners }) {
     </div>
   );
 
+  // Sidebar chunks: one per section, sticky per row
+  const sidebarChunks = [
+    // Row 0: Most Read + Ad 1
+    ({ setPage, mostRead, partners }) => (
+      <div style={{ position: 'sticky', top: 16 }}>
+        <SidebarMostRead setPage={setPage} mostRead={mostRead} />
+        <div style={{ marginBottom: 28 }}>
+          <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
+        </div>
+      </div>
+    ),
+    // Row 1: Partners + Ad 2
+    ({ partners }) => (
+      <div style={{ position: 'sticky', top: 16 }}>
+        {partners.length > 0 && (
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
+            <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
+            {partners.map((p, i) => (
+              <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
+                style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-accent)', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
+                {p.name}
+              </a>
+            ))}
+          </div>
+        )}
+        <div style={{ marginBottom: 28 }}>
+          <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} />
+        </div>
+      </div>
+    ),
+    // Row 2: Ad 3
+    () => <div style={{ position: 'sticky', top: 16 }}><div style={{ marginBottom: 28 }}><AdSlot position="sidebar-3" w="100%" maxW={300} h={250} /></div></div>,
+    // Row 3: Ad 4
+    () => <div style={{ position: 'sticky', top: 16 }}><div style={{ marginBottom: 28 }}><AdSlot position="sidebar-4" w="100%" maxW={300} h={250} /></div></div>,
+    // Row 4+: Ad 5
+    () => <div style={{ position: 'sticky', top: 16 }}><div style={{ marginBottom: 28 }}><AdSlot position="sidebar-5" w="100%" maxW={300} h={250} /></div></div>,
+  ];
+
+  const visibleSections = sections.map((sec, idx) => {
+    const pageKey = SLUG_TO_PAGE[sec.category.slug] || sec.category.slug;
+    const isHeroSection = heroArticle && sec.category.id === heroArticle.category?.id;
+    const arts = isHeroSection ? sec.articles.filter(a => a.id !== heroArticle.id) : sec.articles;
+    return arts.length === 0 ? null : { sec, idx, pageKey, arts };
+  }).filter(Boolean);
+
   return (
     <>
       {latestArticles.length > 0 && <NewsTicker highlights={latestArticles} setPage={setPage} />}
       <HeroZone setPage={setPage} hero={heroArticle} />
 
-      <div className="wrap" style={{ display: 'flex', gap: 40, flexWrap: 'wrap', padding: '0 24px', alignItems: 'flex-start' }}>
-        <div style={{ flex: '1 1 600px', minWidth: 0 }}>
-          {sections.map((sec, idx) => {
-            const pageKey = SLUG_TO_PAGE[sec.category.slug] || sec.category.slug;
-            const isHeroSection = heroArticle && sec.category.id === heroArticle.category?.id;
-            const arts = isHeroSection
-              ? sec.articles.filter(a => a.id !== heroArticle.id)
-              : sec.articles;
-            if (arts.length === 0) return null;
-            const layout = sec.layout || 'grid';
-            return (
-              <div key={sec.category.id}>
+      <div className="wrap" style={{ padding: '0 24px' }}>
+        {visibleSections.map(({ sec, idx, pageKey, arts }, rowIdx) => {
+          const ChunkComponent = sidebarChunks[Math.min(rowIdx, sidebarChunks.length - 1)];
+          return (
+            <div key={sec.category.id} style={{ display: 'flex', gap: 40, alignItems: 'flex-start' }}>
+              <div style={{ flex: '1 1 600px', minWidth: 0 }}>
                 <ContainerD
                   title={sec.category.name}
                   articles={arts}
                   sectionKey={pageKey}
                   color={sec.category.color_hex}
                   setPage={setPage}
-                  layout={layout}
+                  layout={sec.layout || 'grid'}
                 />
                 {idx === 0 && <AdSlot position="leaderboard-top" style={{ margin: '20px 0' }} />}
                 {idx === 1 && <InlineNewsletter />}
               </div>
-            );
-          })}
-          <AdSlot position="leaderboard-mid" style={{ margin: '20px 0 40px' }} />
-        </div>
-
-        <Sidebar setPage={setPage} mostReadOverride={mostRead} partners={partners} />
+              <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36 }}>
+                <ChunkComponent setPage={setPage} mostRead={mostRead} partners={partners} />
+              </div>
+            </div>
+          );
+        })}
+        <AdSlot position="leaderboard-mid" style={{ margin: '20px 0 40px' }} />
       </div>
 
       <MoreArticles setPage={setPage} />
