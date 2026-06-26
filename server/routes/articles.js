@@ -101,7 +101,7 @@ adm.use(verifyToken);
 adm.get('/', async (req, res) => {
   try {
     const { page, limit, offset } = paginate(req.query);
-    const { status, category_id, search } = req.query;
+    const { status, category_id, search, sort } = req.query;
 
     const conds = [];
     const params = [];
@@ -113,6 +113,13 @@ adm.get('/', async (req, res) => {
 
     const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
 
+    const ORDER_BY = {
+      recent:   'COALESCE(a.publish_date, a.created_at) DESC, a.created_at DESC',
+      views:    'a.view_count DESC, COALESCE(a.publish_date, a.created_at) DESC',
+      edited:   'a.updated_at DESC',
+    };
+    const orderBy = ORDER_BY[sort] || ORDER_BY.recent;
+
     const [[{ total }]] = await db.execute(
       `SELECT COUNT(*) AS total FROM articles a
        JOIN users u ON a.author_id = u.id
@@ -123,7 +130,7 @@ adm.get('/', async (req, res) => {
       `SELECT ${ARTICLE_SELECT} FROM articles a
        JOIN users u ON a.author_id = u.id
        JOIN categories c ON a.category_id = c.id
-       ${where} ORDER BY a.updated_at DESC LIMIT ${limit} OFFSET ${offset}`,
+       ${where} ORDER BY ${orderBy} LIMIT ${limit} OFFSET ${offset}`,
       params
     );
 

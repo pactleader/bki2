@@ -10,7 +10,7 @@ export default function ArticleList() {
   const [articles, setArticles] = useState([]);
   const [meta, setMeta] = useState({});
   const [categories, setCategories] = useState([]);
-  const [filters, setFilters] = useState({ status: '', category_id: '', search: '', page: 1 });
+  const [filters, setFilters] = useState({ status: '', category_id: '', search: '', sort: 'recent', page: 1 });
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
 
@@ -73,12 +73,18 @@ export default function ArticleList() {
             <option value="">All Categories</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+          <select value={filters.sort} onChange={e => setFilters(f => ({ ...f, sort: e.target.value, page: 1 }))}
+            style={{ padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}>
+            <option value="recent">Most Recent</option>
+            <option value="views">Most Views</option>
+            <option value="edited">Last Edited</option>
+          </select>
         </div>
       </Card>
 
       <Card style={{ padding: 0 }}>
         {loading ? <div style={{ padding: 24, color: 'var(--text-muted)' }}>Loading…</div> : (
-          <Table headers={['Title', 'Category', 'Author', 'Status', 'Date', 'Views', '']}>
+          <Table headers={['Title', 'Category', 'Author', 'Status', filters.sort === 'edited' ? 'Last Edited' : 'Publish Date', 'Views', '']}>
             {articles.map(a => (
               <TR key={a.id}>
                 <TD>
@@ -99,7 +105,9 @@ export default function ArticleList() {
                   <Badge color={a.status === 'published' ? 'var(--success)' : '#888'}>{a.status}</Badge>
                 </TD>
                 <TD style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString() : '—'}
+                  {filters.sort === 'edited'
+                    ? (a.updated_at ? new Date(a.updated_at).toLocaleDateString() : '—')
+                    : (a.publish_date ? new Date(a.publish_date).toLocaleDateString() : '—')}
                 </TD>
                 <TD style={{ color: 'var(--text-muted)' }}>{a.view_count}</TD>
                 <TD>
