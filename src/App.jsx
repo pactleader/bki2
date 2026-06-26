@@ -1116,12 +1116,12 @@ function SidebarMostRead({ setPage, mostRead = [] }) {
   );
 }
 
-// Used on article/category pages — single sticky sidebar with all content
-function Sidebar({ setPage, mostReadOverride, partners = [] }) {
+// Used on article/category pages — single sidebar with optional sticky
+function Sidebar({ setPage, mostReadOverride, partners = [], sticky = true }) {
   return (
     <aside className="sidebar-col" aria-label="Sidebar" style={{
       flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36,
-      position: 'sticky', top: 72, alignSelf: 'flex-start',
+      ...(sticky ? { position: 'sticky', top: 72, alignSelf: 'flex-start' } : {}),
     }}>
       <SidebarMostRead setPage={setPage} mostRead={mostReadOverride || []} />
       <div style={{ marginBottom: 28 }}>
@@ -1622,7 +1622,7 @@ function CategoryPage({ category, title, setPage, partners }) {
             </div>
           )}
         </div>
-        <Sidebar setPage={setPage} partners={partners} />
+        <Sidebar setPage={setPage} partners={partners} sticky={false} />
       </div>
     </div>
   );
