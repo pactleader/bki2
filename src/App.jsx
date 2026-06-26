@@ -1356,7 +1356,9 @@ function MoreArticles({ setPage }) {
             return sections.map((sectionRows, si) => {
               const slot = si < MA_SIDEBAR_SLOTS.length ? MA_SIDEBAR_SLOTS[si] : null;
               return (
-                <div key={si} style={{ display: 'flex', gap: 40, alignItems: 'stretch', marginBottom: 8 }}>
+                <div key={si}>
+                  {si > 0 && <AdSlot position="in-feed" style={{ margin: '8px 0 20px' }} />}
+                <div style={{ display: 'flex', gap: 40, alignItems: 'stretch', marginBottom: 8 }}>
                   {/* Article rows */}
                   <div style={{ flex: '1 1 0', minWidth: 0 }}>
                     {sectionRows.map(({ cols, chunk }, ri) => (
@@ -1373,6 +1375,7 @@ function MoreArticles({ setPage }) {
                       </div>
                     </div>
                   )}
+                </div>
                 </div>
               );
             });
