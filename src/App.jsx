@@ -1355,7 +1355,7 @@ function MoreArticles({ setPage }) {
             return sections.map((sectionRows, si) => {
               const slot = MA_SIDEBAR_SLOTS[si % MA_SIDEBAR_SLOTS.length];
               return (
-                <div key={si} style={{ display: 'flex', gap: 40, alignItems: 'flex-start', marginBottom: 8 }}>
+                <div key={si} style={{ display: 'flex', gap: 40, alignItems: 'stretch', marginBottom: 8 }}>
                   {/* Article rows */}
                   <div style={{ flex: '1 1 0', minWidth: 0 }}>
                     {sectionRows.map(({ cols, chunk }, ri) => (
@@ -1364,7 +1364,7 @@ function MoreArticles({ setPage }) {
                       </div>
                     ))}
                   </div>
-                  {/* Sidebar slot — sticky for this section */}
+                  {/* Sidebar slot — sticky within this section's height */}
                   <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
                     <div style={{ position: 'sticky', top: 16 }}>
                       <AdSlot position={slot} w="100%" maxW={300} h={250} />
@@ -1446,7 +1446,7 @@ function HomePage({ setPage, partners }) {
 
       <div className="wrap" style={{ padding: '0 24px' }}>
         {visibleSections.map(({ sec, idx, pageKey, arts }, rowIdx) => (
-          <div key={sec.category.id} style={{ display: 'flex', gap: 40, alignItems: 'flex-start' }}>
+          <div key={sec.category.id} style={{ display: 'flex', gap: 40, alignItems: 'stretch' }}>
             <div style={{ flex: '1 1 600px', minWidth: 0 }}>
               <ContainerD
                 title={sec.category.name}
@@ -1459,30 +1459,32 @@ function HomePage({ setPage, partners }) {
               {idx === 0 && <AdSlot position="leaderboard-top" style={{ margin: '20px 0' }} />}
               {idx === 1 && <InlineNewsletter />}
             </div>
-            <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300, marginTop: 36 }}>
-              {rowIdx === 0 && (
-                <div style={{ position: 'sticky', top: 16 }}>
-                  <SidebarMostRead setPage={setPage} mostRead={mostRead} />
-                  <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
-                </div>
-              )}
-              {rowIdx === 1 && (
-                <div style={{ position: 'sticky', top: 16 }}>
-                  {partners.length > 0 && (
-                    <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
-                      <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
-                      {partners.map((p, i) => (
-                        <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
-                          style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-accent)', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
-                          {p.name}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                  <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} />
-                </div>
-              )}
-              {rowIdx > 1 && <div style={{ position: 'sticky', top: 16 }} />}
+            {/* Sidebar column — alignItems:stretch so this div is as tall as the content beside it, enabling sticky */}
+            <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 0, maxWidth: 300 }}>
+              <div style={{ position: 'sticky', top: 16, paddingTop: 36 }}>
+                {rowIdx === 0 && (
+                  <>
+                    <SidebarMostRead setPage={setPage} mostRead={mostRead} />
+                    <AdSlot position="sidebar-1" w="100%" maxW={300} h={250} />
+                  </>
+                )}
+                {rowIdx === 1 && (
+                  <>
+                    {partners.length > 0 && (
+                      <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
+                        <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
+                        {partners.map((p, i) => (
+                          <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
+                            style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-accent)', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
+                            {p.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    <AdSlot position="sidebar-2" w="100%" maxW={300} h={250} />
+                  </>
+                )}
+              </div>
             </div>
           </div>
         ))}
