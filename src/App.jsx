@@ -117,13 +117,29 @@ function useScrollReveal() {
 }
 
 function normalizeArticleBody(html = '') {
-  return String(html)
+  const URL_RE = /(?<!\bhref=["'])(?<!\bsrc=["'])(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+\.[^\s<>"']{2,})/gi;
+
+  let s = String(html)
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/&nbsp;|&#160;|&#xA0;|\u00a0/gi, ' ')
     .replace(/white-space\s*:\s*nowrap\s*;?/gi, '')
     .replace(/word-break\s*:\s*break-all\s*;?/gi, '')
     .replace(/overflow-wrap\s*:\s*anywhere\s*;?/gi, '')
     .replace(/href="(?!https?:|mailto:|tel:|\/|#)([^"]+)"/gi, 'href="https://$1"');
+
+  // Auto-link bare URLs in text nodes only (skip content inside HTML tags)
+  s = s.replace(/(<[^>]+>)|([^<]+)/g, (match, tag, text) => {
+    if (tag) return tag; // leave HTML tags untouched
+    return text.replace(URL_RE, url => {
+      const href = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+  });
+
+  // Ensure all existing links also open in new tab
+  s = s.replace(/<a\s(?![^>]*target=)/gi, '<a target="_blank" rel="noopener noreferrer" ');
+
+  return s;
 }
 
 // ─── ARTICLE IMAGES — Stock photos matched to each headline ──
