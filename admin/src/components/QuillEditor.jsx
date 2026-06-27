@@ -68,7 +68,7 @@ export default function QuillEditor({ value, onChange }) {
             border: '1px solid var(--border)', borderRadius: 3, cursor: 'pointer',
           }}
         >
-          {sourceMode ? 'Visual Editor' : '&lt;/&gt; Source'}
+          {sourceMode ? 'Visual Editor' : '</> Source'}
         </button>
       </div>
 
