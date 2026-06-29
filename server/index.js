@@ -64,6 +64,9 @@ app.use('/api/admin/pages',           require('./routes/pages').admin);
 app.use('/api/subscribe',        require('./routes/subscribers').public);
 app.use('/api/admin/subscribers',require('./routes/subscribers').admin);
 
+// ── Sitemap ────────────────────────────────────────────────────
+app.use('/sitemap.xml', require('./routes/sitemap'));
+
 // ── 301 Redirects — must come before SSR and SPA fallback ────
 app.use(require('./routes/redirects').public);
 
