@@ -4,7 +4,7 @@ const db      = require('../db');
 const router  = express.Router();
 
 const SITE_NAME = 'The Background Investigator';
-const SITE_URL  = process.env.SITE_URL || 'https://bki2.pacificpact.com';
+const SITE_URL  = process.env.SITE_URL || 'https://thebackgroundinvestigator.com';
 
 const BOT_RE = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|applebot|discordbot|embedly|outbrain|pinterest|quora|slack|vkshare|w3c_validator|lighthouse|headlesschrome|prerender|crawl|spider|bot\b/i;
 
@@ -41,7 +41,10 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
 
     const title       = a.seo_title || a.title;
     const description = a.seo_description || a.excerpt || '';
-    const image       = a.og_image || a.featured_image || `${SITE_URL}/og-image.svg`;
+    const rawImage    = a.og_image || a.featured_image || '';
+    const image       = rawImage
+      ? (rawImage.startsWith('http') ? rawImage : `${SITE_URL}${rawImage}`)
+      : `${SITE_URL}/og-image.svg`;
     const canonical   = `${SITE_URL}/Articles/${a.slug}/${a.id}/`;
     const pubDate     = a.publish_date
       ? new Date(a.publish_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -67,8 +70,11 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
   <meta property="og:title"       content="${esc(title)}" />
   <meta property="og:description" content="${esc(description)}" />
   <meta property="og:url"         content="${canonical}" />
-  <meta property="og:image"       content="${esc(image)}" />
-  <meta property="og:locale"      content="en_US" />
+  <meta property="og:image"        content="${esc(image)}" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type"   content="image/jpeg" />
+  <meta property="og:locale"       content="en_US" />
   ${pubDate ? `<meta property="article:published_time" content="${new Date(a.publish_date).toISOString()}" />` : ''}
 
   <!-- Twitter Card -->
