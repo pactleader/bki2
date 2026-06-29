@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
     );
 
     const [pages] = await db.execute(
-      `SELECT slug, updated_at FROM pages WHERE status = 'published'`
+      `SELECT slug, updated_at FROM pages WHERE is_published = 1`
     );
 
     const staticUrls = [
