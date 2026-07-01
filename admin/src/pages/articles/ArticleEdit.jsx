@@ -369,7 +369,6 @@ export default function ArticleEdit() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [slugLocked, setSlugLocked] = useState(!isNew);
-  const [tab, setTab] = useState('content');
 
   useEffect(() => {
     api.listCategories().then(setCategories).catch(() => {});
@@ -440,13 +439,6 @@ export default function ArticleEdit() {
 
   if (loading) return <div style={{ padding: 24, color: 'var(--text-muted)' }}>Loading…</div>;
 
-  const tabStyle = (t) => ({
-    padding: '8px 16px', border: 'none', background: 'none',
-    fontWeight: tab === t ? 600 : 400, cursor: 'pointer', fontSize: 13,
-    borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
-    color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-  });
-
   return (
     <div>
       <PageHeader
@@ -474,105 +466,96 @@ export default function ArticleEdit() {
         }
       />
 
-      {/* Tabs */}
-      <div style={{ borderBottom: '1px solid var(--border)', marginBottom: 20, display: 'flex' }}>
-        <button style={tabStyle('content')} onClick={() => setTab('content')}>Content</button>
-        <button style={tabStyle('meta')} onClick={() => setTab('meta')}>Meta & SEO</button>
-      </div>
-
-      {tab === 'content' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }}>
-          {/* Main */}
-          <div>
-            <Card style={{ marginBottom: 16 }}>
-              <Field label="Title">
-                <Input value={form.title} onChange={e => set('title', e.target.value)} placeholder="Article title" />
-              </Field>
-              <Field label="Slug" hint="Auto-generated from title. Click to edit manually.">
-                <Input
-                  value={form.slug}
-                  onChange={e => { setSlugLocked(true); set('slug', e.target.value); }}
-                  placeholder="article-slug"
-                  style={{ fontFamily: 'monospace', fontSize: 12 }}
-                />
-              </Field>
-              <Field label="Excerpt">
-                <Textarea value={form.excerpt} onChange={e => set('excerpt', e.target.value)} placeholder="Short summary shown in article cards…" style={{ minHeight: 80 }} />
-              </Field>
-            </Card>
-
-            <Card>
-              <Field label="Body">
-                <QuillEditor value={form.body} onChange={val => set('body', val)} />
-              </Field>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <Card>
-              <Field label="Status">
-                <Select value={form.status} onChange={e => set('status', e.target.value)}>
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </Select>
-              </Field>
-              <Field label="Publish Date" hint="Leave blank to publish immediately">
-                <Input type="datetime-local" value={form.publish_date} onChange={e => set('publish_date', e.target.value)} />
-              </Field>
-            </Card>
-
-            <Card>
-              <Field label="Category">
-                <Select value={form.category_id} onChange={e => set('category_id', e.target.value)}>
-                  <option value="">Select category…</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </Select>
-              </Field>
-
-              {user?.role === 'admin' && authors.length > 0 && (
-                <Field label="Author">
-                  <Select value={form.author_id || user.id} onChange={e => set('author_id', e.target.value)}>
-                    {authors.map(u => <option key={u.id} value={u.id}>{u.display_name}</option>)}
-                  </Select>
-                </Field>
-              )}
-            </Card>
-
-            <Card>
-              <FeaturedImageUpload
-                value={form.featured_image}
-                onChange={url => set('featured_image', url)}
-                altValue={form.featured_image_alt}
-                onAltChange={v => set('featured_image_alt', v)}
-                articleTitle={form.title}
-                authorName={authors.find(a => String(a.id) === String(form.author_id || user?.id))?.display_name || user?.display_name || ''}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }}>
+        {/* Main column */}
+        <div>
+          <Card style={{ marginBottom: 16 }}>
+            <Field label="Title">
+              <Input value={form.title} onChange={e => set('title', e.target.value)} placeholder="Article title" />
+            </Field>
+            <Field label="Slug" hint="Auto-generated from title. Click to edit manually.">
+              <Input
+                value={form.slug}
+                onChange={e => { setSlugLocked(true); set('slug', e.target.value); }}
+                placeholder="article-slug"
+                style={{ fontFamily: 'monospace', fontSize: 12 }}
               />
-            </Card>
-          </div>
-        </div>
-      )}
+            </Field>
+            <Field label="Excerpt">
+              <Textarea value={form.excerpt} onChange={e => set('excerpt', e.target.value)} placeholder="Short summary shown in article cards…" style={{ minHeight: 80 }} />
+            </Field>
+          </Card>
 
-      {tab === 'meta' && (
-        <Card style={{ maxWidth: 700 }}>
-          <Field label="SEO Title" hint="Leave blank to use article title">
-            <Input value={form.seo_title} onChange={e => set('seo_title', e.target.value)} />
-          </Field>
-          <Field label="SEO Description">
-            <Textarea value={form.seo_description} onChange={e => set('seo_description', e.target.value)} style={{ minHeight: 80 }} />
-          </Field>
-          <Field label="Keywords" hint="Comma-separated">
-            <Input value={form.seo_keywords} onChange={e => set('seo_keywords', e.target.value)} />
-          </Field>
-          <Field label="OG Image URL" hint="Overrides featured image for social sharing">
-            <Input value={form.og_image} onChange={e => set('og_image', e.target.value)} placeholder="https://…" />
-          </Field>
-          {form.og_image && (
-            <img src={form.og_image} alt="OG Preview" onError={e => e.target.style.display = 'none'}
-              style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 4, marginTop: 8 }} />
-          )}
-        </Card>
-      )}
+          <Card style={{ marginBottom: 16 }}>
+            <Field label="Body">
+              <QuillEditor value={form.body} onChange={val => set('body', val)} />
+            </Field>
+          </Card>
+
+          {/* Meta & SEO — below body */}
+          <Card>
+            <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-muted)', marginBottom: 16 }}>Meta &amp; SEO</div>
+            <Field label="SEO Title" hint="Leave blank to use article title">
+              <Input value={form.seo_title} onChange={e => set('seo_title', e.target.value)} />
+            </Field>
+            <Field label="SEO Description">
+              <Textarea value={form.seo_description} onChange={e => set('seo_description', e.target.value)} style={{ minHeight: 80 }} />
+            </Field>
+            <Field label="Keywords" hint="Comma-separated">
+              <Input value={form.seo_keywords} onChange={e => set('seo_keywords', e.target.value)} />
+            </Field>
+            <Field label="OG Image URL" hint="Overrides featured image for social sharing">
+              <Input value={form.og_image} onChange={e => set('og_image', e.target.value)} placeholder="https://…" />
+            </Field>
+            {form.og_image && (
+              <img src={form.og_image} alt="OG Preview" onError={e => e.target.style.display = 'none'}
+                style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 4, marginTop: 8 }} />
+            )}
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Card>
+            <Field label="Status">
+              <Select value={form.status} onChange={e => set('status', e.target.value)}>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </Select>
+            </Field>
+            <Field label="Publish Date" hint="Leave blank to publish immediately">
+              <Input type="datetime-local" value={form.publish_date} onChange={e => set('publish_date', e.target.value)} />
+            </Field>
+          </Card>
+
+          <Card>
+            <Field label="Category">
+              <Select value={form.category_id} onChange={e => set('category_id', e.target.value)}>
+                <option value="">Select category…</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </Select>
+            </Field>
+            {user?.role === 'admin' && authors.length > 0 && (
+              <Field label="Author">
+                <Select value={form.author_id || user.id} onChange={e => set('author_id', e.target.value)}>
+                  {authors.map(u => <option key={u.id} value={u.id}>{u.display_name}</option>)}
+                </Select>
+              </Field>
+            )}
+          </Card>
+
+          <Card>
+            <FeaturedImageUpload
+              value={form.featured_image}
+              onChange={url => set('featured_image', url)}
+              altValue={form.featured_image_alt}
+              onAltChange={v => set('featured_image_alt', v)}
+              articleTitle={form.title}
+              authorName={authors.find(a => String(a.id) === String(form.author_id || user?.id))?.display_name || user?.display_name || ''}
+            />
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

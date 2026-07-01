@@ -1814,6 +1814,8 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
                 display: inline !important;
               }
               .article-body * { box-sizing: border-box; max-width: 100%; }
+              .article-body p { margin-bottom: 1.2em; }
+              .article-body p:empty, .article-body p br:only-child { display: block; margin-bottom: 1.2em; }
               .article-body img { height: auto; display: block; }
               .article-body table {
                 display: block;
