@@ -18,7 +18,7 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
     }
     const [rows] = await db.execute(
       `SELECT a.id, a.title, a.slug, a.excerpt, a.body, a.featured_image,
-              a.publish_date, a.seo_title, a.seo_description, a.seo_keywords, a.og_image,
+              a.publish_date, a.seo_title, a.seo_description, a.seo_keywords, a.og_image, a.schema_json,
               u.display_name AS author_name,
               c.name AS category_name
        FROM articles a
@@ -84,7 +84,7 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
   <meta name="twitter:image"       content="${esc(image)}" />
 
   <!-- Structured Data -->
-  <script type="application/ld+json">${JSON.stringify({
+  <script type="application/ld+json">${a.schema_json ? a.schema_json.trim() : JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: a.title,

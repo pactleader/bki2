@@ -13,7 +13,7 @@ function slugify(text) {
 const EMPTY = {
   title: '', slug: '', excerpt: '', body: '', featured_image: '', featured_image_alt: '',
   category_id: '', status: 'draft', publish_date: '',
-  seo_title: '', seo_description: '', seo_keywords: '', og_image: '',
+  seo_title: '', seo_description: '', seo_keywords: '', og_image: '', schema_json: '',
 };
 
 function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '', authorName = '' }) {
@@ -396,6 +396,7 @@ export default function ArticleEdit() {
             seo_description: a.seo_description || '',
             seo_keywords: a.seo_keywords || '',
             og_image: a.og_image || '',
+            schema_json: a.schema_json || '',
           });
         })
         .catch(() => toast('Failed to load article', 'error'))
@@ -511,6 +512,18 @@ export default function ArticleEdit() {
               <img src={form.og_image} alt="OG Preview" onError={e => e.target.style.display = 'none'}
                 style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 4, marginTop: 8 }} />
             )}
+            <Field label="JSON-LD Schema" hint="Custom structured data — overrides auto-generated schema. Leave blank to use default NewsArticle schema.">
+              <Textarea
+                value={form.schema_json}
+                onChange={e => set('schema_json', e.target.value)}
+                style={{ minHeight: 160, fontFamily: 'monospace', fontSize: 12 }}
+                placeholder={'{\n  "@context": "https://schema.org",\n  "@type": "NewsArticle",\n  ...\n}'}
+              />
+              {form.schema_json && (() => {
+                try { JSON.parse(form.schema_json); return <div style={{ fontSize: 11, color: '#16a34a', marginTop: 4 }}>Valid JSON</div>; }
+                catch (e) { return <div style={{ fontSize: 11, color: '#dc2626', marginTop: 4 }}>Invalid JSON: {e.message}</div>; }
+              })()}
+            </Field>
           </Card>
         </div>
 
