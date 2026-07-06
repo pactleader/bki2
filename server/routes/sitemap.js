@@ -22,7 +22,7 @@ function fmt(date) {
 router.get('/', async (req, res) => {
   try {
     const [articles] = await db.execute(
-      `SELECT a.id, a.slug, a.publish_date, a.updated_at
+      `SELECT a.id, a.slug, a.publish_date, a.updated_at, a.use_slug_only
        FROM articles a
        WHERE a.status = 'published'
        ORDER BY COALESCE(a.publish_date, a.created_at) DESC`
@@ -57,7 +57,9 @@ router.get('/', async (req, res) => {
     }));
 
     const articleUrls = articles.map(a => ({
-      loc: `${BASE_URL}/Articles/${escapeXml(a.slug)}/${a.id}/`,
+      loc: a.use_slug_only
+        ? `${BASE_URL}/Articles/${escapeXml(a.slug)}/`
+        : `${BASE_URL}/Articles/${escapeXml(a.slug)}/${a.id}/`,
       lastmod: fmt(a.updated_at || a.publish_date),
       priority: '0.8',
       changefreq: 'weekly',

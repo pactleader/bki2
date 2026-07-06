@@ -7,7 +7,7 @@ const { paginate, paginateMeta }    = require('../utils/paginate');
 const ARTICLE_SELECT = `
   a.id, a.title, a.slug, a.excerpt, a.featured_image, a.featured_image_alt, a.status,
   a.publish_date, a.view_count, a.seo_title, a.seo_description,
-  a.seo_keywords, a.og_image, a.schema_json, a.created_at, a.updated_at,
+  a.seo_keywords, a.og_image, a.schema_json, a.use_slug_only, a.created_at, a.updated_at,
   u.id AS author_id, u.display_name AS author_name,
   c.id AS category_id, c.name AS category_name,
   c.slug AS category_slug, c.color_hex AS category_color
@@ -20,6 +20,7 @@ function fmt(row) {
     publish_date: row.publish_date, view_count: row.view_count,
     seo_title: row.seo_title, seo_description: row.seo_description,
     seo_keywords: row.seo_keywords, og_image: row.og_image, schema_json: row.schema_json,
+    use_slug_only: !!row.use_slug_only,
     created_at: row.created_at, updated_at: row.updated_at,
     author:   { id: row.author_id,   display_name: row.author_name },
     category: { id: row.category_id, name: row.category_name, slug: row.category_slug, color_hex: row.category_color },
@@ -167,8 +168,8 @@ adm.post('/', async (req, res) => {
     const [result] = await db.execute(
       `INSERT INTO articles
          (title, slug, excerpt, body, featured_image, featured_image_alt, author_id, category_id,
-          status, publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          status, publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json, use_slug_only)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
        req.user.sub, category_id, status || 'draft',

@@ -1659,7 +1659,7 @@ function useSwipeNav(onSwipeLeft, onSwipeRight) {
   return { onTouchStart, onTouchEnd };
 }
 
-function ArticlePage({ articleId, setPage, onSlug, partners }) {
+function ArticlePage({ articleId, articleSlug, setPage, onSlug, partners }) {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState([]);
@@ -1668,16 +1668,17 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
   const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
 
-  async function fetchArticle(id) {
+  async function fetchArticle() {
+    if (articleSlug) return getArticleBySlug(articleSlug);
     if (isPreview) {
       const token = localStorage.getItem('bki_admin_token');
-      const res = await fetch(`/api/admin/articles/detail/${id}`, {
+      const res = await fetch(`/api/admin/articles/detail/${articleId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error('Not found');
       return res.json();
     }
-    return getArticle(id);
+    return getArticle(articleId);
   }
 
   useEffect(() => {
@@ -1685,17 +1686,17 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
     setRelated([]);
     setPrevArticle(null);
     setNextArticle(null);
-    fetchArticle(articleId)
+    fetchArticle()
       .then(a => {
         setArticle(a);
-        if (a?.slug && onSlug) onSlug(a.slug);
+        if (a?.slug && onSlug) onSlug(a.slug, a);
         if (a?.category?.slug) {
           getArticles({ category: a.category.slug, limit: 500 })
             .then(res => {
               const all = res?.data || [];
-              const items = all.filter(r => r.id !== articleId).slice(0, 3);
+              const items = all.filter(r => r.id !== a.id).slice(0, 3);
               setRelated(items);
-              const idx = all.findIndex(r => r.id === articleId);
+              const idx = all.findIndex(r => r.id === a.id);
               if (idx !== -1) {
                 setPrevArticle(all[idx + 1] || null);
                 setNextArticle(all[idx - 1] || null);
@@ -1706,7 +1707,7 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [articleId]);
+  }, [articleId, articleSlug]);
 
   const swipe = useSwipeNav(
     useCallback(() => { if (nextArticle) setPage('article-' + nextArticle.id, nextArticle.slug); }, [nextArticle, setPage]),
@@ -1857,7 +1858,9 @@ function ArticlePage({ articleId, setPage, onSlug, partners }) {
 
           {/* Share */}
           {article && (() => {
-            const articleUrl = `${SITE_URL}/Articles/${article.slug}/${article.id}/`;
+            const articleUrl = article.use_slug_only
+              ? `${SITE_URL}/Articles/${article.slug}/`
+              : `${SITE_URL}/Articles/${article.slug}/${article.id}/`;
             const encoded    = encodeURIComponent(articleUrl);
             const encodedTitle = encodeURIComponent(article.title || '');
             const shares = [
@@ -2414,9 +2417,12 @@ function pagerBtn(active, disabled, color = '#c0392b') {
 // ─── URL HELPERS ─────────────────────────────────────────
 
 function parsePathToPage(pathname) {
-  // /Articles/{title-slug}/{id}/  or  /Articles/{title-slug}/{id}
+  // /Articles/{slug}/{id}/  — legacy format
   const m = pathname.match(/^\/Articles\/[^/]+\/(\d+)\/?$/i);
   if (m) return 'article-' + m[1];
+  // /Articles/{slug}/  — new slug-only format
+  const ms = pathname.match(/^\/Articles\/([^/]+)\/?$/i);
+  if (ms) return 'article-slug:' + ms[1];
   // /p/:slug  — static pages
   const pm = pathname.match(/^\/p\/([^/]+)\/?$/);
   if (pm) return 'page-' + pm[1];
@@ -2429,10 +2435,15 @@ function parsePathToPage(pathname) {
   return 'home';
 }
 
-function pageToPath(p, articleSlug) {
+function pageToPath(p, articleSlug, articleUseSlugOnly) {
+  if (p.startsWith('article-slug:')) {
+    const slug = p.replace('article-slug:', '');
+    return `/Articles/${slug}/`;
+  }
   if (p.startsWith('article-')) {
     const id = p.replace('article-', '');
     const slug = articleSlug || 'article';
+    if (articleUseSlugOnly) return `/Articles/${slug}/`;
     return `/Articles/${slug}/${id}/`;
   }
   if (p.startsWith('page-')) {
@@ -2561,11 +2572,18 @@ export default function App() {
     const q = decodeURIComponent(page.replace('search-', ''));
     content = <SearchPage query={q} setPage={nav} partners={partners} />;
   }
+  else if (page.startsWith('article-slug:')) {
+    const slug = page.replace('article-slug:', '');
+    content = <ArticlePage articleSlug={slug} setPage={nav} partners={partners} onSlug={(s, a) => {
+      const path = `/Articles/${s}/`;
+      if (window.location.pathname !== path) window.history.replaceState({ page }, '', path);
+    }} />;
+  }
   else if (page.startsWith('article-')) {
     const id = parseInt(page.replace('article-', ''));
-    content = <ArticlePage articleId={id} setPage={nav} partners={partners} onSlug={slug => {
+    content = <ArticlePage articleId={id} setPage={nav} partners={partners} onSlug={(slug, article) => {
       articleSlugs.current[id] = slug;
-      const path = `/Articles/${slug}/${id}/`;
+      const path = article?.use_slug_only ? `/Articles/${slug}/` : `/Articles/${slug}/${id}/`;
       if (window.location.pathname !== path) window.history.replaceState({ page }, '', path);
     }} />;
   }

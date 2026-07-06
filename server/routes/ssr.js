@@ -8,53 +8,72 @@ const SITE_URL  = process.env.SITE_URL || 'https://thebackgroundinvestigator.com
 
 const BOT_RE = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|applebot|discordbot|embedly|outbrain|pinterest|quora|slack|vkshare|w3c_validator|lighthouse|headlesschrome|prerender|crawl|spider|bot\b/i;
 
-// GET /Articles/:slug/:id/
+const ARTICLE_SQL = `
+  SELECT a.id, a.title, a.slug, a.excerpt, a.body, a.featured_image,
+         a.publish_date, a.seo_title, a.seo_description, a.seo_keywords,
+         a.og_image, a.schema_json, a.use_slug_only,
+         u.display_name AS author_name,
+         c.name AS category_name
+  FROM articles a
+  JOIN users u ON a.author_id = u.id
+  JOIN categories c ON a.category_id = c.id`;
+
+// GET /Articles/:slug/:id/  — legacy format (old articles)
 router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
   try {
-    // For real browsers, just serve the SPA — it will handle the route via React Router
     const ua = req.headers['user-agent'] || '';
     if (!BOT_RE.test(ua)) {
       return res.sendFile(require('path').join(__dirname, '../../dist/index.html'));
     }
     const [rows] = await db.execute(
-      `SELECT a.id, a.title, a.slug, a.excerpt, a.body, a.featured_image,
-              a.publish_date, a.seo_title, a.seo_description, a.seo_keywords, a.og_image, a.schema_json,
-              u.display_name AS author_name,
-              c.name AS category_name
-       FROM articles a
-       JOIN users u ON a.author_id = u.id
-       JOIN categories c ON a.category_id = c.id
-       WHERE a.id = ? AND a.status = 'published'
-       LIMIT 1`,
+      `${ARTICLE_SQL} WHERE a.id = ? AND a.status = 'published' LIMIT 1`,
       [req.params.id]
     );
+    if (!rows[0]) return res.redirect(302, '/');
+    const canonical = `${SITE_URL}/Articles/${rows[0].slug}/${rows[0].id}/`;
+    return renderArticle(res, rows[0], canonical);
+  } catch (err) {
+    console.error('SSR error:', err);
+    res.redirect(302, '/');
+  }
+});
 
-    if (!rows[0]) {
-      // Not found — let the SPA handle it (redirect to home)
-      return res.redirect(302, '/');
+// GET /Articles/:slug/  — new format (slug-only articles)
+router.get('/:slug/?', async (req, res) => {
+  try {
+    const ua = req.headers['user-agent'] || '';
+    if (!BOT_RE.test(ua)) {
+      return res.sendFile(require('path').join(__dirname, '../../dist/index.html'));
     }
+    const [rows] = await db.execute(
+      `${ARTICLE_SQL} WHERE a.slug = ? AND a.use_slug_only = 1 AND a.status = 'published' LIMIT 1`,
+      [req.params.slug]
+    );
+    if (!rows[0]) return res.redirect(302, '/');
+    const canonical = `${SITE_URL}/Articles/${rows[0].slug}/`;
+    return renderArticle(res, rows[0], canonical);
+  } catch (err) {
+    console.error('SSR error:', err);
+    res.redirect(302, '/');
+  }
+});
 
-    const a = rows[0];
+function renderArticle(res, a, canonical) {
+  db.execute('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [a.id]).catch(() => {});
 
-    // Increment view count (fire-and-forget)
-    db.execute('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [a.id]).catch(() => {});
+  const title       = a.seo_title || a.title;
+  const description = a.seo_description || a.excerpt || '';
+  const rawImage    = a.og_image || a.featured_image || '';
+  const image       = rawImage
+    ? (rawImage.startsWith('http') ? rawImage : `${SITE_URL}${rawImage}`)
+    : `${SITE_URL}/og-image.svg`;
+  const pubDate     = a.publish_date
+    ? new Date(a.publish_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+  const featuredImg = a.featured_image || '';
+  const safeBody    = normalizeArticleBody(a.body || '');
 
-    const title       = a.seo_title || a.title;
-    const description = a.seo_description || a.excerpt || '';
-    const rawImage    = a.og_image || a.featured_image || '';
-    const image       = rawImage
-      ? (rawImage.startsWith('http') ? rawImage : `${SITE_URL}${rawImage}`)
-      : `${SITE_URL}/og-image.svg`;
-    const canonical   = `${SITE_URL}/Articles/${a.slug}/${a.id}/`;
-    const pubDate     = a.publish_date
-      ? new Date(a.publish_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-      : '';
-    const featuredImg = a.featured_image || '';
-
-    // Sanitise body — strip scripts for safety before inserting into SSR HTML
-    const safeBody = normalizeArticleBody(a.body || '');
-
-    const html = `<!doctype html>
+  const html = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -270,9 +289,7 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
     <p>&copy; ${new Date().getFullYear()} ${SITE_NAME}. All rights reserved.</p>
   </footer>
 
-  <!-- After reading, send user into the SPA -->
   <script>
-    // On any internal link click, load the SPA
     document.querySelectorAll('a[href="/"]').forEach(a => {
       a.addEventListener('click', function(e) {
         e.preventDefault();
@@ -283,16 +300,10 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
 </body>
 </html>`;
 
-    res.set('Content-Type', 'text/html; charset=utf-8');
-    // Cache for 5 minutes at CDN/reverse-proxy level
-    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
-    res.send(html);
-
-  } catch (err) {
-    console.error('SSR error:', err);
-    res.redirect(302, '/');
-  }
-});
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+  res.send(html);
+}
 
 // Simple HTML escape
 function esc(str) {
@@ -306,7 +317,7 @@ function esc(str) {
 function normalizeArticleBody(html = '') {
   return String(html)
     .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/&nbsp;|&#160;|&#xA0;|\u00a0/gi, ' ')
+    .replace(/&nbsp;|&#160;|&#xA0;| /gi, ' ')
     .replace(/white-space\s*:\s*nowrap\s*;?/gi, '')
     .replace(/word-break\s*:\s*break-all\s*;?/gi, '')
     .replace(/overflow-wrap\s*:\s*anywhere\s*;?/gi, '');
