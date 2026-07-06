@@ -572,10 +572,10 @@ export default function ArticleEdit() {
                       }}
                       style={{
                         padding: '3px 10px', borderRadius: 4, fontSize: 12, cursor: 'pointer',
-                        border: `1px solid ${selected ? 'var(--color-primary)' : 'var(--border)'}`,
-                        background: selected ? 'var(--color-primary)' : 'transparent',
-                        color: selected ? '#fff' : 'var(--text-muted)',
-                        fontFamily: 'var(--f-ui)',
+                        border: `1px solid ${selected ? '#c0392b' : '#d1d5db'}`,
+                        background: selected ? '#c0392b' : '#f9fafb',
+                        color: selected ? '#fff' : '#374151',
+                        fontFamily: 'sans-serif',
                       }}
                     >{c.name}</button>
                   );
