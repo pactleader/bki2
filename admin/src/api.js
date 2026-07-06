@@ -36,8 +36,11 @@ export const getArticle     = (id) => apiFetch(`/admin/articles/detail/${id}`);
 export const createArticle  = (data) => apiFetch('/admin/articles', { method: 'POST', body: JSON.stringify(data) });
 export const updateArticle  = (id, data) => apiFetch(`/admin/articles/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteArticle  = (id) => apiFetch(`/admin/articles/${id}`, { method: 'DELETE' });
-export const publishArticle = (id) => apiFetch(`/admin/articles/${id}/publish`, { method: 'POST' });
+export const publishArticle   = (id) => apiFetch(`/admin/articles/${id}/publish`, { method: 'POST' });
 export const unpublishArticle = (id) => apiFetch(`/admin/articles/${id}/unpublish`, { method: 'POST' });
+export const listTrash        = () => apiFetch('/admin/articles/trash');
+export const restoreArticle   = (id) => apiFetch(`/admin/articles/${id}/restore`, { method: 'POST' });
+export const permanentDelete  = (id) => apiFetch(`/admin/articles/${id}/permanent`, { method: 'DELETE' });
 
 // ── Categories ────────────────────────────────────────────────
 export const listCategories  = () => apiFetch('/categories');

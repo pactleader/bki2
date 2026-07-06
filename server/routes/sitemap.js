@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
     const [articles] = await db.execute(
       `SELECT a.id, a.slug, a.publish_date, a.updated_at, a.use_slug_only
        FROM articles a
-       WHERE a.status = 'published'
+       WHERE a.status = 'published' AND a.deleted_at IS NULL
        ORDER BY COALESCE(a.publish_date, a.created_at) DESC`
     );
 

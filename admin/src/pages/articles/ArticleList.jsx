@@ -7,6 +7,15 @@ import { useToast } from '../../components/Toast.jsx';
 
 export default function ArticleList() {
   const toast = useToast();
+  const [view, setView] = useState('list'); // 'list' | 'trash'
+
+  return view === 'trash'
+    ? <TrashView onBack={() => setView('list')} />
+    : <ListView onTrash={() => setView('trash')} />;
+}
+
+function ListView({ onTrash }) {
+  const toast = useToast();
   const [articles, setArticles] = useState([]);
   const [meta, setMeta] = useState({});
   const [categories, setCategories] = useState([]);
@@ -29,7 +38,7 @@ export default function ArticleList() {
     try {
       await api.deleteArticle(id);
       setArticles(a => a.filter(x => x.id !== id));
-      toast('Article deleted');
+      toast('Article moved to trash');
     } catch (err) {
       toast(err.message, 'error');
     } finally { setDeleting(null); }
@@ -51,10 +60,14 @@ export default function ArticleList() {
     <div>
       <PageHeader
         title="Articles"
-        action={<Link to="/admin/articles/new"><Btn variant="accent">+ New Article</Btn></Link>}
+        action={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Btn onClick={onTrash} variant="ghost">🗑 Trash</Btn>
+            <Link to="/admin/articles/new"><Btn variant="accent">+ New Article</Btn></Link>
+          </div>
+        }
       />
 
-      {/* Filters */}
       <Card style={{ marginBottom: 20, padding: 16 }}>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <input
@@ -89,7 +102,8 @@ export default function ArticleList() {
               <TR key={a.id}>
                 <TD>
                   {a.status === 'published' && a.slug ? (
-                    <a href={`/Articles/${a.slug}/${a.id}/`} target="_blank" rel="noopener noreferrer"
+                    <a href={a.use_slug_only ? `/Articles/${a.slug}/` : `/Articles/${a.slug}/${a.id}/`}
+                      target="_blank" rel="noopener noreferrer"
                       style={{ fontWeight: 500, maxWidth: 320, display: 'block', color: 'inherit', textDecoration: 'none' }}
                       onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                       onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
@@ -119,7 +133,7 @@ export default function ArticleList() {
                     </button>
                     <button onClick={() => setDeleting(a)}
                       style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}>
-                      Delete
+                      Trash
                     </button>
                   </div>
                 </TD>
@@ -131,7 +145,6 @@ export default function ArticleList() {
           </Table>
         )}
 
-        {/* Pagination */}
         {meta.pages > 1 && (
           <div style={{ padding: 16, display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
             <PaginationBtn disabled={filters.page <= 1} onClick={() => setFilters(f => ({ ...f, page: f.page - 1 }))}>‹ Prev</PaginationBtn>
@@ -149,10 +162,100 @@ export default function ArticleList() {
 
       {deleting && (
         <ConfirmModal
-          title="Delete Article"
-          message={`Delete "${deleting.title}"? This cannot be undone.`}
+          title="Move to Trash"
+          message={`Move "${deleting.title}" to trash? You can restore it later.`}
           onConfirm={() => handleDelete(deleting.id)}
           onCancel={() => setDeleting(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function TrashView({ onBack }) {
+  const toast = useToast();
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState(null); // { id, title, action: 'restore'|'permanent' }
+
+  function load() {
+    setLoading(true);
+    api.listTrash()
+      .then(res => setArticles(res.data))
+      .catch(() => toast('Failed to load trash', 'error'))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleConfirm() {
+    const { id, action } = confirming;
+    setConfirming(null);
+    try {
+      if (action === 'restore') {
+        await api.restoreArticle(id);
+        setArticles(a => a.filter(x => x.id !== id));
+        toast('Article restored');
+      } else {
+        await api.permanentDelete(id);
+        setArticles(a => a.filter(x => x.id !== id));
+        toast('Article permanently deleted');
+      }
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Trash"
+        action={<Btn onClick={onBack} variant="ghost">← Back to Articles</Btn>}
+      />
+
+      <Card style={{ padding: 0 }}>
+        {loading ? <div style={{ padding: 24, color: 'var(--text-muted)' }}>Loading…</div> : (
+          <Table headers={['Title', 'Category', 'Author', 'Status', 'Deleted', '']}>
+            {articles.map(a => (
+              <TR key={a.id}>
+                <TD><div style={{ fontWeight: 500, maxWidth: 340, color: 'var(--text-muted)' }}>{a.title}</div></TD>
+                <TD><Badge color={a.category?.color_hex}>{a.category?.name}</Badge></TD>
+                <TD style={{ color: 'var(--text-muted)' }}>{a.author?.display_name}</TD>
+                <TD><Badge color="#888">{a.status}</Badge></TD>
+                <TD style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                  {a.deleted_at ? new Date(a.deleted_at).toLocaleDateString() : '—'}
+                </TD>
+                <TD>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => setConfirming({ id: a.id, title: a.title, action: 'restore' })}
+                      style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: 12, cursor: 'pointer' }}>
+                      Restore
+                    </button>
+                    <button
+                      onClick={() => setConfirming({ id: a.id, title: a.title, action: 'permanent' })}
+                      style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}>
+                      Delete Forever
+                    </button>
+                  </div>
+                </TD>
+              </TR>
+            ))}
+            {articles.length === 0 && (
+              <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>Trash is empty.</td></tr>
+            )}
+          </Table>
+        )}
+      </Card>
+
+      {confirming && (
+        <ConfirmModal
+          title={confirming.action === 'restore' ? 'Restore Article' : 'Delete Forever'}
+          message={confirming.action === 'restore'
+            ? `Restore "${confirming.title}"?`
+            : `Permanently delete "${confirming.title}"? This cannot be undone.`}
+          onConfirm={handleConfirm}
+          onCancel={() => setConfirming(null)}
         />
       )}
     </div>
@@ -164,30 +267,22 @@ function paginationWindow(current, total) {
   const pages = [];
   const rangeStart = Math.max(2, current - delta);
   const rangeEnd   = Math.min(total - 1, current + delta);
-
   pages.push(1);
   if (rangeStart > 2) pages.push('…');
   for (let p = rangeStart; p <= rangeEnd; p++) pages.push(p);
   if (rangeEnd < total - 1) pages.push('…');
   if (total > 1) pages.push(total);
-
   return pages;
 }
 
 function PaginationBtn({ children, onClick, active, disabled }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)',
-        background: active ? 'var(--primary)' : '#fff',
-        color: active ? '#fff' : disabled ? 'var(--text-muted)' : 'var(--text)',
-        cursor: disabled ? 'default' : 'pointer',
-        fontSize: 13, opacity: disabled ? 0.5 : 1,
-      }}
-    >
-      {children}
-    </button>
+    <button onClick={onClick} disabled={disabled} style={{
+      padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)',
+      background: active ? 'var(--primary)' : '#fff',
+      color: active ? '#fff' : disabled ? 'var(--text-muted)' : 'var(--text)',
+      cursor: disabled ? 'default' : 'pointer',
+      fontSize: 13, opacity: disabled ? 0.5 : 1,
+    }}>{children}</button>
   );
 }

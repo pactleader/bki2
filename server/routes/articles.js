@@ -38,7 +38,7 @@ pub.get('/', async (req, res) => {
     const { page, limit, offset } = paginate(req.query);
     const { category, search, has_thumbnail } = req.query;
 
-    const conds = [`a.status = 'published'`];
+    const conds = [`a.status = 'published'`, `a.deleted_at IS NULL`];
     const params = [];
 
     if (category)      { conds.push('c.slug = ?'); params.push(category); }
@@ -106,7 +106,7 @@ adm.get('/', async (req, res) => {
     const { page, limit, offset } = paginate(req.query);
     const { status, category_id, search, sort } = req.query;
 
-    const conds = [];
+    const conds = ['a.deleted_at IS NULL'];
     const params = [];
 
     if (req.user.role === 'author') { conds.push('a.author_id = ?'); params.push(req.user.sub); }
@@ -250,10 +250,40 @@ adm.post('/:id/unpublish', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// DELETE /api/admin/articles/:id
+// DELETE /api/admin/articles/:id  — soft delete (move to trash)
 adm.delete('/:id', requireAdmin, async (req, res) => {
   try {
-    await db.execute('DELETE FROM articles WHERE id=?', [req.params.id]);
+    await db.execute('UPDATE articles SET deleted_at = NOW() WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// GET /api/admin/articles/trash
+adm.get('/trash', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      `SELECT ${ARTICLE_SELECT}, a.deleted_at FROM articles a
+       JOIN users u ON a.author_id = u.id
+       JOIN categories c ON a.category_id = c.id
+       WHERE a.deleted_at IS NOT NULL
+       ORDER BY a.deleted_at DESC`
+    );
+    res.json({ data: rows.map(r => ({ ...fmt(r), deleted_at: r.deleted_at })) });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+// POST /api/admin/articles/:id/restore
+adm.post('/:id/restore', requireAdmin, async (req, res) => {
+  try {
+    await db.execute('UPDATE articles SET deleted_at = NULL WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// DELETE /api/admin/articles/:id/permanent
+adm.delete('/:id/permanent', requireAdmin, async (req, res) => {
+  try {
+    await db.execute('DELETE FROM articles WHERE id = ?', [req.params.id]);
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });

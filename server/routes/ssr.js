@@ -26,7 +26,7 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
       return res.sendFile(require('path').join(__dirname, '../../dist/index.html'));
     }
     const [rows] = await db.execute(
-      `${ARTICLE_SQL} WHERE a.id = ? AND a.status = 'published' LIMIT 1`,
+      `${ARTICLE_SQL} WHERE a.id = ? AND a.status = 'published' AND a.deleted_at IS NULL LIMIT 1`,
       [req.params.id]
     );
     if (!rows[0]) return res.redirect(302, '/');
@@ -46,7 +46,7 @@ router.get('/:slug/?', async (req, res) => {
       return res.sendFile(require('path').join(__dirname, '../../dist/index.html'));
     }
     const [rows] = await db.execute(
-      `${ARTICLE_SQL} WHERE a.slug = ? AND a.use_slug_only = 1 AND a.status = 'published' LIMIT 1`,
+      `${ARTICLE_SQL} WHERE a.slug = ? AND a.use_slug_only = 1 AND a.status = 'published' AND a.deleted_at IS NULL LIMIT 1`,
       [req.params.slug]
     );
     if (!rows[0]) return res.redirect(302, '/');
