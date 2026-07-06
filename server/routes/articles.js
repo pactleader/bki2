@@ -154,7 +154,12 @@ adm.get('/detail/:id', async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     if (req.user.role === 'author' && rows[0].author_id !== req.user.sub)
       return res.status(403).json({ error: 'Forbidden' });
-    res.json({ ...fmt(rows[0]), body: rows[0].body });
+    const [extraRows] = await db.execute(
+      `SELECT category_id FROM article_categories WHERE article_id = ?`,
+      [req.params.id]
+    );
+    const extra_category_ids = extraRows.map(r => r.category_id);
+    res.json({ ...fmt(rows[0]), body: rows[0].body, extra_category_ids });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -163,7 +168,7 @@ adm.post('/', async (req, res) => {
   try {
     const { title, excerpt, body, featured_image, featured_image_alt, category_id, status,
             publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json,
-            source_name, source_url } = req.body;
+            source_name, source_url, extra_category_ids } = req.body;
     if (!title || !category_id) return res.status(400).json({ error: 'Title and category required' });
 
     const normalizeDate = d => d ? d.replace('T', ' ').replace('Z', '').split('.')[0] : null;
@@ -181,7 +186,9 @@ adm.post('/', async (req, res) => {
        seo_keywords || null, og_image || null, schema_json || null,
        source_name || null, source_url || null]
     );
-    res.status(201).json({ id: result.insertId, slug });
+    const articleId = result.insertId;
+    await saveExtraCategories(articleId, extra_category_ids, category_id);
+    res.status(201).json({ id: articleId, slug });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -195,7 +202,7 @@ adm.put('/:id', async (req, res) => {
 
     const { title, excerpt, body, featured_image, featured_image_alt, category_id, author_id, status,
             publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json,
-            source_name, source_url } = req.body;
+            source_name, source_url, extra_category_ids } = req.body;
 
     let slug = existing[0].slug;
     if (title && title !== existing[0].title)
@@ -219,6 +226,7 @@ adm.put('/:id', async (req, res) => {
        seo_keywords || null, og_image || null, schema_json || null,
        source_name || null, source_url || null, req.params.id]
     );
+    await saveExtraCategories(req.params.id, extra_category_ids, category_id);
     res.json({ ok: true, slug });
   } catch (err) { console.error(err); res.status(500).json({ error: err.message || 'Server error' }); }
 });
@@ -249,5 +257,16 @@ adm.delete('/:id', requireAdmin, async (req, res) => {
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
+
+async function saveExtraCategories(articleId, extraIds, primaryCategoryId) {
+  await db.execute('DELETE FROM article_categories WHERE article_id = ?', [articleId]);
+  const ids = (Array.isArray(extraIds) ? extraIds : [])
+    .map(id => parseInt(id))
+    .filter(id => !isNaN(id) && id !== parseInt(primaryCategoryId));
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => '(?, ?)').join(', ');
+  const values = ids.flatMap(id => [articleId, id]);
+  await db.execute(`INSERT INTO article_categories (article_id, category_id) VALUES ${placeholders}`, values);
+}
 
 module.exports = { public: pub, admin: adm };

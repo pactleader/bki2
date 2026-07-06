@@ -14,7 +14,7 @@ const EMPTY = {
   title: '', slug: '', excerpt: '', body: '', featured_image: '', featured_image_alt: '',
   category_id: '', status: 'draft', publish_date: '',
   seo_title: '', seo_description: '', seo_keywords: '', og_image: '', schema_json: '',
-  source_name: '', source_url: '',
+  source_name: '', source_url: '', extra_category_ids: [],
 };
 
 function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '', authorName = '' }) {
@@ -400,6 +400,7 @@ export default function ArticleEdit() {
             schema_json: a.schema_json || '',
             source_name: a.source_name || '',
             source_url: a.source_url || '',
+            extra_category_ids: a.extra_category_ids || [],
           });
         })
         .catch(() => toast('Failed to load article', 'error'))
@@ -410,9 +411,12 @@ export default function ArticleEdit() {
   function set(field, value) {
     setForm(f => {
       const next = { ...f, [field]: value };
-      // Auto-generate slug from title only if not locked
       if (field === 'title' && !slugLocked) {
         next.slug = slugify(value);
+      }
+      // Remove from extra_category_ids if it becomes the primary
+      if (field === 'category_id') {
+        next.extra_category_ids = (f.extra_category_ids || []).filter(id => String(id) !== String(value));
       }
       return next;
     });
@@ -545,11 +549,41 @@ export default function ArticleEdit() {
           </Card>
 
           <Card>
-            <Field label="Category">
+            <Field label="Primary Category">
               <Select value={form.category_id} onChange={e => set('category_id', e.target.value)}>
                 <option value="">Select category…</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
+            </Field>
+            <Field label="Additional Categories" hint="Click to toggle">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
+                {categories.filter(c => String(c.id) !== String(form.category_id)).map(c => {
+                  const selected = form.extra_category_ids.map(String).includes(String(c.id));
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        const ids = form.extra_category_ids.map(String);
+                        set('extra_category_ids', selected
+                          ? ids.filter(id => id !== String(c.id))
+                          : [...ids, String(c.id)]
+                        );
+                      }}
+                      style={{
+                        padding: '3px 10px', borderRadius: 4, fontSize: 12, cursor: 'pointer',
+                        border: `1px solid ${selected ? 'var(--color-primary)' : 'var(--border)'}`,
+                        background: selected ? 'var(--color-primary)' : 'transparent',
+                        color: selected ? '#fff' : 'var(--text-muted)',
+                        fontFamily: 'var(--f-ui)',
+                      }}
+                    >{c.name}</button>
+                  );
+                })}
+                {categories.filter(c => String(c.id) !== String(form.category_id)).length === 0 && (
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>No other categories</span>
+                )}
+              </div>
             </Field>
             {user?.role === 'admin' && authors.length > 0 && (
               <Field label="Author">
