@@ -83,6 +83,9 @@ app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOSt
 const SPA = require('path').join(__dirname, '../dist/index.html');
 app.get('/p/*', (req, res) => res.sendFile(SPA));
 
+// ── /login → /admin/login redirect ───────────────────────────
+app.get('/login', (req, res) => res.redirect(301, '/admin/login'));
+
 // ── SPA fallback — serve index.html for client-side routes ───
 app.get('/search', (req, res) => {
   res.sendFile(require('path').join(__dirname, '../dist/index.html'));

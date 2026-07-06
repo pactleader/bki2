@@ -14,6 +14,7 @@ const EMPTY = {
   title: '', slug: '', excerpt: '', body: '', featured_image: '', featured_image_alt: '',
   category_id: '', status: 'draft', publish_date: '',
   seo_title: '', seo_description: '', seo_keywords: '', og_image: '', schema_json: '',
+  source_name: '', source_url: '',
 };
 
 function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '', authorName = '' }) {
@@ -397,6 +398,8 @@ export default function ArticleEdit() {
             seo_keywords: a.seo_keywords || '',
             og_image: a.og_image || '',
             schema_json: a.schema_json || '',
+            source_name: a.source_name || '',
+            source_url: a.source_url || '',
           });
         })
         .catch(() => toast('Failed to load article', 'error'))
@@ -555,6 +558,16 @@ export default function ArticleEdit() {
                 </Select>
               </Field>
             )}
+          </Card>
+
+          <Card>
+            <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-muted)', marginBottom: 16 }}>Source / Credit</div>
+            <Field label="Source Name" hint="e.g. Reuters, AP, original author">
+              <Input value={form.source_name} onChange={e => set('source_name', e.target.value)} placeholder="e.g. Reuters" />
+            </Field>
+            <Field label="Source URL" hint="Link to the original article">
+              <Input value={form.source_url} onChange={e => set('source_url', e.target.value)} placeholder="https://…" />
+            </Field>
           </Card>
 
           <Card>

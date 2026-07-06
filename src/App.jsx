@@ -1770,6 +1770,15 @@ function ArticlePage({ articleId, articleSlug, setPage, onSlug, partners }) {
           <div style={{ margin: '16px 0 20px', paddingBottom: 16, borderBottom: '1px solid var(--color-border)' }}>
             <div style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
               By <strong style={{ color: 'var(--color-text-primary)' }}>{article.author?.display_name || article.author}</strong>
+              {article.source_name && (
+                <span>
+                  {' '}&middot;{' '}Source:{' '}
+                  {article.source_url
+                    ? <a href={article.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>{article.source_name}</a>
+                    : <span style={{ color: 'var(--color-text-primary)' }}>{article.source_name}</span>
+                  }
+                </span>
+              )}
             </div>
             {(article.publish_date || article.created_at || article.date) && (
               <div style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4 }}>

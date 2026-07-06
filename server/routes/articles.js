@@ -7,7 +7,8 @@ const { paginate, paginateMeta }    = require('../utils/paginate');
 const ARTICLE_SELECT = `
   a.id, a.title, a.slug, a.excerpt, a.featured_image, a.featured_image_alt, a.status,
   a.publish_date, a.view_count, a.seo_title, a.seo_description,
-  a.seo_keywords, a.og_image, a.schema_json, a.use_slug_only, a.created_at, a.updated_at,
+  a.seo_keywords, a.og_image, a.schema_json, a.use_slug_only,
+  a.source_name, a.source_url, a.created_at, a.updated_at,
   u.id AS author_id, u.display_name AS author_name,
   c.id AS category_id, c.name AS category_name,
   c.slug AS category_slug, c.color_hex AS category_color
@@ -21,6 +22,7 @@ function fmt(row) {
     seo_title: row.seo_title, seo_description: row.seo_description,
     seo_keywords: row.seo_keywords, og_image: row.og_image, schema_json: row.schema_json,
     use_slug_only: !!row.use_slug_only,
+    source_name: row.source_name, source_url: row.source_url,
     created_at: row.created_at, updated_at: row.updated_at,
     author:   { id: row.author_id,   display_name: row.author_name },
     category: { id: row.category_id, name: row.category_name, slug: row.category_slug, color_hex: row.category_color },
@@ -160,7 +162,8 @@ adm.get('/detail/:id', async (req, res) => {
 adm.post('/', async (req, res) => {
   try {
     const { title, excerpt, body, featured_image, featured_image_alt, category_id, status,
-            publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json } = req.body;
+            publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json,
+            source_name, source_url } = req.body;
     if (!title || !category_id) return res.status(400).json({ error: 'Title and category required' });
 
     const normalizeDate = d => d ? d.replace('T', ' ').replace('Z', '').split('.')[0] : null;
@@ -168,13 +171,15 @@ adm.post('/', async (req, res) => {
     const [result] = await db.execute(
       `INSERT INTO articles
          (title, slug, excerpt, body, featured_image, featured_image_alt, author_id, category_id,
-          status, publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json, use_slug_only)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+          status, publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json,
+          use_slug_only, source_name, source_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
        req.user.sub, category_id, status || 'draft',
        normalizeDate(publish_date), seo_title || null, seo_description || null,
-       seo_keywords || null, og_image || null, schema_json || null]
+       seo_keywords || null, og_image || null, schema_json || null,
+       source_name || null, source_url || null]
     );
     res.status(201).json({ id: result.insertId, slug });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
@@ -189,7 +194,8 @@ adm.put('/:id', async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' });
 
     const { title, excerpt, body, featured_image, featured_image_alt, category_id, author_id, status,
-            publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json } = req.body;
+            publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json,
+            source_name, source_url } = req.body;
 
     let slug = existing[0].slug;
     if (title && title !== existing[0].title)
@@ -203,13 +209,15 @@ adm.put('/:id', async (req, res) => {
       `UPDATE articles SET
          title=?, slug=?, excerpt=?, body=?, featured_image=?, featured_image_alt=?,
          category_id=?, author_id=?, status=?, publish_date=?,
-         seo_title=?, seo_description=?, seo_keywords=?, og_image=?, schema_json=?
+         seo_title=?, seo_description=?, seo_keywords=?, og_image=?, schema_json=?,
+         source_name=?, source_url=?
        WHERE id=?`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
        category_id, resolvedAuthorId, status || 'draft', normalizeDate(publish_date),
        seo_title || null, seo_description || null,
-       seo_keywords || null, og_image || null, schema_json || null, req.params.id]
+       seo_keywords || null, og_image || null, schema_json || null,
+       source_name || null, source_url || null, req.params.id]
     );
     res.json({ ok: true, slug });
   } catch (err) { console.error(err); res.status(500).json({ error: err.message || 'Server error' }); }
