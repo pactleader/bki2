@@ -62,7 +62,7 @@ function ListView({ onTrash }) {
         title="Articles"
         action={
           <div style={{ display: 'flex', gap: 8 }}>
-            <Btn onClick={onTrash} variant="ghost">🗑 Trash</Btn>
+            <Btn onClick={onTrash} variant="outline">Trash</Btn>
             <Link to="/admin/articles/new"><Btn variant="accent">+ New Article</Btn></Link>
           </div>
         }
