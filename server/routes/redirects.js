@@ -6,6 +6,8 @@ const { verifyToken, requireAdmin } = require('../middleware/auth');
 const pub = express.Router();
 
 pub.get('*', async (req, res, next) => {
+  // Skip API and admin paths — those are handled by their own routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/admin')) return next();
   try {
     const path = req.path === '' ? '/' : req.path;
     const [rows] = await db.execute(

@@ -67,6 +67,9 @@ app.use('/api/admin/subscribers',require('./routes/subscribers').admin);
 // ── Sitemap ────────────────────────────────────────────────────
 app.use('/sitemap.xml', require('./routes/sitemap'));
 
+// ── /login → /admin/login redirect ───────────────────────────
+app.get('/login', (req, res) => res.redirect(301, '/admin/login'));
+
 // ── 301 Redirects — must come before SSR and SPA fallback ────
 app.use(require('./routes/redirects').public);
 
@@ -82,9 +85,6 @@ app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOSt
 // ── SPA fallback for client-side routes ──────────────────────
 const SPA = require('path').join(__dirname, '../dist/index.html');
 app.get('/p/*', (req, res) => res.sendFile(SPA));
-
-// ── /login → /admin/login redirect ───────────────────────────
-app.get('/login', (req, res) => res.redirect(301, '/admin/login'));
 
 // ── SPA fallback — serve index.html for client-side routes ───
 app.get('/search', (req, res) => {
