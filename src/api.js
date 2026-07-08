@@ -6,7 +6,7 @@ async function get(path) {
   return res.json();
 }
 
-export const getHomepage   = ()           => get('/homepage');
+export const getHomepage   = (seenIds=[]) => get(`/homepage${seenIds.length ? '?seen=' + seenIds.join(',') : ''}`);
 export const getMostRead   = ()           => get('/homepage/most-read');
 export const getArticles   = (params)     => get(`/articles?${new URLSearchParams(params).toString()}`);
 export const getArticle    = (id)         => get(`/articles/${id}`);

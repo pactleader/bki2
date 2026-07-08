@@ -40,8 +40,9 @@ export default function HomepageConfig() {
   const [saving, setSaving] = useState(false);
 
   // Settings
-  const [mostRead, setMostRead] = useState([]);   // [{value: id, label: title}, ...]
-  const [heroCatId, setHeroCatId] = useState(''); // category_id whose top article shows in hero
+  const [mostRead, setMostRead] = useState([]);
+  const [heroCatId, setHeroCatId] = useState('');
+  const [rotationCatIds, setRotationCatIds] = useState([]); // category ids for hero rotation
   const [settingsSaving, setSettingsSaving] = useState(false);
 
   useEffect(() => { load(); }, []);
@@ -74,6 +75,9 @@ export default function HomepageConfig() {
 
       const heroCat = st.find(x => x.setting_key === 'hero_category_id');
       if (heroCat?.setting_value) setHeroCatId(heroCat.setting_value);
+
+      const rotCat = st.find(x => x.setting_key === 'hero_rotation_category_ids');
+      try { setRotationCatIds(JSON.parse(rotCat?.setting_value || '[]').map(Number).filter(Boolean)); } catch { setRotationCatIds([]); }
     } catch { toast('Load failed', 'error'); }
   }
 
@@ -118,8 +122,9 @@ export default function HomepageConfig() {
     setSettingsSaving(true);
     try {
       await api.saveSettings([
-        { key: 'most_read_article_ids', value: JSON.stringify(mostRead.map(o => o.value)), type: 'json' },
-        { key: 'hero_category_id',      value: heroCatId || '',                            type: 'string' },
+        { key: 'most_read_article_ids',        value: JSON.stringify(mostRead.map(o => o.value)), type: 'json' },
+        { key: 'hero_category_id',             value: heroCatId || '',                            type: 'string' },
+        { key: 'hero_rotation_category_ids',   value: JSON.stringify(rotationCatIds),             type: 'json' },
       ]);
       toast('Settings saved');
     } catch (err) {
@@ -222,7 +227,36 @@ export default function HomepageConfig() {
       <Card>
         <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Settings</h3>
 
-        <Field label="Hero Category" hint="The most recent article from this category appears in the large hero area at the top of the homepage">
+        <Field label="Hero Rotation Categories" hint="Select categories to rotate in the hero every 4 hours. If set, overrides Hero Category below. Articles the user has already seen are skipped automatically.">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
+            {categories.map(c => {
+              const selected = rotationCatIds.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setRotationCatIds(ids =>
+                    selected ? ids.filter(id => id !== c.id) : [...ids, c.id]
+                  )}
+                  style={{
+                    padding: '4px 12px', borderRadius: 4, fontSize: 12, cursor: 'pointer',
+                    border: `1px solid ${selected ? '#c0392b' : '#d1d5db'}`,
+                    background: selected ? '#c0392b' : '#f9fafb',
+                    color: selected ? '#fff' : '#374151',
+                    fontFamily: 'sans-serif',
+                  }}
+                >{c.name}</button>
+              );
+            })}
+          </div>
+          {rotationCatIds.length > 0 && (
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+              Rotation order: {rotationCatIds.map(id => categories.find(c => c.id === id)?.name).filter(Boolean).join(' → ')}
+            </p>
+          )}
+        </Field>
+
+        <Field label="Hero Category (Fallback)" hint="Used only if no rotation categories are selected above. Shows most recent article from this category.">
           <select
             value={heroCatId}
             onChange={e => setHeroCatId(e.target.value)}

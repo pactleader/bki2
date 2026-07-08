@@ -1396,6 +1396,19 @@ const SLUG_TO_PAGE = {
   'press-releases':     'pressReleases',
 };
 
+const SEEN_HERO_KEY = 'bki_seen_heroes';
+function getSeenHeroIds() {
+  try { return JSON.parse(localStorage.getItem(SEEN_HERO_KEY) || '[]'); } catch { return []; }
+}
+function addSeenHeroId(id) {
+  const seen = getSeenHeroIds();
+  if (!seen.includes(id)) {
+    // Keep last 50 so it doesn't grow forever
+    const updated = [...seen, id].slice(-50);
+    localStorage.setItem(SEEN_HERO_KEY, JSON.stringify(updated));
+  }
+}
+
 function HomePage({ setPage, partners }) {
   useMeta({});
   const [hpData, setHpData] = useState(null);
@@ -1408,21 +1421,28 @@ function HomePage({ setPage, partners }) {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    getHomepage()
+  function loadHomepage() {
+    getHomepage(getSeenHeroIds())
       .then(data => {
         setHpData(data);
+        if (data?.heroArticle?.id) addSeenHeroId(data.heroArticle.id);
       })
       .catch(() => {
         setHpData({ sections: [], mostRead: [], highlights: [] });
       })
       .finally(() => setHpLoading(false));
+  }
+
+  useEffect(() => {
+    loadHomepage();
+    // Re-fetch hero every 4 hours to match server rotation window
+    const interval = setInterval(loadHomepage, 4 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const sections    = hpData?.sections  || [];
   const mostRead    = hpData?.mostRead  || [];
   const heroCatId   = hpData?.heroCategoryId || null;
-  // Use server-resolved heroArticle when a hero category is configured
   const heroArticle = hpData?.heroArticle || sections[0]?.articles?.[0] || null;
 
   if (hpLoading) return (
@@ -2266,7 +2286,6 @@ function CookieBanner({ settings, privacySlug, setPage }) {
 
   useEffect(() => {
     if (settings.enabled && !localStorage.getItem(COOKIE_KEY)) {
-      // Small delay so it doesn't flash during initial paint
       const t = setTimeout(() => setVisible(true), 800);
       return () => clearTimeout(t);
     }
@@ -2283,43 +2302,57 @@ function CookieBanner({ settings, privacySlug, setPage }) {
 
   return (
     <div style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9000,
-      background: 'var(--color-primary)', color: 'rgba(255,255,255,0.85)',
-      boxShadow: '0 -4px 24px rgba(0,0,0,0.25)',
-      fontFamily: 'var(--f-ui)',
-      animation: 'cookieSlideUp .3s ease',
+      position: 'fixed', inset: 0, zIndex: 9000,
+      background: 'rgba(0,0,0,0.65)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px',
+      animation: 'cookieFadeIn .25s ease',
     }}>
-      <style>{`@keyframes cookieSlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+      <style>{`@keyframes cookieFadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
       <div style={{
-        maxWidth: 1280, margin: '0 auto', padding: '16px 24px',
-        display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+        background: '#fff', borderRadius: 12, maxWidth: 520, width: '100%',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
+        fontFamily: 'var(--f-ui)',
+        overflow: 'hidden',
+        animation: 'cookieSlideUp .3s ease',
       }}>
-        <span style={{ fontSize: 13, lineHeight: 1.5, flex: '1 1 300px' }}>
-          🍪 {msg}
+        <style>{`@keyframes cookieSlideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+
+        {/* Header */}
+        <div style={{ background: 'var(--color-primary)', padding: '24px 28px' }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>🍪</div>
+          <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: 0 }}>We use cookies</h2>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '24px 28px' }}>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: '#374151', margin: '0 0 20px' }}>{msg}</p>
           {privacySlug && (
-            <> {' '}
+            <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 24px' }}>
+              For more information, see our{' '}
               <button
-                onClick={() => { respond('accepted'); setPage('page-' + privacySlug); }}
-                style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: 13, padding: 0, textDecoration: 'underline' }}
-              >Learn more</button>
-            </>
+                onClick={() => { respond(true); setPage('page-' + privacySlug); }}
+                style={{ background: 'none', border: 'none', color: 'var(--color-accent, #c0392b)', cursor: 'pointer', fontSize: 13, padding: 0, textDecoration: 'underline', fontWeight: 600 }}
+              >Privacy Policy</button>.
+            </p>
           )}
-        </span>
-        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-          <button
-            onClick={() => respond(false)}
-            style={{
-              padding: '8px 20px', borderRadius: 5, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.65)',
-            }}
-          >Decline</button>
-          <button
-            onClick={() => respond(true)}
-            style={{
-              padding: '8px 20px', borderRadius: 5, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              background: 'var(--color-accent)', border: 'none', color: '#fff',
-            }}
-          >Accept</button>
+          <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+            <button
+              onClick={() => respond(true)}
+              style={{
+                width: '100%', padding: '13px 20px', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                background: 'var(--color-accent, #c0392b)', border: 'none', color: '#fff',
+                letterSpacing: 0.2,
+              }}
+            >Accept All Cookies</button>
+            <button
+              onClick={() => respond(false)}
+              style={{
+                width: '100%', padding: '12px 20px', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                background: '#f3f4f6', border: '1px solid #e5e7eb', color: '#6b7280',
+              }}
+            >Decline</button>
+          </div>
         </div>
       </div>
     </div>

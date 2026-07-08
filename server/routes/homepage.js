@@ -44,7 +44,7 @@ pub.get('/', async (req, res) => {
     }));
 
     const [settingRows] = await db.execute(
-      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_article_ids', 'highlight_items', 'hero_category_id')`
+      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_article_ids', 'highlight_items', 'hero_category_id', 'hero_rotation_category_ids')`
     );
     const settings = {};
     settingRows.forEach(r => { settings[r.setting_key] = r.setting_value; });
@@ -70,34 +70,66 @@ pub.get('/', async (req, res) => {
     let highlights = [];
     try { highlights = JSON.parse(settings.highlight_items || '[]'); } catch {}
 
-    // Fetch hero article: from configured category, or fall back to first section's top article
+    // Hero article rotation logic:
+    // If hero_rotation_category_ids is set, rotate among those categories every 4 hours,
+    // skipping articles the user has already seen (passed as ?seen=1,2,3).
+    // Falls back to hero_category_id (single fixed category) or first section's top article.
     let heroArticle = null;
+    const rotationIds = (() => {
+      try { return JSON.parse(settings.hero_rotation_category_ids || '[]').map(Number).filter(Boolean); } catch { return []; }
+    })();
     const heroCategoryId = settings.hero_category_id ? parseInt(settings.hero_category_id, 10) : null;
-    if (heroCategoryId) {
-      const [heroRows] = await db.execute(
-        `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.publish_date, a.view_count,
-                u.display_name AS author_name,
-                c.id AS cat_id, c.name AS cat_name, c.slug AS cat_slug, c.color_hex
-         FROM articles a
-         JOIN users u ON a.author_id = u.id
-         JOIN categories c ON a.category_id = c.id
-         WHERE a.category_id = ? AND a.status = 'published'
-         ORDER BY COALESCE(a.publish_date, a.created_at) DESC, a.created_at DESC
-         LIMIT 1`,
-        [heroCategoryId]
-      );
-      if (heroRows[0]) {
-        const r = heroRows[0];
-        heroArticle = {
-          id: r.id, title: r.title, slug: r.slug, excerpt: r.excerpt,
-          featured_image: r.featured_image, publish_date: r.publish_date, view_count: r.view_count,
-          author: { display_name: r.author_name },
-          category: { id: r.cat_id, name: r.cat_name, slug: r.cat_slug, color_hex: r.color_hex },
-        };
-      }
+    const seenIds = (() => {
+      try { return String(req.query.seen || '').split(',').map(Number).filter(Boolean); } catch { return []; }
+    })();
+
+    const heroSQL = `SELECT a.id, a.title, a.slug, a.use_slug_only, a.excerpt, a.featured_image, a.publish_date, a.view_count,
+                            u.display_name AS author_name,
+                            c.id AS cat_id, c.name AS cat_name, c.slug AS cat_slug, c.color_hex
+                     FROM articles a
+                     JOIN users u ON a.author_id = u.id
+                     JOIN categories c ON a.category_id = c.id
+                     WHERE a.category_id = ? AND a.status = 'published' AND a.deleted_at IS NULL`;
+
+    function shapeHero(r) {
+      return {
+        id: r.id, title: r.title, slug: r.slug, use_slug_only: !!r.use_slug_only,
+        excerpt: r.excerpt, featured_image: r.featured_image,
+        publish_date: r.publish_date, view_count: r.view_count,
+        author: { display_name: r.author_name },
+        category: { id: r.cat_id, name: r.cat_name, slug: r.cat_slug, color_hex: r.color_hex },
+      };
     }
 
-    res.json({ sections: sectionsWithArticles, mostRead, highlights, heroCategoryId, heroArticle });
+    if (rotationIds.length > 0) {
+      // Pick category based on 4-hour window (same for all users in that window)
+      const windowIndex = Math.floor(Date.now() / (4 * 60 * 60 * 1000));
+      // Try each category in rotation order starting from window slot, skip if seen
+      for (let attempt = 0; attempt < rotationIds.length; attempt++) {
+        const catId = rotationIds[(windowIndex + attempt) % rotationIds.length];
+        const seenClause = seenIds.length > 0 ? ` AND a.id NOT IN (${seenIds.map(() => '?').join(',')})` : '';
+        const [heroRows] = await db.execute(
+          `${heroSQL}${seenClause} ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT 1`,
+          [catId, ...seenIds]
+        );
+        if (heroRows[0]) { heroArticle = shapeHero(heroRows[0]); break; }
+      }
+      // If all seen, pick top article from current slot category ignoring seen
+      if (!heroArticle) {
+        const catId = rotationIds[windowIndex % rotationIds.length];
+        const [heroRows] = await db.execute(`${heroSQL} ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT 1`, [catId]);
+        if (heroRows[0]) heroArticle = shapeHero(heroRows[0]);
+      }
+    } else if (heroCategoryId) {
+      const seenClause = seenIds.length > 0 ? ` AND a.id NOT IN (${seenIds.map(() => '?').join(',')})` : '';
+      const [heroRows] = await db.execute(
+        `${heroSQL}${seenClause} ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT 1`,
+        [heroCategoryId, ...seenIds]
+      );
+      if (heroRows[0]) heroArticle = shapeHero(heroRows[0]);
+    }
+
+    res.json({ sections: sectionsWithArticles, mostRead, highlights, heroCategoryId, rotationCategoryIds: rotationIds, heroArticle });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
