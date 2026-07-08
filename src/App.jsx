@@ -286,10 +286,14 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
 
   if (!tried || !ad) return null;
 
+  const ensureHttps = url => url && !/^https?:\/\//i.test(url) ? 'https://' + url : url;
+  const imageUrl = ensureHttps(ad.image_url);
+  const linkUrl  = ensureHttps(ad.link_url);
+
   const autoHeight = h === 'auto' || !h;
   const inner = (
     <img
-      src={ad.image_url}
+      src={imageUrl}
       alt={ad.name}
       style={{ width: '100%', height: autoHeight ? 'auto' : '100%', objectFit: autoHeight ? 'fill' : 'contain', display: 'block' }}
     />
@@ -298,8 +302,8 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', ...style }}>
       <div style={{ width: w, maxWidth: maxW, ...(autoHeight ? {} : { height: h }), overflow: 'hidden', lineHeight: 0 }}>
-        {ad.link_url
-          ? <a href={ad.link_url} target="_blank" rel="noopener noreferrer sponsored" style={{ display: 'block', height: autoHeight ? 'auto' : '100%' }}>{inner}</a>
+        {linkUrl
+          ? <a href={linkUrl} target="_blank" rel="noopener noreferrer sponsored" style={{ display: 'block', height: autoHeight ? 'auto' : '100%' }}>{inner}</a>
           : inner}
       </div>
     </div>
