@@ -286,7 +286,7 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
 
   if (!tried || !ad) return null;
 
-  const ensureHttps = url => url && !/^https?:\/\//i.test(url) ? 'https://' + url : url;
+  const ensureHttps = url => url && !/^https?:\/\//i.test(url) && !url.startsWith('/') ? 'https://' + url : url;
   const imageUrl = ensureHttps(ad.image_url);
   const linkUrl  = ensureHttps(ad.link_url);
 
