@@ -15,6 +15,7 @@ export const getCategory   = (slug, page) => get(`/articles?category=${slug}&pag
 export const getCategories = ()           => get('/categories');
 export const getEvents     = ()           => get('/events');
 export const getAds        = (position)   => get(`/ads?position=${position}`);
+export const getAllAds     = ()            => get('/ads');
 export const getMenu       = ()           => get('/menu');
 export const getSettings   = ()           => get('/settings');
 

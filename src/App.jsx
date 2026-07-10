@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getCategories, getEvents, getAds, getMenu, subscribe, submitContact, getSettings } from "./api.js";
+import { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
+import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getCategories, getEvents, getAds, getAllAds, getMenu, subscribe, submitContact, getSettings } from "./api.js";
+
+const AdsContext = createContext({});
 
 // ─── DATA ────────────────────────────────────────────────
 const ARTICLES = {
@@ -273,16 +275,24 @@ function CatTag({ category, onClick }) {
 // ─── AD SLOT ─────────────────────────────────────────────
 
 function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
+  const adsCache = useContext(AdsContext);
   const [ad, setAd] = useState(null);
   const [tried, setTried] = useState(false);
 
   useEffect(() => {
     if (!position) { setTried(true); return; }
+    // If cache is populated, use it immediately (no network request)
+    if (adsCache && Object.keys(adsCache).length > 0) {
+      setAd((adsCache[position] || [])[0] || null);
+      setTried(true);
+      return;
+    }
+    // Fallback: individual fetch
     getAds(position)
       .then(ads => { setAd(ads?.[0] || null); })
       .catch(() => {})
       .finally(() => setTried(true));
-  }, [position]);
+  }, [position, adsCache]);
 
   if (!tried || !ad) return null;
 
@@ -2511,6 +2521,21 @@ export default function App() {
   const [footerSlugs, setFooterSlugs] = useState({ privacy: '', terms: '' });
   const [cookieSettings, setCookieSettings] = useState({ enabled: false, message: '' });
   const [logoUrl, setLogoUrl] = useState('');
+  const [adsCache, setAdsCache] = useState({});
+
+  // Fetch all ads once at app root and group by position_slug
+  useEffect(() => {
+    getAllAds()
+      .then(ads => {
+        const grouped = {};
+        (ads || []).forEach(ad => {
+          if (!grouped[ad.position_slug]) grouped[ad.position_slug] = [];
+          grouped[ad.position_slug].push(ad);
+        });
+        setAdsCache(grouped);
+      })
+      .catch(() => {});
+  }, []);
 
   // Inject custom scripts from site settings
   useEffect(() => {
@@ -2636,6 +2661,7 @@ export default function App() {
   else content = <HomePage setPage={nav} partners={partners} />;
 
   return (
+    <AdsContext.Provider value={adsCache}>
     <div style={{ minHeight: '100vh' }}>
       <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700&family=Source+Serif+4:ital,wght@0,400;0,600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <style>{`
@@ -2699,5 +2725,6 @@ export default function App() {
       <Footer setPage={nav} footerSlugs={footerSlugs} />
       <CookieBanner settings={cookieSettings} privacySlug={footerSlugs.privacy} setPage={nav} />
     </div>
+    </AdsContext.Provider>
   );
 }
