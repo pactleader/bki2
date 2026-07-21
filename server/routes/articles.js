@@ -69,7 +69,7 @@ pub.get('/slug/:slug', async (req, res) => {
       `SELECT ${ARTICLE_SELECT}, a.body FROM articles a
        JOIN users u ON a.author_id = u.id
        JOIN categories c ON a.category_id = c.id
-       WHERE a.slug = ? AND a.status = 'published' LIMIT 1`,
+       WHERE a.slug = ? AND a.status = 'published' AND a.deleted_at IS NULL LIMIT 1`,
       [req.params.slug]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
@@ -177,8 +177,8 @@ adm.post('/', async (req, res) => {
       `INSERT INTO articles
          (title, slug, excerpt, body, featured_image, featured_image_alt, author_id, category_id,
           status, publish_date, seo_title, seo_description, seo_keywords, og_image, schema_json,
-          use_slug_only, source_name, source_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+          source_name, source_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
        req.user.sub, category_id, status || 'draft',

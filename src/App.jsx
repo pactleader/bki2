@@ -1723,7 +1723,7 @@ function ArticlePage({ articleId, articleSlug, setPage, onSlug, partners }) {
     fetchArticle()
       .then(a => {
         setArticle(a);
-        if (a?.slug && onSlug) onSlug(a.slug, a);
+        if (a?.slug && onSlug) onSlug(a.slug);
         if (a?.category?.slug) {
           getArticles({ category: a.category.slug, limit: 500 })
             .then(res => {
@@ -1901,9 +1901,7 @@ function ArticlePage({ articleId, articleSlug, setPage, onSlug, partners }) {
 
           {/* Share */}
           {article && (() => {
-            const articleUrl = article.use_slug_only
-              ? `${SITE_URL}/Articles/${article.slug}/`
-              : `${SITE_URL}/Articles/${article.slug}/${article.id}/`;
+            const articleUrl = `${SITE_URL}/Articles/${article.slug}/${article.id}/`;
             const encoded    = encodeURIComponent(articleUrl);
             const encodedTitle = encodeURIComponent(article.title || '');
             const shares = [
@@ -2473,12 +2471,9 @@ function pagerBtn(active, disabled, color = '#c0392b') {
 // ─── URL HELPERS ─────────────────────────────────────────
 
 function parsePathToPage(pathname) {
-  // /Articles/{slug}/{id}/  — legacy format
+  // /Articles/{slug}/{id}/
   const m = pathname.match(/^\/Articles\/[^/]+\/(\d+)\/?$/i);
   if (m) return 'article-' + m[1];
-  // /Articles/{slug}/  — new slug-only format
-  const ms = pathname.match(/^\/Articles\/([^/]+)\/?$/i);
-  if (ms) return 'article-slug:' + ms[1];
   // /p/:slug  — static pages
   const pm = pathname.match(/^\/p\/([^/]+)\/?$/);
   if (pm) return 'page-' + pm[1];
@@ -2491,15 +2486,10 @@ function parsePathToPage(pathname) {
   return 'home';
 }
 
-function pageToPath(p, articleSlug, articleUseSlugOnly) {
-  if (p.startsWith('article-slug:')) {
-    const slug = p.replace('article-slug:', '');
-    return `/Articles/${slug}/`;
-  }
+function pageToPath(p, articleSlug) {
   if (p.startsWith('article-')) {
     const id = p.replace('article-', '');
     const slug = articleSlug || 'article';
-    if (articleUseSlugOnly) return `/Articles/${slug}/`;
     return `/Articles/${slug}/${id}/`;
   }
   if (p.startsWith('page-')) {
@@ -2643,18 +2633,11 @@ export default function App() {
     const q = decodeURIComponent(page.replace('search-', ''));
     content = <SearchPage query={q} setPage={nav} partners={partners} />;
   }
-  else if (page.startsWith('article-slug:')) {
-    const slug = page.replace('article-slug:', '');
-    content = <ArticlePage articleSlug={slug} setPage={nav} partners={partners} onSlug={(s, a) => {
-      const path = `/Articles/${s}/`;
-      if (window.location.pathname !== path) window.history.replaceState({ page }, '', path);
-    }} />;
-  }
   else if (page.startsWith('article-')) {
     const id = parseInt(page.replace('article-', ''));
-    content = <ArticlePage articleId={id} setPage={nav} partners={partners} onSlug={(slug, article) => {
+    content = <ArticlePage articleId={id} setPage={nav} partners={partners} onSlug={(slug) => {
       articleSlugs.current[id] = slug;
-      const path = article?.use_slug_only ? `/Articles/${slug}/` : `/Articles/${slug}/${id}/`;
+      const path = `/Articles/${slug}/${id}/`;
       if (window.location.pathname !== path) window.history.replaceState({ page }, '', path);
     }} />;
   }

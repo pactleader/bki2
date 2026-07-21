@@ -102,7 +102,7 @@ function ListView({ onTrash }) {
               <TR key={a.id}>
                 <TD>
                   {a.status === 'published' && a.slug ? (
-                    <a href={a.use_slug_only ? `/Articles/${a.slug}/` : `/Articles/${a.slug}/${a.id}/`}
+                    <a href={`/Articles/${a.slug}/${a.id}/`}
                       target="_blank" rel="noopener noreferrer"
                       style={{ fontWeight: 500, maxWidth: 320, display: 'block', color: 'inherit', textDecoration: 'none' }}
                       onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
