@@ -70,7 +70,7 @@ const HIGHLIGHTS = [
 // ─── HOOKS ───────────────────────────────────────────────
 
 const SITE_NAME = 'The Background Investigator';
-const SITE_URL = 'https://bki2.pacificpact.com';
+const SITE_URL = 'https://thebackgroundinvestigator.com';
 const DEFAULT_DESC = 'Your information resource for the background investigation industry. News, court record updates, and compliance analysis for pre-employment screening professionals.';
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.svg`;
 
