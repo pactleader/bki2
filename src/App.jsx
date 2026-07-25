@@ -2520,6 +2520,7 @@ function parsePathToPage(pathname) {
 }
 
 function pageToPath(p, articleSlug) {
+  if (p === 'not-found') return window.location.pathname; // keep the bad URL in the bar
   if (p.startsWith('article-')) {
     const id = p.replace('article-', '');
     const slug = articleSlug || 'article';
