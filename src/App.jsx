@@ -2468,7 +2468,34 @@ function pagerBtn(active, disabled, color = '#c0392b') {
   };
 }
 
+// ─── 404 PAGE ────────────────────────────────────────────
+
+function NotFoundPage({ setPage }) {
+  useMeta({ title: 'Page Not Found' });
+  return (
+    <div className="wrap" style={{ padding: '80px 24px', textAlign: 'center', maxWidth: 600, margin: '0 auto' }}>
+      <p style={{ fontFamily: 'var(--f-ui)', fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--color-accent)', marginBottom: 16 }}>404</p>
+      <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 16, lineHeight: 1.2 }}>Page Not Found</h1>
+      <p style={{ fontFamily: 'var(--f-body)', fontSize: '1.05rem', color: 'var(--color-text-secondary)', marginBottom: 36, lineHeight: 1.7 }}>
+        The page you're looking for doesn't exist or may have been moved.
+      </p>
+      <button
+        onClick={() => setPage('home')}
+        style={{ background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: 4, padding: '12px 28px', fontFamily: 'var(--f-ui)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+      >
+        Go to Homepage
+      </button>
+    </div>
+  );
+}
+
 // ─── URL HELPERS ─────────────────────────────────────────
+
+const KNOWN_PAGES = new Set([
+  '/', '/top-stories', '/international-news', '/national-news',
+  '/press-releases', '/events', '/advertise', '/archives',
+  '/contact', '/subscribe', '/search',
+]);
 
 function parsePathToPage(pathname) {
   // /Articles/{slug}/{id}/
@@ -2482,8 +2509,14 @@ function parsePathToPage(pathname) {
     const q = new URLSearchParams(window.location.search).get('q') || '';
     if (q) return 'search-' + encodeURIComponent(q);
   }
-  // fallback: home
-  return 'home';
+  // /category/:slug  — dynamic category pages
+  const cm = pathname.match(/^\/category\/([^/]+)\/?$/);
+  if (cm) return 'category-' + cm[1];
+  // known top-level paths
+  const clean = pathname.replace(/\/$/, '') || '/';
+  if (KNOWN_PAGES.has(clean)) return URL_TO_PAGE[clean] || 'home';
+  // anything else is a 404
+  return 'not-found';
 }
 
 function pageToPath(p, articleSlug) {
@@ -2641,6 +2674,7 @@ export default function App() {
       if (window.location.pathname !== path) window.history.replaceState({ page }, '', path);
     }} />;
   }
+  else if (page === 'not-found') content = <NotFoundPage setPage={nav} />;
   else content = <HomePage setPage={nav} partners={partners} />;
 
   return (

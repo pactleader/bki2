@@ -91,7 +91,12 @@ app.get('/search', (req, res) => {
   res.sendFile(require('path').join(__dirname, '../dist/index.html'));
 });
 
-// ── 404 / Error ───────────────────────────────────────────────
+// ── SPA 404 — unknown paths get index.html with 404 status ───
+app.get('*', (req, res) => {
+  res.status(404).sendFile(require('path').join(__dirname, '../dist/index.html'));
+});
+
+// ── API 404 / Error ───────────────────────────────────────────
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, _next) => {
   console.error('Unhandled error:', err);
