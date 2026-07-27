@@ -1118,7 +1118,7 @@ function SidebarMostRead({ setPage, mostRead = [] }) {
         }}>
           <span style={{
             fontFamily: 'var(--f-display)', fontSize: 'var(--text-2xl)', fontWeight: 700,
-            color: i < 3 ? '#c0392b' : '#ddd', lineHeight: 1, minWidth: 28,
+            color: '#c0392b', lineHeight: 1, minWidth: 28,
           }}>{i + 1}</span>
           <h4 style={{
             fontFamily: 'var(--f-display)', fontSize: 'var(--text-sm)', fontWeight: 600,
