@@ -1499,7 +1499,7 @@ function HomePage({ setPage, partners }) {
               />
               {idx === 0 && <AdSlot position="leaderboard-top" style={{ margin: '20px 0' }} />}
               {idx === 1 && <InlineNewsletter />}
-              {rowIdx === 0 && <div className="inline-sidebar-ad"><AdSlot position="sidebar-1" w="100%" h="auto" /></div>}
+              {rowIdx === 0 && <div className="inline-sidebar-ad"><SidebarMostRead setPage={setPage} mostRead={mostRead} /><AdSlot position="sidebar-1" w="100%" h="auto" /></div>}
               {rowIdx === 1 && <div className="inline-sidebar-ad"><AdSlot position="sidebar-2" w="100%" h="auto" /></div>}
             </div>
             {/* Sidebar column — alignItems:stretch so this div is as tall as the content beside it, enabling sticky */}
