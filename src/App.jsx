@@ -1237,7 +1237,7 @@ function InlineNewsletter() {
   const { email, setEmail, status, msg, handleSubmit } = useSubscribeForm('inline');
   const [ref, vis] = useScrollReveal();
   return (
-    <div ref={ref} className="wrap" style={{ padding: '0 24px', opacity: vis ? 1 : 0, transition: 'opacity 500ms ease' }}>
+    <div ref={ref} style={{ opacity: vis ? 1 : 0, transition: 'opacity 500ms ease' }}>
       <div style={{ background: 'var(--color-primary)', borderRadius: 8, padding: '32px 40px', display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap', justifyContent: 'space-between', margin: '20px 0' }}>
         <div style={{ flex: '1 1 300px' }}>
           <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-xl)', color: '#fff', fontWeight: 700, marginBottom: 4 }}>Stay ahead of compliance changes.</h3>
