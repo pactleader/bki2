@@ -1380,6 +1380,7 @@ function MoreArticles({ setPage }) {
                         {chunk.map(a => <ArticleCard key={a.id} a={a} />)}
                       </div>
                     ))}
+                    {slot && <div className="inline-sidebar-ad"><AdSlot position={slot} w="100%" h="auto" /></div>}
                   </div>
                   {/* Sidebar slot — only for first N slots, then full-width */}
                   {slot && (
@@ -1498,6 +1499,8 @@ function HomePage({ setPage, partners }) {
               />
               {idx === 0 && <AdSlot position="leaderboard-top" style={{ margin: '20px 0' }} />}
               {idx === 1 && <InlineNewsletter />}
+              {rowIdx === 0 && <div className="inline-sidebar-ad"><AdSlot position="sidebar-1" w="100%" h="auto" /></div>}
+              {rowIdx === 1 && <div className="inline-sidebar-ad"><AdSlot position="sidebar-2" w="100%" h="auto" /></div>}
             </div>
             {/* Sidebar column — alignItems:stretch so this div is as tall as the content beside it, enabling sticky */}
             <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 300 }}>
@@ -1963,6 +1966,11 @@ function ArticlePage({ articleId, articleSlug, setPage, onSlug, partners }) {
               </div>
             );
           })()}
+
+          {/* Inline sidebar ad — shown only when sidebar is hidden (tablet/mobile) */}
+          <div className="inline-sidebar-ad" style={{ marginTop: 32 }}>
+            <AdSlot position="sidebar-1" w="100%" h="auto" />
+          </div>
 
           {/* Related */}
           {related.length > 0 && (
@@ -2720,9 +2728,11 @@ export default function App() {
         .desktop-only { display: flex; }
         .mobile-only { display: none !important; }
         .sidebar-col { display: block; }
+        .inline-sidebar-ad { display: none !important; }
 
         @media (max-width: 1023px) {
           .sidebar-col { display: none !important; }
+          .inline-sidebar-ad { display: block !important; margin: 16px 0 24px; }
         }
         @media (max-width: 768px) {
           .desktop-only { display: none !important; }
