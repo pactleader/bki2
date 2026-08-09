@@ -121,7 +121,7 @@ function ListView({ onTrash }) {
                 <TD style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {filters.sort === 'edited'
                     ? (a.updated_at ? new Date(a.updated_at).toLocaleDateString() : '—')
-                    : (a.publish_date ? new Date(a.publish_date).toLocaleDateString() : '—')}
+                    : (a.publish_date ? new Date(a.publish_date).toLocaleString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric', hour: a.status === 'scheduled' ? 'numeric' : undefined, minute: a.status === 'scheduled' ? '2-digit' : undefined }) : '—')}
                 </TD>
                 <TD style={{ color: 'var(--text-muted)' }}>{a.view_count}</TD>
                 <TD>
