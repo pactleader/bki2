@@ -134,7 +134,9 @@ function ListView({ onTrash }) {
                 </TD>
                 <TD style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {(() => {
-                    const raw = filters.sort === 'edited' ? a.updated_at : a.publish_date;
+                    const raw = filters.sort === 'edited'
+                      ? a.updated_at
+                      : (a.publish_date || a.created_at);
                     if (!raw) return '—';
                     const d = new Date(String(raw).replace(' ', 'T') + 'Z');
                     if (isNaN(d)) return '—';
