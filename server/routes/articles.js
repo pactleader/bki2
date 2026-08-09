@@ -118,7 +118,7 @@ pub.get('/slug/:slug', async (req, res) => {
       `SELECT ${ARTICLE_SELECT}, a.body FROM articles a
        JOIN users u ON a.author_id = u.id
        JOIN categories c ON a.category_id = c.id
-       WHERE a.slug = ? AND a.status = 'published' AND a.deleted_at IS NULL AND (a.publish_date IS NULL OR a.publish_date <= NOW()) LIMIT 1`,
+       WHERE a.slug = ? AND a.status = 'published' AND a.deleted_at IS NULL LIMIT 1`,
       [req.params.slug]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
@@ -135,7 +135,7 @@ pub.get('/:id', async (req, res) => {
       `SELECT ${ARTICLE_SELECT}, a.body FROM articles a
        JOIN users u ON a.author_id = u.id
        JOIN categories c ON a.category_id = c.id
-       WHERE a.id = ? AND a.status = 'published' AND (a.publish_date IS NULL OR a.publish_date <= NOW()) LIMIT 1`,
+       WHERE a.id = ? AND a.status = 'published' AND a.deleted_at IS NULL LIMIT 1`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
