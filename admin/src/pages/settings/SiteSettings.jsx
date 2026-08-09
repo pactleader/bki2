@@ -185,6 +185,7 @@ export default function SiteSettings() {
                 ['Asia/Manila',          'Philippine Time — Manila'],
                 ['Australia/Sydney',     'Australian Eastern Time — Sydney'],
                 ['Australia/Melbourne',  'Australian Eastern Time — Melbourne'],
+                ['Pacific/Saipan',       'Chamorro Standard Time — Saipan/Guam (UTC+10)'],
                 ['Pacific/Auckland',     'New Zealand Time — Auckland'],
                 ['UTC',                  'UTC'],
               ].map(([tz, label]) => (
