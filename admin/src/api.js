@@ -103,6 +103,9 @@ export const deleteMedia = (filename) => apiFetch(`/admin/media/${encodeURICompo
 export const generateImage = (prompt, provider = 'openai', metadata = {}) =>
   apiFetch('/admin/generate-image', { method: 'POST', body: JSON.stringify({ prompt, provider, ...metadata }) });
 
+export const suggestImagePrompt = (title, body) =>
+  apiFetch('/admin/generate-image/suggest-prompt', { method: 'POST', body: JSON.stringify({ title, body }) });
+
 // ── Import ────────────────────────────────────────────────────
 export function importPreview(file) {
   const token = getToken();

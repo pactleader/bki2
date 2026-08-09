@@ -17,7 +17,7 @@ const EMPTY = {
   source_name: '', source_url: '', extra_category_ids: [],
 };
 
-function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '', authorName = '' }) {
+function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '', authorName = '', articleBody = '' }) {
   const fileRef  = useRef();
   const [uploading, setUploading] = useState(false);
   const [error,     setError]     = useState('');
@@ -184,7 +184,8 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
 
       {aiOpen && (
         <AiGenerateModal
-          initialPrompt={articleTitle}
+          articleTitle={articleTitle}
+          articleBody={articleBody}
           metadata={effectiveMeta()}
           onAccept={url => { onChange(url); if (!altValue && articleTitle) onAltChange?.(articleTitle); setAiOpen(false); }}
           onClose={() => setAiOpen(false)}
@@ -194,16 +195,21 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
   );
 }
 
-function AiGenerateModal({ initialPrompt, metadata = {}, onAccept, onClose }) {
-  const [prompt,      setPrompt]      = useState(
-    initialPrompt
-      ? `A high-quality, Newspaper headline image for a news article titled: "${initialPrompt}". Professional, no text.`
-      : ''
-  );
+function AiGenerateModal({ articleTitle = '', articleBody = '', metadata = {}, onAccept, onClose }) {
+  const [prompt,      setPrompt]      = useState('');
+  const [suggesting,  setSuggesting]  = useState(true);
   const [provider,    setProvider]    = useState('openai');
   const [generating,  setGenerating]  = useState(false);
   const [previewUrl,  setPreviewUrl]  = useState(null);
   const [error,       setError]       = useState('');
+
+  useEffect(() => {
+    setSuggesting(true);
+    api.suggestImagePrompt(articleTitle, articleBody)
+      .then(res => setPrompt(res.prompt || ''))
+      .catch(() => setPrompt(articleTitle ? `A high-quality newspaper headline image for: "${articleTitle}". Professional, photorealistic, no text.` : ''))
+      .finally(() => setSuggesting(false));
+  }, []);
 
   async function handleGenerate() {
     if (!prompt.trim()) return;
@@ -246,17 +252,24 @@ function AiGenerateModal({ initialPrompt, metadata = {}, onAccept, onClose }) {
         <div style={{ padding: 20 }}>
           {/* Prompt */}
           <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>
-            Prompt
+            {suggesting ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ display: 'inline-block', width: 10, height: 10, border: '2px solid #c4b5fd', borderTopColor: '#7c3aed', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                Analyzing article and suggesting prompt…
+              </span>
+            ) : 'Prompt (AI suggested — edit as needed)'}
           </label>
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             rows={4}
+            disabled={suggesting}
             style={{
               width: '100%', padding: '8px 10px', fontSize: 13, border: '1px solid var(--border)',
               borderRadius: 4, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
+              opacity: suggesting ? 0.5 : 1,
             }}
-            placeholder="Describe the image you want…"
+            placeholder={suggesting ? 'Generating suggestion…' : 'Describe the image you want…'}
           />
           {/* Provider toggle */}
           <div style={{ display: 'flex', gap: 6, margin: '10px 0 16px' }}>
@@ -287,12 +300,12 @@ function AiGenerateModal({ initialPrompt, metadata = {}, onAccept, onClose }) {
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={generating || !prompt.trim()}
+            disabled={generating || suggesting || !prompt.trim()}
             style={{
               width: '100%', padding: '9px 0', borderRadius: 4, border: 'none',
-              background: generating || !prompt.trim() ? '#c4b5fd' : '#7c3aed',
+              background: generating || suggesting || !prompt.trim() ? '#c4b5fd' : '#7c3aed',
               color: '#fff', fontWeight: 600, fontSize: 13,
-              cursor: generating || !prompt.trim() ? 'not-allowed' : 'pointer',
+              cursor: generating || suggesting || !prompt.trim() ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
@@ -611,6 +624,7 @@ export default function ArticleEdit() {
               altValue={form.featured_image_alt}
               onAltChange={v => set('featured_image_alt', v)}
               articleTitle={form.title}
+              articleBody={form.body}
               authorName={authors.find(a => String(a.id) === String(form.author_id || user?.id))?.display_name || user?.display_name || ''}
             />
           </Card>

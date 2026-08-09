@@ -86,6 +86,47 @@ async function generateWithGoogle(prompt, apiKey) {
   return `/uploads/${filename}`;
 }
 
+// POST /api/admin/generate-image/suggest-prompt
+router.post('/suggest-prompt', async (req, res) => {
+  try {
+    const { title, body } = req.body;
+    if (!title && !body) return res.status(400).json({ error: 'title or body required' });
+
+    const [[row]] = await db.execute(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'openai_api_key' LIMIT 1`
+    );
+    const apiKey = row?.setting_value?.trim();
+    if (!apiKey) return res.status(400).json({ error: 'OpenAI API key not configured in Settings' });
+
+    const { default: OpenAI } = require('openai');
+    const openai = new OpenAI({ apiKey });
+
+    // Strip HTML tags and truncate body to ~800 chars for context
+    const plainBody = (body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 800);
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      max_tokens: 120,
+      messages: [
+        {
+          role: 'system',
+          content: 'You write concise image generation prompts for newspaper article featured images. Write a single prompt (1-2 sentences, no bullet points). The image must be professional, photorealistic, no text or words in the image. Focus on the key visual concept from the article.',
+        },
+        {
+          role: 'user',
+          content: `Article title: "${title}"\n\nArticle excerpt:\n${plainBody || '(no body yet)'}`,
+        },
+      ],
+    });
+
+    const suggested = completion.choices[0]?.message?.content?.trim() || '';
+    res.json({ prompt: suggested });
+  } catch (err) {
+    console.error('suggest-prompt error:', err);
+    res.status(500).json({ error: err.message || 'Failed to suggest prompt' });
+  }
+});
+
 // POST /api/admin/generate-image
 router.post('/', async (req, res) => {
   try {
