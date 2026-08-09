@@ -185,7 +185,7 @@ adm.post('/', async (req, res) => {
     if (!category_id) return res.status(400).json({ error: 'category_id required' });
     const [result] = await db.execute(
       'INSERT INTO homepage_sections (category_id, display_order, article_count, layout, is_active) VALUES (?, ?, ?, ?, ?)',
-      [category_id, display_order ?? 0, article_count ?? 4, layout || 'band', is_active ?? 1]
+      [category_id, display_order ?? 0, article_count ?? 4, layout || 'style1', is_active ?? 1]
     );
     res.status(201).json({ id: result.insertId });
   } catch (err) {
@@ -210,7 +210,7 @@ adm.put('/:id', async (req, res) => {
     const { display_order, article_count, layout, is_active } = req.body;
     await db.execute(
       'UPDATE homepage_sections SET display_order=?, article_count=?, layout=?, is_active=? WHERE id=?',
-      [display_order ?? 0, article_count ?? 4, layout || 'band', is_active ? 1 : 0, req.params.id]
+      [display_order ?? 0, article_count ?? 4, layout || 'style1', is_active ? 1 : 0, req.params.id]
     );
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }

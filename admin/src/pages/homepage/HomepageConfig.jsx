@@ -92,7 +92,7 @@ export default function HomepageConfig() {
     if (!newCatId) { toast('Select a category', 'error'); return; }
     setSaving(true);
     try {
-      await api.createHomepageSection({ category_id: newCatId, display_order: sections.length, article_count: 4, layout: 'band' });
+      await api.createHomepageSection({ category_id: newCatId, display_order: sections.length, article_count: 4, layout: 'style1' });
       toast('Section added');
       setAdding(false);
       setNewCatId('');
