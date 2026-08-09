@@ -130,6 +130,7 @@ export default function SiteSettings() {
         { key: 'brand_primary_color',    value: values['brand_primary_color']    || '#0d1b2a', type: 'string' },
         { key: 'brand_accent_color',     value: values['brand_accent_color']     || '#c0392b', type: 'string' },
         { key: 'brand_nav_link_color',   value: values['brand_nav_link_color']   || '#ffffff', type: 'string' },
+        { key: 'site_timezone',          value: values['site_timezone']          || 'America/New_York', type: 'string' },
       ];
       await api.saveSettings(items);
       toast('Settings saved');
@@ -152,6 +153,45 @@ export default function SiteSettings() {
               <Input value={values[f.key] || ''} onChange={e => set(f.key, e.target.value)} />
             </Field>
           ))}
+
+          {/* Timezone */}
+          <Field label="Site Timezone" hint="Used for scheduled post times and date display">
+            <select
+              value={values['site_timezone'] || 'America/New_York'}
+              onChange={e => set('site_timezone', e.target.value)}
+              style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 13, background: '#fff' }}
+            >
+              {[
+                ['America/New_York',     'Eastern Time (ET) — New York'],
+                ['America/Chicago',      'Central Time (CT) — Chicago'],
+                ['America/Denver',       'Mountain Time (MT) — Denver'],
+                ['America/Los_Angeles',  'Pacific Time (PT) — Los Angeles'],
+                ['America/Phoenix',      'Arizona (MST, no DST)'],
+                ['America/Anchorage',    'Alaska Time (AKT)'],
+                ['Pacific/Honolulu',     'Hawaii Time (HST)'],
+                ['America/Toronto',      'Eastern Time — Toronto'],
+                ['America/Vancouver',    'Pacific Time — Vancouver'],
+                ['Europe/London',        'GMT/BST — London'],
+                ['Europe/Paris',         'Central European Time — Paris'],
+                ['Europe/Berlin',        'Central European Time — Berlin'],
+                ['Europe/Madrid',        'Central European Time — Madrid'],
+                ['Europe/Rome',          'Central European Time — Rome'],
+                ['Europe/Amsterdam',     'Central European Time — Amsterdam'],
+                ['Asia/Dubai',           'Gulf Standard Time — Dubai'],
+                ['Asia/Kolkata',         'India Standard Time — Mumbai'],
+                ['Asia/Singapore',       'Singapore Time'],
+                ['Asia/Tokyo',           'Japan Standard Time — Tokyo'],
+                ['Asia/Seoul',           'Korea Standard Time — Seoul'],
+                ['Asia/Manila',          'Philippine Time — Manila'],
+                ['Australia/Sydney',     'Australian Eastern Time — Sydney'],
+                ['Australia/Melbourne',  'Australian Eastern Time — Melbourne'],
+                ['Pacific/Auckland',     'New Zealand Time — Auckland'],
+                ['UTC',                  'UTC'],
+              ].map(([tz, label]) => (
+                <option key={tz} value={tz}>{label}</option>
+              ))}
+            </select>
+          </Field>
 
           {/* Brand Colors */}
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 20, marginBottom: 20 }}>

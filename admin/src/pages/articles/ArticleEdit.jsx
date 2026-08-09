@@ -383,12 +383,19 @@ export default function ArticleEdit() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [slugLocked, setSlugLocked] = useState(!isNew);
+  const [siteTimezone, setSiteTimezone] = useState('America/New_York');
 
   useEffect(() => {
     api.listCategories().then(setCategories).catch(() => {});
     if (user?.role === 'admin') {
       api.listUsers().then(setAuthors).catch(() => {});
     }
+    api.listSettings()
+      .then(rows => {
+        const tz = rows.find(r => r.setting_key === 'site_timezone')?.setting_value;
+        if (tz) setSiteTimezone(tz);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -557,7 +564,7 @@ export default function ArticleEdit() {
                 <option value="published">Published</option>
               </Select>
             </Field>
-            <Field label="Publish Date" hint="Set a future date to schedule">
+            <Field label="Publish Date">
               <Input
                 type="datetime-local"
                 value={form.publish_date}
@@ -571,6 +578,10 @@ export default function ArticleEdit() {
                   }
                 }}
               />
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                Timezone: <strong>{siteTimezone}</strong>
+                {form.status === 'scheduled' && ' — set a future date to schedule'}
+              </div>
             </Field>
           </Card>
 
