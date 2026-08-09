@@ -4,7 +4,7 @@ import { useToast } from '../../components/Toast.jsx';
 import ConfirmModal from '../../components/ConfirmModal.jsx';
 import PageHeader, { Btn, Card, Field, Input, Textarea, Table, TR, TD } from '../../components/PageHeader.jsx';
 
-const EMPTY = { name: '', color_hex: '#444444', display_order: 0, description: '' };
+const EMPTY = { name: '', color_hex: '#444444', description: '' };
 
 export default function CategoryList() {
   const toast = useToast();
@@ -21,7 +21,7 @@ export default function CategoryList() {
   }
 
   function openNew() { setForm(EMPTY); setEditing('new'); }
-  function openEdit(c) { setForm({ name: c.name, color_hex: c.color_hex, display_order: c.display_order, description: c.description || '' }); setEditing(c); }
+  function openEdit(c) { setForm({ name: c.name, color_hex: c.color_hex, description: c.description || '' }); setEditing(c); }
 
   async function save() {
     if (!form.name) { toast('Name required', 'error'); return; }
@@ -54,14 +54,13 @@ export default function CategoryList() {
       <PageHeader title="Categories" action={<Btn variant="accent" onClick={openNew}>+ New Category</Btn>} />
 
       <Card style={{ padding: 0 }}>
-        <Table headers={['', 'Name', 'Slug', 'Articles', 'Order', '']}>
+        <Table headers={['', 'Name', 'Slug', 'Articles', '']}>
           {cats.map(c => (
             <TR key={c.id}>
               <TD><span style={{ display: 'inline-block', width: 18, height: 18, borderRadius: 3, background: c.color_hex }} /></TD>
               <TD style={{ fontWeight: 500 }}>{c.name}</TD>
               <TD style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{c.slug}</TD>
               <TD>{c.article_count}</TD>
-              <TD>{c.display_order}</TD>
               <TD>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => openEdit(c)} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: 12, cursor: 'pointer' }}>Edit</button>
@@ -70,7 +69,7 @@ export default function CategoryList() {
               </TD>
             </TR>
           ))}
-          {cats.length === 0 && <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>No categories.</td></tr>}
+          {cats.length === 0 && <tr><td colSpan={5} style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)' }}>No categories.</td></tr>}
         </Table>
       </Card>
 
@@ -86,7 +85,6 @@ export default function CategoryList() {
                 <Input value={form.color_hex} onChange={e => set('color_hex', e.target.value)} style={{ fontFamily: 'monospace' }} />
               </div>
             </Field>
-            <Field label="Display Order"><Input type="number" value={form.display_order} onChange={e => set('display_order', parseInt(e.target.value) || 0)} /></Field>
             <Field label="Description (optional)"><Textarea value={form.description} onChange={e => set('description', e.target.value)} /></Field>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
               <Btn variant="outline" onClick={() => setEditing(null)}>Cancel</Btn>
