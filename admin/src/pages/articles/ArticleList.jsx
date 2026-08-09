@@ -16,7 +16,8 @@ export default function ArticleList() {
 
 function utcToTz(utcStr, tz) {
   if (!utcStr) return null;
-  const d = new Date(String(utcStr).replace(' ', 'T') + 'Z');
+  const s = String(utcStr).replace(' ', 'T');
+  const d = new Date(s.length === 10 ? s + 'T00:00:00Z' : s + 'Z');
   if (isNaN(d)) return null;
   return d.toLocaleString(undefined, { timeZone: tz, month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
@@ -138,7 +139,8 @@ function ListView({ onTrash }) {
                       ? a.updated_at
                       : (a.publish_date || a.created_at);
                     if (!raw) return '—';
-                    const d = new Date(String(raw).replace(' ', 'T') + 'Z');
+                    const s = String(raw).replace(' ', 'T');
+                    const d = new Date(s.length === 10 ? s + 'T00:00:00Z' : s + 'Z');
                     if (isNaN(d)) return '—';
                     return a.status === 'scheduled'
                       ? utcToTz(raw, siteTimezone)
