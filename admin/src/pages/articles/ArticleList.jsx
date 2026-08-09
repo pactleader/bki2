@@ -48,8 +48,7 @@ function ListView({ onTrash }) {
     try {
       if (article.status === 'published') await api.unpublishArticle(article.id);
       else await api.publishArticle(article.id);
-      setArticles(a => a.map(x => x.id === article.id
-        ? { ...x, status: x.status === 'published' ? 'draft' : 'published' } : x));
+      setFilters(f => ({ ...f }));
       toast('Status updated');
     } catch (err) {
       toast(err.message, 'error');
@@ -79,6 +78,7 @@ function ListView({ onTrash }) {
             style={{ padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}>
             <option value="">All Statuses</option>
             <option value="published">Published</option>
+            <option value="scheduled">Scheduled</option>
             <option value="draft">Draft</option>
           </select>
           <select value={filters.category_id} onChange={e => setFilters(f => ({ ...f, category_id: e.target.value, page: 1 }))}
@@ -116,7 +116,7 @@ function ListView({ onTrash }) {
                 <TD><Badge color={a.category?.color_hex}>{a.category?.name}</Badge></TD>
                 <TD style={{ color: 'var(--text-muted)' }}>{a.author?.display_name}</TD>
                 <TD>
-                  <Badge color={a.status === 'published' ? 'var(--success)' : '#888'}>{a.status}</Badge>
+                  <Badge color={a.status === 'published' ? 'var(--success)' : a.status === 'scheduled' ? '#d97706' : '#888'}>{a.status}</Badge>
                 </TD>
                 <TD style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {filters.sort === 'edited'

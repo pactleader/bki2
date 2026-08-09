@@ -103,6 +103,21 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// ── DB migration: add 'scheduled' status ─────────────────────
+db.execute(`ALTER TABLE articles MODIFY COLUMN status ENUM('draft','published','scheduled') NOT NULL DEFAULT 'draft'`)
+  .catch(err => { if (!err.message.includes('already')) console.warn('Migration note:', err.message); });
+
+// ── Scheduled post auto-publisher ────────────────────────────
+setInterval(async () => {
+  try {
+    const [result] = await db.execute(
+      `UPDATE articles SET status='published'
+       WHERE status='scheduled' AND publish_date IS NOT NULL AND publish_date <= NOW()`
+    );
+    if (result.affectedRows > 0) console.log(`Auto-published ${result.affectedRows} scheduled article(s)`);
+  } catch (err) { console.error('Scheduler error:', err.message); }
+}, 60 * 1000); // runs every minute
+
 const PORT = parseInt(process.env.PORT || '4000');
 const server = app.listen(PORT, '127.0.0.1', () => {
   console.log(`BKI API running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);

@@ -38,7 +38,7 @@ pub.get('/', async (req, res) => {
     const { page, limit, offset } = paginate(req.query);
     const { category, search, has_thumbnail } = req.query;
 
-    const conds = [`a.status = 'published'`, `a.deleted_at IS NULL`];
+    const conds = [`a.status = 'published'`, `a.deleted_at IS NULL`, `(a.publish_date IS NULL OR a.publish_date <= NOW())`];
     const params = [];
 
     if (category)      { conds.push('c.slug = ?'); params.push(category); }
@@ -69,7 +69,7 @@ pub.get('/slug/:slug', async (req, res) => {
       `SELECT ${ARTICLE_SELECT}, a.body FROM articles a
        JOIN users u ON a.author_id = u.id
        JOIN categories c ON a.category_id = c.id
-       WHERE a.slug = ? AND a.status = 'published' AND a.deleted_at IS NULL LIMIT 1`,
+       WHERE a.slug = ? AND a.status = 'published' AND a.deleted_at IS NULL AND (a.publish_date IS NULL OR a.publish_date <= NOW()) LIMIT 1`,
       [req.params.slug]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
@@ -86,7 +86,7 @@ pub.get('/:id', async (req, res) => {
       `SELECT ${ARTICLE_SELECT}, a.body FROM articles a
        JOIN users u ON a.author_id = u.id
        JOIN categories c ON a.category_id = c.id
-       WHERE a.id = ? AND a.status = 'published' LIMIT 1`,
+       WHERE a.id = ? AND a.status = 'published' AND (a.publish_date IS NULL OR a.publish_date <= NOW()) LIMIT 1`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
@@ -235,7 +235,10 @@ adm.put('/:id', async (req, res) => {
 adm.post('/:id/publish', requireAdmin, async (req, res) => {
   try {
     await db.execute(
-      `UPDATE articles SET status='published', publish_date=IF(publish_date IS NULL, NOW(), publish_date) WHERE id=?`,
+      `UPDATE articles SET
+         publish_date = IF(publish_date IS NULL, NOW(), publish_date),
+         status = IF(publish_date IS NULL OR publish_date <= NOW(), 'published', 'scheduled')
+       WHERE id=?`,
       [req.params.id]
     );
     res.json({ ok: true });

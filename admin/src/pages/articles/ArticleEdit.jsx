@@ -553,11 +553,24 @@ export default function ArticleEdit() {
             <Field label="Status">
               <Select value={form.status} onChange={e => set('status', e.target.value)}>
                 <option value="draft">Draft</option>
+                <option value="scheduled">Scheduled</option>
                 <option value="published">Published</option>
               </Select>
             </Field>
-            <Field label="Publish Date" hint="Leave blank to publish immediately">
-              <Input type="datetime-local" value={form.publish_date} onChange={e => set('publish_date', e.target.value)} />
+            <Field label="Publish Date" hint="Set a future date to schedule">
+              <Input
+                type="datetime-local"
+                value={form.publish_date}
+                onChange={e => {
+                  const val = e.target.value;
+                  set('publish_date', val);
+                  if (val && new Date(val) > new Date() && form.status === 'draft') {
+                    set('status', 'scheduled');
+                  } else if (!val && form.status === 'scheduled') {
+                    set('status', 'draft');
+                  }
+                }}
+              />
             </Field>
           </Card>
 
