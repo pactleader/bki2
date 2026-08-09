@@ -54,6 +54,15 @@ const CAT_COLORS = {
   'Press Releases': '#6a1b9a',
 };
 
+// Populated at runtime from /api/settings
+let SITE_TZ = 'Pacific/Saipan';
+function fmtDate(dateVal, opts = {}) {
+  if (!dateVal) return '';
+  const d = new Date(dateVal);
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString('en-US', { timeZone: SITE_TZ, ...opts });
+}
+
 // Populated at runtime from /api/categories — keyed by both name and slug
 let catColorMap = {};
 function getCatColor(nameOrSlug) {
@@ -579,7 +588,7 @@ function HeroZone({ setPage, hero: heroProp }) {
           }}>{hero.title}</h1>
           <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
             <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>By {hero.author?.display_name || hero.author}</span>
-            <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.3)' }}>{hero.publish_date ? new Date(hero.publish_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : hero.date}</span>
+            <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.3)' }}>{hero.publish_date ? new Date(hero.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, year: 'numeric', month: 'long', day: 'numeric' }) : hero.date}</span>
           </div>
           <button onClick={() => setPage('article-' + hero.id, hero.slug)} style={{
             background: 'none', border: 'none', color: 'var(--color-accent)', fontFamily: 'var(--f-ui)',
@@ -629,7 +638,7 @@ function ContainerA({ article, reverse = false, setPage }) {
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{article.excerpt}</p>
           <div style={{ marginTop: 14, fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
-            <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{article.author?.display_name || article.author}</span> · {article.publish_date ? new Date(article.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : article.date}
+            <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{article.author?.display_name || article.author}</span> · {article.publish_date ? new Date(article.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : article.date}
           </div>
         </div>
       </article>
@@ -776,7 +785,7 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                   color: 'var(--color-text-primary)', lineHeight: 1.3,
                 }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
                 </span>
               </article>
             ))}
@@ -804,7 +813,7 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                     color: 'var(--color-text-primary)', lineHeight: 1.3,
                   }}>{a.title}</h3>
                   <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
-                    {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                    {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
                   </span>
                 </article>
               ))}
@@ -831,7 +840,7 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                 display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}>{a.excerpt}</p>
               <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
               </span>
             </article>
           ); })()}
@@ -853,7 +862,7 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                     color: 'var(--color-text-primary)', lineHeight: 1.3,
                   }}>{a.title}</h3>
                   <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
-                    {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                    {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
                   </span>
                 </article>
               ))}
@@ -901,7 +910,7 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                   color: 'var(--color-text-primary)', lineHeight: 1.3,
                 }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
-                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
                 </span>
               </article>
             ))}
@@ -927,7 +936,7 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                   color: 'var(--color-text-primary)', lineHeight: 1.3,
                 }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 4, display: 'block' }}>
-                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                  {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
                 </span>
               </article>
             ))}
@@ -952,7 +961,7 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
                 display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}>{articles[3].excerpt}</p>
               <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                {articles[3].publish_date ? new Date(articles[3].publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : articles[3].date}
+                {articles[3].publish_date ? new Date(articles[3].publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : articles[3].date}
               </span>
             </article>
           )}
@@ -1063,7 +1072,7 @@ function SearchPage({ query, setPage, partners }) {
                 </p>
               )}
               <span style={{ fontFamily: 'var(--f-ui)', fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+                {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : ''}
               </span>
             </div>
           </article>
@@ -1315,7 +1324,7 @@ function MoreArticles({ setPage }) {
         </div>
         <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>{a.title}</h3>
         <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-          {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+          {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
         </span>
       </article>
     );
@@ -1642,7 +1651,7 @@ function CategoryPage({ category, title, setPage, partners }) {
                   color: 'var(--color-text-primary)', lineHeight: 1.3, marginTop: 8,
                 }}>{a.title}</h3>
                 <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
-                  {a.author?.display_name || a.author} · {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+                  {a.author?.display_name || a.author} · {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
                 </span>
               </article>
             ))}
@@ -1822,7 +1831,7 @@ function ArticlePage({ articleId, articleSlug, setPage, onSlug, partners }) {
                 {(() => {
                   const raw = article.publish_date || article.created_at || article.date;
                   const d = new Date(raw);
-                  return isNaN(d) ? raw : d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                  return isNaN(d) ? raw : d.toLocaleDateString('en-US', { timeZone: SITE_TZ, year: 'numeric', month: 'long', day: 'numeric' });
                 })()}
               </div>
             )}
@@ -1979,7 +1988,7 @@ function ArticlePage({ articleId, articleSlug, setPage, onSlug, partners }) {
               {related.map(r => {
                 const rCatName = r.category?.name || r.category || '';
                 const rDate = r.publish_date || r.created_at || r.date || '';
-                const rDateStr = rDate ? (() => { const d = new Date(rDate); return isNaN(d) ? rDate : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); })() : '';
+                const rDateStr = rDate ? (() => { const d = new Date(rDate); return isNaN(d) ? rDate : d.toLocaleDateString('en-US', { timeZone: SITE_TZ, year: 'numeric', month: 'short', day: 'numeric' }); })() : '';
                 return (
                   <div key={r.id} onClick={() => setPage('article-' + r.id, r.slug)} style={{
                     display: 'flex', gap: 14, padding: '16px 0', borderBottom: '1px solid var(--color-border)', cursor: 'pointer', alignItems: 'flex-start',
@@ -2604,6 +2613,7 @@ export default function App() {
       if (map['brand_accent_color'])   root.style.setProperty('--color-accent',    map['brand_accent_color']);
       if (map['brand_nav_link_color']) root.style.setProperty('--color-nav-link',  map['brand_nav_link_color']);
       if (map['logo_url']) setLogoUrl(map['logo_url']);
+      if (map['site_timezone']) SITE_TZ = map['site_timezone'];
       setCookieSettings({
         enabled: map['cookie_consent_enabled'] === '1',
         message: map['cookie_consent_message'] || '',

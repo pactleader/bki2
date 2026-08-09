@@ -142,7 +142,7 @@ function ListView({ onTrash }) {
                     if (isNaN(d)) return '—';
                     return a.status === 'scheduled'
                       ? utcToTz(raw, siteTimezone)
-                      : d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'numeric', day: 'numeric', year: 'numeric' });
+                      : d.toLocaleDateString('en-US', { timeZone: siteTimezone, month: 'numeric', day: 'numeric', year: 'numeric' });
                   })()}
                 </TD>
                 <TD style={{ color: 'var(--text-muted)' }}>{a.view_count}</TD>

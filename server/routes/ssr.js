@@ -6,6 +6,13 @@ const router  = express.Router();
 const SITE_NAME = 'The Background Investigator';
 const SITE_URL  = process.env.SITE_URL || 'https://thebackgroundinvestigator.com';
 
+async function getSiteTimezone() {
+  try {
+    const [[row]] = await db.execute(`SELECT setting_value FROM site_settings WHERE setting_key = 'site_timezone' LIMIT 1`);
+    return row?.setting_value || 'Pacific/Saipan';
+  } catch { return 'Pacific/Saipan'; }
+}
+
 const BOT_RE = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|applebot|discordbot|embedly|outbrain|pinterest|quora|slack|vkshare|w3c_validator|lighthouse|headlesschrome|prerender|crawl|spider|bot\b/i;
 
 const ARTICLE_SQL = `
@@ -31,7 +38,8 @@ router.get('/:slug/:id([0-9]+)/?', async (req, res) => {
     );
     if (!rows[0]) return res.redirect(302, '/');
     const canonical = `${SITE_URL}/Articles/${rows[0].slug}/${rows[0].id}/`;
-    return renderArticle(res, rows[0], canonical);
+    const tz = await getSiteTimezone();
+    return renderArticle(res, rows[0], canonical, tz);
   } catch (err) {
     console.error('SSR error:', err);
     res.redirect(302, '/');
@@ -51,14 +59,15 @@ router.get('/:slug/?', async (req, res) => {
     );
     if (!rows[0]) return res.redirect(302, '/');
     const canonical = `${SITE_URL}/Articles/${rows[0].slug}/`;
-    return renderArticle(res, rows[0], canonical);
+    const tz = await getSiteTimezone();
+    return renderArticle(res, rows[0], canonical, tz);
   } catch (err) {
     console.error('SSR error:', err);
     res.redirect(302, '/');
   }
 });
 
-function renderArticle(res, a, canonical) {
+function renderArticle(res, a, canonical, tz = 'Pacific/Saipan') {
   db.execute('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [a.id]).catch(() => {});
 
   const title       = a.seo_title || a.title;
@@ -68,7 +77,7 @@ function renderArticle(res, a, canonical) {
     ? (rawImage.startsWith('http') ? rawImage : `${SITE_URL}${rawImage}`)
     : `${SITE_URL}/og-image.svg`;
   const pubDate     = a.publish_date
-    ? new Date(a.publish_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: tz, year: 'numeric', month: 'long', day: 'numeric' })
     : '';
   const featuredImg = a.featured_image || '';
   const safeBody    = normalizeArticleBody(a.body || '');
