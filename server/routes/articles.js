@@ -4,6 +4,55 @@ const { verifyToken, requireAdmin } = require('../middleware/auth');
 const { uniqueSlug }                = require('../utils/slugify');
 const { paginate, paginateMeta }    = require('../utils/paginate');
 
+async function getSiteTimezone() {
+  try {
+    const [[row]] = await db.execute(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'site_timezone' LIMIT 1`
+    );
+    return row?.setting_value || 'UTC';
+  } catch { return 'UTC'; }
+}
+
+// Convert a naive datetime string (from datetime-local input) in the site timezone to a UTC MySQL string
+function toUTC(naiveDateStr, tz) {
+  if (!naiveDateStr) return null;
+  const clean = naiveDateStr.replace('T', ' ').replace('Z', '').split('.')[0];
+  // Parse as if it's in the given timezone using Intl trick
+  // We find what UTC time corresponds to this wall-clock time in tz
+  const [datePart, timePart = '00:00:00'] = clean.split(' ');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute, second = 0] = timePart.split(':').map(Number);
+  // Create a date using the naive values, then figure out the offset
+  const naive = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  // Get what this UTC time looks like in the target timezone
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).formatToParts(naive);
+  const get = type => parseInt(parts.find(p => p.type === type)?.value || '0');
+  const tzY = get('year'), tzM = get('month'), tzD = get('day');
+  const tzH = get('hour'), tzMin = get('minute'), tzS = get('second');
+  // Offset = naive UTC - what tz says it is
+  const tzAsUTC = Date.UTC(tzY, tzM - 1, tzD, tzH === 24 ? 0 : tzH, tzMin, tzS);
+  const offsetMs = naive - tzAsUTC;
+  const utc = new Date(naive.getTime() + offsetMs);
+  return utc.toISOString().replace('T', ' ').slice(0, 19);
+}
+
+// Convert a UTC datetime string from DB to site timezone for display (returns ISO-like string)
+function fromUTC(utcStr, tz) {
+  if (!utcStr) return null;
+  const d = new Date(String(utcStr).replace(' ', 'T') + 'Z'); // treat as UTC
+  if (isNaN(d)) return utcStr;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).formatToParts(d);
+  const get = type => parts.find(p => p.type === type)?.value || '00';
+  const h = get('hour') === '24' ? '00' : get('hour');
+  return `${get('year')}-${get('month')}-${get('day')}T${h}:${get('minute')}:${get('second')}`;
+}
+
 const ARTICLE_SELECT = `
   a.id, a.title, a.slug, a.excerpt, a.featured_image, a.featured_image_alt, a.status,
   a.publish_date, a.view_count, a.seo_title, a.seo_description,
@@ -171,7 +220,7 @@ adm.post('/', async (req, res) => {
             source_name, source_url, extra_category_ids } = req.body;
     if (!title || !category_id) return res.status(400).json({ error: 'Title and category required' });
 
-    const normalizeDate = d => d ? d.replace('T', ' ').replace('Z', '').split('.')[0] : null;
+    const tz = await getSiteTimezone();
     const slug = await uniqueSlug('articles', title);
     const [result] = await db.execute(
       `INSERT INTO articles
@@ -182,7 +231,7 @@ adm.post('/', async (req, res) => {
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
        req.user.sub, category_id, status || 'draft',
-       normalizeDate(publish_date), seo_title || null, seo_description || null,
+       toUTC(publish_date, tz), seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null, schema_json || null,
        source_name || null, source_url || null]
     );
@@ -208,8 +257,7 @@ adm.put('/:id', async (req, res) => {
     if (title && title !== existing[0].title)
       slug = await uniqueSlug('articles', title, parseInt(req.params.id));
 
-    const normalizeDate = d => d ? d.replace('T', ' ').replace('Z', '').split('.')[0] : null;
-
+    const tz = await getSiteTimezone();
     const resolvedAuthorId = (req.user.role === 'admin' && author_id) ? author_id : existing[0].author_id;
 
     await db.execute(
@@ -221,7 +269,7 @@ adm.put('/:id', async (req, res) => {
        WHERE id=?`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
-       category_id, resolvedAuthorId, status || 'draft', normalizeDate(publish_date),
+       category_id, resolvedAuthorId, status || 'draft', toUTC(publish_date, tz),
        seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null, schema_json || null,
        source_name || null, source_url || null, req.params.id]

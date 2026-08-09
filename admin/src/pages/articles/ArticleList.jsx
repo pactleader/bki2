@@ -14,6 +14,13 @@ export default function ArticleList() {
     : <ListView onTrash={() => setView('trash')} />;
 }
 
+function utcToTz(utcStr, tz) {
+  if (!utcStr) return null;
+  const d = new Date(String(utcStr).replace(' ', 'T') + 'Z');
+  if (isNaN(d)) return null;
+  return d.toLocaleString(undefined, { timeZone: tz, month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
 function ListView({ onTrash }) {
   const toast = useToast();
   const [articles, setArticles] = useState([]);
@@ -22,8 +29,15 @@ function ListView({ onTrash }) {
   const [filters, setFilters] = useState({ status: '', category_id: '', search: '', sort: 'recent', page: 1 });
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
+  const [siteTimezone, setSiteTimezone] = useState('America/New_York');
 
-  useEffect(() => { api.listCategories().then(setCategories).catch(() => {}); }, []);
+  useEffect(() => {
+    api.listCategories().then(setCategories).catch(() => {});
+    api.listSettings().then(rows => {
+      const tz = rows.find(r => r.setting_key === 'site_timezone')?.setting_value;
+      if (tz) setSiteTimezone(tz);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -122,12 +136,11 @@ function ListView({ onTrash }) {
                   {(() => {
                     const raw = filters.sort === 'edited' ? a.updated_at : a.publish_date;
                     if (!raw) return '—';
-                    // Replace space with T so JS parses as local time, not UTC
-                    const d = new Date(String(raw).replace(' ', 'T'));
+                    const d = new Date(String(raw).replace(' ', 'T') + 'Z');
                     if (isNaN(d)) return '—';
                     return a.status === 'scheduled'
-                      ? d.toLocaleString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
-                      : d.toLocaleDateString();
+                      ? utcToTz(raw, siteTimezone)
+                      : d.toLocaleDateString(undefined, { timeZone: siteTimezone });
                   })()}
                 </TD>
                 <TD style={{ color: 'var(--text-muted)' }}>{a.view_count}</TD>

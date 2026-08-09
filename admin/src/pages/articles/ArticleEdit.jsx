@@ -10,6 +10,22 @@ function slugify(text) {
   return text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/--+/g, '-');
 }
 
+// Convert a UTC datetime string from the server to a datetime-local value in the given timezone
+function utcToLocalInput(utcStr, tz) {
+  if (!utcStr) return '';
+  const d = new Date(String(utcStr).replace(' ', 'T') + 'Z');
+  if (isNaN(d)) return '';
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(d);
+    const get = type => parts.find(p => p.type === type)?.value || '00';
+    const h = get('hour') === '24' ? '00' : get('hour');
+    return `${get('year')}-${get('month')}-${get('day')}T${h}:${get('minute')}`;
+  } catch { return String(utcStr).replace(' ', 'T').slice(0, 16); }
+}
+
 const EMPTY = {
   title: '', slug: '', excerpt: '', body: '', featured_image: '', featured_image_alt: '',
   category_id: '', status: 'draft', publish_date: '',
@@ -384,21 +400,20 @@ export default function ArticleEdit() {
   const [saving, setSaving] = useState(false);
   const [slugLocked, setSlugLocked] = useState(!isNew);
   const [siteTimezone, setSiteTimezone] = useState('America/New_York');
+  const timezoneRef = useRef('America/New_York');
 
   useEffect(() => {
     api.listCategories().then(setCategories).catch(() => {});
     if (user?.role === 'admin') {
       api.listUsers().then(setAuthors).catch(() => {});
     }
+    // Load settings first so timezone is available when article loads
     api.listSettings()
       .then(rows => {
         const tz = rows.find(r => r.setting_key === 'site_timezone')?.setting_value;
-        if (tz) setSiteTimezone(tz);
+        if (tz) { setSiteTimezone(tz); timezoneRef.current = tz; }
       })
       .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (!isNew) {
       api.getArticle(id)
         .then(a => {
@@ -412,7 +427,7 @@ export default function ArticleEdit() {
             category_id: a.category?.id || '',
             author_id: a.author?.id || '',
             status: a.status || 'draft',
-            publish_date: a.publish_date ? String(a.publish_date).replace(' ', 'T').slice(0, 16) : '',
+            publish_date: utcToLocalInput(a.publish_date, timezoneRef.current),
             seo_title: a.seo_title || '',
             seo_description: a.seo_description || '',
             seo_keywords: a.seo_keywords || '',
