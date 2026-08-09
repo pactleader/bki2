@@ -119,9 +119,16 @@ function ListView({ onTrash }) {
                   <Badge color={a.status === 'published' ? 'var(--success)' : a.status === 'scheduled' ? '#d97706' : '#888'}>{a.status}</Badge>
                 </TD>
                 <TD style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {filters.sort === 'edited'
-                    ? (a.updated_at ? new Date(a.updated_at).toLocaleDateString() : '—')
-                    : (a.publish_date ? new Date(a.publish_date).toLocaleString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric', hour: a.status === 'scheduled' ? 'numeric' : undefined, minute: a.status === 'scheduled' ? '2-digit' : undefined }) : '—')}
+                  {(() => {
+                    const raw = filters.sort === 'edited' ? a.updated_at : a.publish_date;
+                    if (!raw) return '—';
+                    // Replace space with T so JS parses as local time, not UTC
+                    const d = new Date(String(raw).replace(' ', 'T'));
+                    if (isNaN(d)) return '—';
+                    return a.status === 'scheduled'
+                      ? d.toLocaleString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+                      : d.toLocaleDateString();
+                  })()}
                 </TD>
                 <TD style={{ color: 'var(--text-muted)' }}>{a.view_count}</TD>
                 <TD>

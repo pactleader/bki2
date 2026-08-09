@@ -405,7 +405,7 @@ export default function ArticleEdit() {
             category_id: a.category?.id || '',
             author_id: a.author?.id || '',
             status: a.status || 'draft',
-            publish_date: a.publish_date ? a.publish_date.slice(0, 16) : '',
+            publish_date: a.publish_date ? String(a.publish_date).replace(' ', 'T').slice(0, 16) : '',
             seo_title: a.seo_title || '',
             seo_description: a.seo_description || '',
             seo_keywords: a.seo_keywords || '',
