@@ -44,7 +44,7 @@ pub.get('/', async (req, res) => {
     }));
 
     const [settingRows] = await db.execute(
-      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_article_ids', 'highlight_items', 'hero_category_id', 'hero_rotation_category_ids')`
+      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_article_ids', 'highlight_items', 'hero_category_id', 'hero_rotation_category_ids', 'hero_article_count', 'hero_date_range')`
     );
     const settings = {};
     settingRows.forEach(r => { settings[r.setting_key] = r.setting_value; });
@@ -79,17 +79,19 @@ pub.get('/', async (req, res) => {
       try { return JSON.parse(settings.hero_rotation_category_ids || '[]').map(Number).filter(Boolean); } catch { return []; }
     })();
     const heroCategoryId = settings.hero_category_id ? parseInt(settings.hero_category_id, 10) : null;
+    const heroArticleCount = parseInt(settings.hero_article_count || '5', 10) || 5;
+    const heroDateRange = settings.hero_date_range || '';
     const seenIds = (() => {
       try { return String(req.query.seen || '').split(',').map(Number).filter(Boolean); } catch { return []; }
     })();
 
-    const heroSQL = `SELECT a.id, a.title, a.slug, a.use_slug_only, a.excerpt, a.featured_image, a.publish_date, a.view_count,
-                            u.display_name AS author_name,
-                            c.id AS cat_id, c.name AS cat_name, c.slug AS cat_slug, c.color_hex
-                     FROM articles a
-                     JOIN users u ON a.author_id = u.id
-                     JOIN categories c ON a.category_id = c.id
-                     WHERE a.category_id = ? AND a.status = 'published' AND a.deleted_at IS NULL`;
+    // Build date range clause
+    function dateRangeClause(range) {
+      const map = { '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
+      const days = map[range];
+      if (!days) return '';
+      return ` AND COALESCE(a.publish_date, a.created_at) >= DATE_SUB(NOW(), INTERVAL ${days} DAY)`;
+    }
 
     function shapeHero(r) {
       return {
@@ -101,32 +103,52 @@ pub.get('/', async (req, res) => {
       };
     }
 
+    const heroBaseSQL = `SELECT a.id, a.title, a.slug, a.use_slug_only, a.excerpt, a.featured_image, a.publish_date, a.view_count,
+                                u.display_name AS author_name,
+                                c.id AS cat_id, c.name AS cat_name, c.slug AS cat_slug, c.color_hex
+                         FROM articles a
+                         JOIN users u ON a.author_id = u.id
+                         JOIN categories c ON a.category_id = c.id
+                         WHERE a.status = 'published' AND a.deleted_at IS NULL`;
+
     if (rotationIds.length > 0) {
-      // Pick category based on 4-hour window (same for all users in that window)
-      const windowIndex = Math.floor(Date.now() / (4 * 60 * 60 * 1000));
-      // Try each category in rotation order starting from window slot, skip if seen
-      for (let attempt = 0; attempt < rotationIds.length; attempt++) {
-        const catId = rotationIds[(windowIndex + attempt) % rotationIds.length];
-        const seenClause = seenIds.length > 0 ? ` AND a.id NOT IN (${seenIds.map(() => '?').join(',')})` : '';
-        const [heroRows] = await db.execute(
-          `${heroSQL}${seenClause} ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT 1`,
-          [catId, ...seenIds]
-        );
-        if (heroRows[0]) { heroArticle = shapeHero(heroRows[0]); break; }
-      }
-      // If all seen, pick top article from current slot category ignoring seen
-      if (!heroArticle) {
-        const catId = rotationIds[windowIndex % rotationIds.length];
-        const [heroRows] = await db.execute(`${heroSQL} ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT 1`, [catId]);
-        if (heroRows[0]) heroArticle = shapeHero(heroRows[0]);
+      // Build a pool of N most recent articles across all rotation categories
+      const catPlaceholders = rotationIds.map(() => '?').join(',');
+      const dateClause = dateRangeClause(heroDateRange);
+      const [poolRows] = await db.execute(
+        `${heroBaseSQL} AND a.category_id IN (${catPlaceholders})${dateClause}
+         ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT ${heroArticleCount}`,
+        rotationIds
+      );
+
+      if (poolRows.length > 0) {
+        // Cycle through pool by time window (1 hour per article)
+        const windowIndex = Math.floor(Date.now() / (60 * 60 * 1000));
+        // Try to find an unseen article starting from current window slot
+        let picked = null;
+        for (let i = 0; i < poolRows.length; i++) {
+          const candidate = poolRows[(windowIndex + i) % poolRows.length];
+          if (!seenIds.includes(candidate.id)) { picked = candidate; break; }
+        }
+        // If all seen, just use the current window slot
+        heroArticle = shapeHero(picked || poolRows[windowIndex % poolRows.length]);
       }
     } else if (heroCategoryId) {
-      const seenClause = seenIds.length > 0 ? ` AND a.id NOT IN (${seenIds.map(() => '?').join(',')})` : '';
+      const dateClause = dateRangeClause(heroDateRange);
       const [heroRows] = await db.execute(
-        `${heroSQL}${seenClause} ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT 1`,
-        [heroCategoryId, ...seenIds]
+        `${heroBaseSQL} AND a.category_id = ?${dateClause}
+         ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT ${heroArticleCount}`,
+        [heroCategoryId]
       );
-      if (heroRows[0]) heroArticle = shapeHero(heroRows[0]);
+      if (heroRows.length > 0) {
+        const windowIndex = Math.floor(Date.now() / (60 * 60 * 1000));
+        let picked = null;
+        for (let i = 0; i < heroRows.length; i++) {
+          const candidate = heroRows[(windowIndex + i) % heroRows.length];
+          if (!seenIds.includes(candidate.id)) { picked = candidate; break; }
+        }
+        heroArticle = shapeHero(picked || heroRows[windowIndex % heroRows.length]);
+      }
     }
 
     res.json({ sections: sectionsWithArticles, mostRead, highlights, heroCategoryId, rotationCategoryIds: rotationIds, heroArticle });

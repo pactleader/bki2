@@ -42,7 +42,9 @@ export default function HomepageConfig() {
   // Settings
   const [mostRead, setMostRead] = useState([]);
   const [heroCatId, setHeroCatId] = useState('');
-  const [rotationCatIds, setRotationCatIds] = useState([]); // category ids for hero rotation
+  const [rotationCatIds, setRotationCatIds] = useState([]);
+  const [heroArticleCount, setHeroArticleCount] = useState(5);
+  const [heroDateRange, setHeroDateRange] = useState('');
   const [settingsSaving, setSettingsSaving] = useState(false);
 
   useEffect(() => { load(); }, []);
@@ -78,6 +80,12 @@ export default function HomepageConfig() {
 
       const rotCat = st.find(x => x.setting_key === 'hero_rotation_category_ids');
       try { setRotationCatIds(JSON.parse(rotCat?.setting_value || '[]').map(Number).filter(Boolean)); } catch { setRotationCatIds([]); }
+
+      const artCount = st.find(x => x.setting_key === 'hero_article_count');
+      if (artCount?.setting_value) setHeroArticleCount(parseInt(artCount.setting_value) || 5);
+
+      const dateRange = st.find(x => x.setting_key === 'hero_date_range');
+      if (dateRange?.setting_value) setHeroDateRange(dateRange.setting_value);
     } catch { toast('Load failed', 'error'); }
   }
 
@@ -125,6 +133,8 @@ export default function HomepageConfig() {
         { key: 'most_read_article_ids',        value: JSON.stringify(mostRead.map(o => o.value)), type: 'json' },
         { key: 'hero_category_id',             value: heroCatId || '',                            type: 'string' },
         { key: 'hero_rotation_category_ids',   value: JSON.stringify(rotationCatIds),             type: 'json' },
+        { key: 'hero_article_count',           value: String(heroArticleCount || 5),              type: 'string' },
+        { key: 'hero_date_range',              value: heroDateRange || '',                        type: 'string' },
       ]);
       toast('Settings saved');
     } catch (err) {
@@ -255,6 +265,33 @@ export default function HomepageConfig() {
             </p>
           )}
         </Field>
+
+        <div style={{ display: 'flex', gap: 16 }}>
+          <Field label="Articles to Rotate" hint="How many recent articles to cycle through in the hero.">
+            <select
+              value={heroArticleCount}
+              onChange={e => setHeroArticleCount(parseInt(e.target.value))}
+              style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}
+            >
+              {[3, 5, 7, 10, 15, 20].map(n => <option key={n} value={n}>{n} articles</option>)}
+            </select>
+          </Field>
+          <Field label="Date Range" hint="Only include articles published within this period.">
+            <select
+              value={heroDateRange}
+              onChange={e => setHeroDateRange(e.target.value)}
+              style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}
+            >
+              <option value="">No limit (all time)</option>
+              <option value="7d">Last 7 days</option>
+              <option value="14d">Last 14 days</option>
+              <option value="1m">This month</option>
+              <option value="2m">Last 2 months</option>
+              <option value="3m">Last 3 months</option>
+              <option value="6m">Last 6 months</option>
+            </select>
+          </Field>
+        </div>
 
         <Field label="Hero Category (Fallback)" hint="Used only if no rotation categories are selected above. Shows most recent article from this category.">
           <select
