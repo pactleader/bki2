@@ -111,8 +111,14 @@ pub.get('/', async (req, res) => {
                          JOIN categories c ON a.category_id = c.id
                          WHERE a.status = 'published' AND a.deleted_at IS NULL`;
 
+    function pickFromPool(pool, seenIds) {
+      // Prefer unseen articles, pick randomly among them
+      const unseen = pool.filter(r => !seenIds.includes(r.id));
+      const candidates = unseen.length > 0 ? unseen : pool;
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
     if (rotationIds.length > 0) {
-      // Build a pool of N most recent articles across all rotation categories
       const catPlaceholders = rotationIds.map(() => '?').join(',');
       const dateClause = dateRangeClause(heroDateRange);
       const [poolRows] = await db.execute(
@@ -120,19 +126,7 @@ pub.get('/', async (req, res) => {
          ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT ${heroArticleCount}`,
         rotationIds
       );
-
-      if (poolRows.length > 0) {
-        // Cycle through pool by time window (1 hour per article)
-        const windowIndex = Math.floor(Date.now() / (60 * 60 * 1000));
-        // Try to find an unseen article starting from current window slot
-        let picked = null;
-        for (let i = 0; i < poolRows.length; i++) {
-          const candidate = poolRows[(windowIndex + i) % poolRows.length];
-          if (!seenIds.includes(candidate.id)) { picked = candidate; break; }
-        }
-        // If all seen, just use the current window slot
-        heroArticle = shapeHero(picked || poolRows[windowIndex % poolRows.length]);
-      }
+      if (poolRows.length > 0) heroArticle = shapeHero(pickFromPool(poolRows, seenIds));
     } else if (heroCategoryId) {
       const dateClause = dateRangeClause(heroDateRange);
       const [heroRows] = await db.execute(
@@ -140,15 +134,7 @@ pub.get('/', async (req, res) => {
          ORDER BY COALESCE(a.publish_date, a.created_at) DESC LIMIT ${heroArticleCount}`,
         [heroCategoryId]
       );
-      if (heroRows.length > 0) {
-        const windowIndex = Math.floor(Date.now() / (60 * 60 * 1000));
-        let picked = null;
-        for (let i = 0; i < heroRows.length; i++) {
-          const candidate = heroRows[(windowIndex + i) % heroRows.length];
-          if (!seenIds.includes(candidate.id)) { picked = candidate; break; }
-        }
-        heroArticle = shapeHero(picked || heroRows[windowIndex % heroRows.length]);
-      }
+      if (heroRows.length > 0) heroArticle = shapeHero(pickFromPool(heroRows, seenIds));
     }
 
     res.json({ sections: sectionsWithArticles, mostRead, highlights, heroCategoryId, rotationCategoryIds: rotationIds, heroArticle });
