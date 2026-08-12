@@ -447,10 +447,9 @@ function Header({ currentPage, setPage, logoUrl }) {
       position: 'sticky', top: 0, zIndex: 200,
       background: 'var(--color-primary)',
       boxShadow: scrolled ? '0 1px 12px rgba(0,0,0,0.18)' : 'none',
-      transition: 'all 250ms ease',
     }}>
       {/* Main bar */}
-      <div className="wrap" style={{ padding: scrolled ? '10px 24px' : '16px 24px', transition: 'padding 250ms ease' }}>
+      <div className="wrap" style={{ padding: '10px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Logo */}
           <div onClick={() => setPage('home')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -458,7 +457,7 @@ function Header({ currentPage, setPage, logoUrl }) {
               <img
                 src={logoUrl}
                 alt="Site logo"
-                style={{ height: scrolled ? 48 : 60, maxWidth: 280, objectFit: 'contain', transition: 'height 250ms ease' }}
+                style={{ height: 48, maxWidth: 280, objectFit: 'contain' }}
               />
             )}
           </div>
