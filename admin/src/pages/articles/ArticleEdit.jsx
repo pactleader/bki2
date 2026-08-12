@@ -13,7 +13,8 @@ function slugify(text) {
 // Convert a UTC datetime string from the server to a datetime-local value in the given timezone
 function utcToLocalInput(utcStr, tz) {
   if (!utcStr) return '';
-  const d = new Date(String(utcStr).replace(' ', 'T') + 'Z');
+  const s = String(utcStr).replace(' ', 'T');
+  const d = new Date(s.endsWith('Z') ? s : s + 'Z');
   if (isNaN(d)) return '';
   try {
     const parts = new Intl.DateTimeFormat('en-CA', {
