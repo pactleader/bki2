@@ -283,28 +283,45 @@ function CatTag({ category, onClick }) {
 
 // ─── AD SLOT ─────────────────────────────────────────────
 
+const AD_ROTATION_INTERVAL = 5000; // ms between ad rotations
+
 function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
   const adsCache = useContext(AdsContext);
-  const [ad, setAd] = useState(null);
+  const [ads, setAds] = useState([]);
   const [tried, setTried] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     if (!position) { setTried(true); return; }
-    // If cache is populated, use it immediately (no network request)
     if (adsCache && Object.keys(adsCache).length > 0) {
-      setAd((adsCache[position] || [])[0] || null);
+      setAds(adsCache[position] || []);
       setTried(true);
       return;
     }
     // Fallback: individual fetch
     getAds(position)
-      .then(ads => { setAd(ads?.[0] || null); })
+      .then(result => { setAds(result || []); })
       .catch(() => {})
       .finally(() => setTried(true));
   }, [position, adsCache]);
 
-  if (!tried || !ad) return null;
+  // Rotate through ads with fade transition
+  useEffect(() => {
+    if (ads.length < 2) return;
+    const timer = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIdx(i => (i + 1) % ads.length);
+        setVisible(true);
+      }, 400);
+    }, AD_ROTATION_INTERVAL);
+    return () => clearInterval(timer);
+  }, [ads]);
 
+  if (!tried || ads.length === 0) return null;
+
+  const ad = ads[idx];
   const ensureHttps = url => url && !/^https?:\/\//i.test(url) && !url.startsWith('/') ? 'https://' + url : url;
   const imageUrl = ensureHttps(ad.image_url);
   const linkUrl  = ensureHttps(ad.link_url);
@@ -314,7 +331,12 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
     <img
       src={imageUrl}
       alt={ad.name}
-      style={{ width: '100%', height: autoHeight ? 'auto' : '100%', objectFit: autoHeight ? 'fill' : 'contain', display: 'block' }}
+      style={{
+        width: '100%', height: autoHeight ? 'auto' : '100%',
+        objectFit: autoHeight ? 'fill' : 'contain', display: 'block',
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 400ms ease',
+      }}
     />
   );
 
