@@ -459,7 +459,11 @@ export default function ArticleEdit() {
   }
 
   async function save(publishNow = false) {
-    const effectiveStatus = publishNow ? 'published' : form.status;
+    // If publishNow, determine status based on publish date (future = scheduled, past/none = published)
+    const isFuture = form.publish_date && new Date(form.publish_date) > new Date();
+    const effectiveStatus = publishNow
+      ? (isFuture ? 'scheduled' : 'published')
+      : form.status;
     if (!form.title || !form.category_id) {
       toast('Title and category are required', 'error');
       return;
@@ -470,7 +474,7 @@ export default function ArticleEdit() {
     }
     setSaving(true);
     try {
-      const payload = { ...form, status: publishNow ? 'published' : form.status };
+      const payload = { ...form, status: effectiveStatus };
       if (isNew) {
         const res = await api.createArticle(payload);
         toast('Article created');
