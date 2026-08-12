@@ -24,7 +24,7 @@ pub.get('/', async (req, res) => {
          FROM articles a
          JOIN users u ON a.author_id = u.id
          JOIN categories c ON a.category_id = c.id
-         WHERE a.category_id = ? AND a.status = 'published'
+         WHERE a.category_id = ? AND a.status = 'published' AND a.deleted_at IS NULL
          ORDER BY COALESCE(a.publish_date, a.created_at) DESC, a.created_at DESC
          LIMIT ${parseInt(sec.article_count, 10)}`,
         [sec.category_id]
@@ -58,7 +58,7 @@ pub.get('/', async (req, res) => {
           `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.publish_date,
                   c.name AS category_name, c.slug AS category_slug, c.color_hex
            FROM articles a JOIN categories c ON a.category_id = c.id
-           WHERE a.id IN (${placeholders}) AND a.status = 'published'`,
+           WHERE a.id IN (${placeholders}) AND a.status = 'published' AND a.deleted_at IS NULL`,
           ids
         );
         const map = {};
@@ -158,7 +158,7 @@ pub.get('/most-read', async (req, res) => {
       `SELECT a.id, a.title, a.slug, a.publish_date,
               c.name AS category_name, c.color_hex
        FROM articles a JOIN categories c ON a.category_id = c.id
-       WHERE a.id IN (${placeholders}) AND a.status = 'published'`,
+       WHERE a.id IN (${placeholders}) AND a.status = 'published' AND a.deleted_at IS NULL`,
       ids
     );
     // Return in the saved order
