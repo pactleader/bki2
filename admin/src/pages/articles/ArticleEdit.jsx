@@ -459,8 +459,13 @@ export default function ArticleEdit() {
   }
 
   async function save(publishNow = false) {
+    const effectiveStatus = publishNow ? 'published' : form.status;
     if (!form.title || !form.category_id) {
       toast('Title and category are required', 'error');
+      return;
+    }
+    if (effectiveStatus !== 'draft' && !form.publish_date) {
+      toast('Publish date is required for published and scheduled articles', 'error');
       return;
     }
     setSaving(true);
@@ -580,7 +585,7 @@ export default function ArticleEdit() {
                 <option value="published">Published</option>
               </Select>
             </Field>
-            <Field label="Publish Date">
+            <Field label={<span>Publish Date{form.status !== 'draft' && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}</span>}>
               <Input
                 type="datetime-local"
                 value={form.publish_date}
