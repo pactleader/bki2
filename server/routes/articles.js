@@ -222,6 +222,12 @@ adm.post('/', async (req, res) => {
 
     const tz = await getSiteTimezone();
     const slug = await uniqueSlug('articles', title);
+    const utcPublishDate = toUTC(publish_date, tz);
+    let resolvedStatus = status || 'draft';
+    if (resolvedStatus === 'published' && utcPublishDate) {
+      const pubMs = new Date(utcPublishDate.replace(' ', 'T') + 'Z').getTime();
+      if (pubMs > Date.now()) resolvedStatus = 'scheduled';
+    }
     const [result] = await db.execute(
       `INSERT INTO articles
          (title, slug, excerpt, body, featured_image, featured_image_alt, author_id, category_id,
@@ -230,8 +236,8 @@ adm.post('/', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
-       req.user.sub, category_id, status || 'draft',
-       toUTC(publish_date, tz), seo_title || null, seo_description || null,
+       req.user.sub, category_id, resolvedStatus,
+       utcPublishDate, seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null, schema_json || null,
        source_name || null, source_url || null]
     );
@@ -259,6 +265,13 @@ adm.put('/:id', async (req, res) => {
 
     const tz = await getSiteTimezone();
     const resolvedAuthorId = (req.user.role === 'admin' && author_id) ? author_id : existing[0].author_id;
+    const utcPublishDate = toUTC(publish_date, tz);
+    // If user requests published but date is in the future, save as scheduled instead
+    let resolvedStatus = status || 'draft';
+    if (resolvedStatus === 'published' && utcPublishDate) {
+      const pubMs = new Date(utcPublishDate.replace(' ', 'T') + 'Z').getTime();
+      if (pubMs > Date.now()) resolvedStatus = 'scheduled';
+    }
 
     await db.execute(
       `UPDATE articles SET
@@ -269,7 +282,7 @@ adm.put('/:id', async (req, res) => {
        WHERE id=?`,
       [title, slug, excerpt || null, body || null, featured_image || null,
        featured_image_alt || null,
-       category_id, resolvedAuthorId, status || 'draft', toUTC(publish_date, tz),
+       category_id, resolvedAuthorId, resolvedStatus, utcPublishDate,
        seo_title || null, seo_description || null,
        seo_keywords || null, og_image || null, schema_json || null,
        source_name || null, source_url || null, req.params.id]

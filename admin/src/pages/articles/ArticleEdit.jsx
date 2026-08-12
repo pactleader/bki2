@@ -459,11 +459,7 @@ export default function ArticleEdit() {
   }
 
   async function save(publishNow = false) {
-    // If publishNow, determine status based on publish date (future = scheduled, past/none = published)
-    const isFuture = form.publish_date && new Date(form.publish_date) > new Date();
-    const effectiveStatus = publishNow
-      ? (isFuture ? 'scheduled' : 'published')
-      : form.status;
+    const effectiveStatus = publishNow ? 'published' : form.status;
     if (!form.title || !form.category_id) {
       toast('Title and category are required', 'error');
       return;
