@@ -593,9 +593,17 @@ export default function ArticleEdit() {
                   }
                 }}
               />
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                Timezone: <strong>{siteTimezone}</strong>
-                {form.status === 'scheduled' && ' — set a future date to schedule'}
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>Timezone: <strong>{siteTimezone}</strong>{form.status === 'scheduled' && ' — set a future date to schedule'}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = utcToLocalInput(new Date().toISOString(), siteTimezone);
+                    set('publish_date', now);
+                    if (form.status === 'scheduled') set('status', 'published');
+                  }}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: 11, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                >Use current date &amp; time</button>
               </div>
             </Field>
           </Card>
