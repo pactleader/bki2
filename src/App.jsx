@@ -283,7 +283,7 @@ function CatTag({ category, onClick }) {
 
 // ─── AD SLOT ─────────────────────────────────────────────
 
-const AD_ROTATION_INTERVAL = 5000; // ms between ad rotations
+let AD_ROTATION_INTERVAL = 5000; // ms — overridden at runtime from site settings
 
 function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
   const adsCache = useContext(AdsContext);
@@ -2635,6 +2635,7 @@ export default function App() {
       if (map['brand_nav_link_color']) root.style.setProperty('--color-nav-link',  map['brand_nav_link_color']);
       if (map['logo_url']) setLogoUrl(map['logo_url']);
       if (map['site_timezone']) SITE_TZ = map['site_timezone'];
+      if (map['ad_rotation_interval']) AD_ROTATION_INTERVAL = parseInt(map['ad_rotation_interval'], 10) * 1000;
       setCookieSettings({
         enabled: map['cookie_consent_enabled'] === '1',
         message: map['cookie_consent_message'] || '',

@@ -40,13 +40,41 @@ function scheduleStatus(ad) {
   return 'active';
 }
 
+const INTERVAL_OPTIONS = [
+  { label: '3 seconds',  value: '3' },
+  { label: '5 seconds',  value: '5' },
+  { label: '7 seconds',  value: '7' },
+  { label: '10 seconds', value: '10' },
+  { label: '15 seconds', value: '15' },
+  { label: '20 seconds', value: '20' },
+  { label: '30 seconds', value: '30' },
+];
+
 export default function AdList() {
   const toast = useToast();
   const [ads, setAds] = useState([]);
   const [deleting, setDeleting] = useState(null);
   const [view, setView] = useState('visual'); // 'visual' | 'list'
+  const [rotationInterval, setRotationInterval] = useState('5');
+  const [savingInterval, setSavingInterval] = useState(false);
 
-  useEffect(() => { api.listAds().then(setAds).catch(() => toast('Load failed', 'error')); }, []);
+  useEffect(() => {
+    api.listAds().catch(() => toast('Load failed', 'error')).then(setAds);
+    api.listSettings().then(rows => {
+      const row = rows.find(r => r.setting_key === 'ad_rotation_interval');
+      if (row?.setting_value) setRotationInterval(row.setting_value);
+    }).catch(() => {});
+  }, []);
+
+  async function saveInterval(val) {
+    setSavingInterval(true);
+    try {
+      await api.saveSetting('ad_rotation_interval', val, 'string');
+      setRotationInterval(val);
+      toast('Rotation interval saved');
+    } catch { toast('Save failed', 'error'); }
+    finally { setSavingInterval(false); }
+  }
 
   async function handleToggle(ad) {
     try {
@@ -90,7 +118,20 @@ export default function AdList() {
       <PageHeader
         title="Ad Management"
         action={
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Rotation interval */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f9fafb', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px' }}>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Rotate every</span>
+              <select
+                value={rotationInterval}
+                onChange={e => saveInterval(e.target.value)}
+                disabled={savingInterval}
+                style={{ fontSize: 12, border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', outline: 'none' }}
+              >
+                {INTERVAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            {/* View toggle */}
             <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
               <button onClick={() => setView('visual')} style={{ padding: '6px 14px', fontSize: 12, border: 'none', cursor: 'pointer', background: view === 'visual' ? 'var(--primary)' : '#fff', color: view === 'visual' ? '#fff' : 'var(--text)' }}>Visual</button>
               <button onClick={() => setView('list')} style={{ padding: '6px 14px', fontSize: 12, border: 'none', cursor: 'pointer', background: view === 'list' ? 'var(--primary)' : '#fff', color: view === 'list' ? '#fff' : 'var(--text)' }}>List</button>

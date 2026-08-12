@@ -2,7 +2,7 @@ const express = require('express');
 const db      = require('../db');
 const { verifyToken, requireAdmin } = require('../middleware/auth');
 
-const PUBLIC_KEYS = ['site_name', 'site_tagline', 'site_url', 'og_image_default', 'default_article_image', 'phone', 'address', 'robots_meta', 'custom_head_scripts', 'custom_body_scripts', 'custom_footer_scripts', 'partners', 'footer_privacy_slug', 'footer_terms_slug', 'cookie_consent_enabled', 'cookie_consent_message', 'brand_primary_color', 'brand_accent_color', 'brand_nav_link_color', 'logo_url', 'hero_category_id', 'hero_rotation_category_ids', 'site_timezone', 'hero_article_count', 'hero_date_range'];
+const PUBLIC_KEYS = ['site_name', 'site_tagline', 'site_url', 'og_image_default', 'default_article_image', 'phone', 'address', 'robots_meta', 'custom_head_scripts', 'custom_body_scripts', 'custom_footer_scripts', 'partners', 'footer_privacy_slug', 'footer_terms_slug', 'cookie_consent_enabled', 'cookie_consent_message', 'brand_primary_color', 'brand_accent_color', 'brand_nav_link_color', 'logo_url', 'hero_category_id', 'hero_rotation_category_ids', 'site_timezone', 'hero_article_count', 'hero_date_range', 'ad_rotation_interval'];
 
 // ── PUBLIC ────────────────────────────────────────────────────
 const pub = express.Router();
