@@ -44,26 +44,42 @@ pub.get('/', async (req, res) => {
     }));
 
     const [settingRows] = await db.execute(
-      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_article_ids', 'highlight_items', 'hero_category_id', 'hero_rotation_category_ids', 'hero_article_count', 'hero_date_range')`
+      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_article_ids', 'highlight_items', 'hero_category_id', 'hero_rotation_category_ids', 'hero_article_count', 'hero_date_range', 'most_read_mode', 'most_read_date_range', 'most_read_count')`
     );
     const settings = {};
     settingRows.forEach(r => { settings[r.setting_key] = r.setting_value; });
 
     let mostRead = [];
     try {
-      const ids = JSON.parse(settings.most_read_article_ids || '[]');
-      if (ids.length > 0) {
-        const placeholders = ids.map(() => '?').join(',');
+      const mrMode  = settings.most_read_mode || 'manual';
+      const mrCount = Math.min(parseInt(settings.most_read_count || '7', 10) || 7, 20);
+      if (mrMode === 'auto') {
+        const dateMap = { '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
+        const days = dateMap[settings.most_read_date_range || ''];
+        const dateClause = days ? ` AND COALESCE(a.publish_date, a.created_at) >= DATE_SUB(NOW(), INTERVAL ${days} DAY)` : '';
         const [mrRows] = await db.execute(
-          `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.publish_date,
+          `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.publish_date, a.view_count,
                   c.name AS category_name, c.slug AS category_slug, c.color_hex
            FROM articles a JOIN categories c ON a.category_id = c.id
-           WHERE a.id IN (${placeholders}) AND a.status = 'published' AND a.deleted_at IS NULL`,
-          ids
+           WHERE a.status = 'published' AND a.deleted_at IS NULL${dateClause}
+           ORDER BY a.view_count DESC LIMIT ${mrCount}`
         );
-        const map = {};
-        mrRows.forEach(r => { map[r.id] = r; });
-        mostRead = ids.map(id => map[id]).filter(Boolean);
+        mostRead = mrRows;
+      } else {
+        const ids = JSON.parse(settings.most_read_article_ids || '[]');
+        if (ids.length > 0) {
+          const placeholders = ids.map(() => '?').join(',');
+          const [mrRows] = await db.execute(
+            `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.publish_date,
+                    c.name AS category_name, c.slug AS category_slug, c.color_hex
+             FROM articles a JOIN categories c ON a.category_id = c.id
+             WHERE a.id IN (${placeholders}) AND a.status = 'published' AND a.deleted_at IS NULL`,
+            ids
+          );
+          const map = {};
+          mrRows.forEach(r => { map[r.id] = r; });
+          mostRead = ids.map(id => map[id]).filter(Boolean);
+        }
       }
     } catch {}
 
@@ -147,12 +163,33 @@ pub.get('/', async (req, res) => {
 // GET /api/most-read  — lightweight, used by sidebar on all pages
 pub.get('/most-read', async (req, res) => {
   try {
-    const [[setting]] = await db.execute(
-      `SELECT setting_value FROM site_settings WHERE setting_key = 'most_read_article_ids' LIMIT 1`
+    const [settingRows] = await db.execute(
+      `SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('most_read_mode','most_read_article_ids','most_read_date_range','most_read_count')`
     );
-    const ids = JSON.parse(setting?.setting_value || '[]');
-    if (!ids.length) return res.json([]);
+    const cfg = {};
+    settingRows.forEach(r => { cfg[r.setting_key] = r.setting_value; });
 
+    const mode  = cfg.most_read_mode || 'manual';
+    const count = Math.min(parseInt(cfg.most_read_count || '7', 10) || 7, 20);
+
+    if (mode === 'auto') {
+      const range = cfg.most_read_date_range || '';
+      const dateMap = { '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
+      const days = dateMap[range];
+      const dateClause = days ? ` AND COALESCE(a.publish_date, a.created_at) >= DATE_SUB(NOW(), INTERVAL ${days} DAY)` : '';
+      const [rows] = await db.execute(
+        `SELECT a.id, a.title, a.slug, a.publish_date, a.view_count,
+                c.name AS category_name, c.color_hex
+         FROM articles a JOIN categories c ON a.category_id = c.id
+         WHERE a.status = 'published' AND a.deleted_at IS NULL${dateClause}
+         ORDER BY a.view_count DESC LIMIT ${count}`
+      );
+      return res.json(rows);
+    }
+
+    // Manual mode
+    const ids = JSON.parse(cfg.most_read_article_ids || '[]');
+    if (!ids.length) return res.json([]);
     const placeholders = ids.map(() => '?').join(',');
     const [rows] = await db.execute(
       `SELECT a.id, a.title, a.slug, a.publish_date,
@@ -161,7 +198,6 @@ pub.get('/most-read', async (req, res) => {
        WHERE a.id IN (${placeholders}) AND a.status = 'published' AND a.deleted_at IS NULL`,
       ids
     );
-    // Return in the saved order
     const map = {};
     rows.forEach(r => { map[r.id] = r; });
     res.json(ids.map(id => map[id]).filter(Boolean));

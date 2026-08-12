@@ -41,6 +41,9 @@ export default function HomepageConfig() {
 
   // Settings
   const [mostRead, setMostRead] = useState([]);
+  const [mostReadMode, setMostReadMode] = useState('manual'); // 'manual' | 'auto'
+  const [mostReadDateRange, setMostReadDateRange] = useState('');
+  const [mostReadCount, setMostReadCount] = useState('7');
   const [heroCatId, setHeroCatId] = useState('');
   const [rotationCatIds, setRotationCatIds] = useState([]);
   const [heroArticleCount, setHeroArticleCount] = useState(5);
@@ -74,6 +77,15 @@ export default function HomepageConfig() {
       }
 
       setMostRead(mrIds.map(id => ({ value: id, label: resolved[id] || `[${id}]` })));
+
+      const mrMode = st.find(x => x.setting_key === 'most_read_mode');
+      if (mrMode?.setting_value) setMostReadMode(mrMode.setting_value);
+
+      const mrDateRange = st.find(x => x.setting_key === 'most_read_date_range');
+      if (mrDateRange?.setting_value) setMostReadDateRange(mrDateRange.setting_value);
+
+      const mrCount = st.find(x => x.setting_key === 'most_read_count');
+      if (mrCount?.setting_value) setMostReadCount(mrCount.setting_value);
 
       const heroCat = st.find(x => x.setting_key === 'hero_category_id');
       if (heroCat?.setting_value) setHeroCatId(heroCat.setting_value);
@@ -131,6 +143,9 @@ export default function HomepageConfig() {
     try {
       await api.saveSettings([
         { key: 'most_read_article_ids',        value: JSON.stringify(mostRead.map(o => o.value)), type: 'json' },
+        { key: 'most_read_mode',               value: mostReadMode,                               type: 'string' },
+        { key: 'most_read_date_range',         value: mostReadDateRange || '',                    type: 'string' },
+        { key: 'most_read_count',              value: mostReadCount || '7',                       type: 'string' },
         { key: 'hero_category_id',             value: heroCatId || '',                            type: 'string' },
         { key: 'hero_rotation_category_ids',   value: JSON.stringify(rotationCatIds),             type: 'json' },
         { key: 'hero_article_count',           value: String(heroArticleCount || 5),              type: 'string' },
@@ -304,18 +319,74 @@ export default function HomepageConfig() {
           </select>
         </Field>
 
-        <Field label="Most Read Articles" hint="Search and select up to 7 articles to show in the sidebar Most Read list">
-          <AsyncSelect
-            isMulti
-            cacheOptions
-            defaultOptions
-            loadOptions={searchArticles}
-            value={mostRead}
-            onChange={setMostRead}
-            placeholder="Search articles…"
-            styles={selectStyles}
-            noOptionsMessage={({ inputValue }) => inputValue ? 'No articles found' : 'Type to search…'}
-          />
+        <Field label="Most Read Articles">
+          {/* Mode toggle */}
+          <div style={{ display: 'flex', gap: 0, border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden', marginBottom: 12, width: 'fit-content' }}>
+            {[['manual', 'Manual (hand-pick)'], ['auto', 'Auto (by views)']].map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setMostReadMode(val)}
+                style={{
+                  padding: '7px 16px', fontSize: 12, border: 'none', cursor: 'pointer',
+                  background: mostReadMode === val ? 'var(--primary)' : '#fff',
+                  color: mostReadMode === val ? '#fff' : 'var(--text)',
+                  fontWeight: mostReadMode === val ? 600 : 400,
+                }}
+              >{label}</button>
+            ))}
+          </div>
+
+          {mostReadMode === 'manual' ? (
+            <>
+              <AsyncSelect
+                isMulti
+                cacheOptions
+                defaultOptions
+                loadOptions={searchArticles}
+                value={mostRead}
+                onChange={val => { if (val.length <= 20) setMostRead(val); }}
+                placeholder="Search articles…"
+                styles={selectStyles}
+                noOptionsMessage={({ inputValue }) => inputValue ? 'No articles found' : 'Type to search…'}
+              />
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>Search and select articles to show in the sidebar Most Read list</div>
+            </>
+          ) : (
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 4 }}>Date range</div>
+                <select
+                  value={mostReadDateRange}
+                  onChange={e => setMostReadDateRange(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}
+                >
+                  <option value="">All time</option>
+                  <option value="7d">Last 7 days</option>
+                  <option value="14d">Last 14 days</option>
+                  <option value="1m">Last 30 days</option>
+                  <option value="2m">Last 2 months</option>
+                  <option value="3m">Last 3 months</option>
+                  <option value="6m">Last 6 months</option>
+                </select>
+              </div>
+              <div style={{ flex: 1, minWidth: 120 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 4 }}>Number of articles</div>
+                <select
+                  value={mostReadCount}
+                  onChange={e => setMostReadCount(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}
+                >
+                  {[3,4,5,6,7,8,9,10].map(n => <option key={n} value={String(n)}>{n} articles</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 2, minWidth: 200, alignSelf: 'flex-end', paddingBottom: 2 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  Automatically shows the top articles ranked by view count within the selected date range. Updates in real time.
+                </div>
+              </div>
+            </div>
+          )}
         </Field>
 
         <Btn variant="accent" onClick={saveSettings} disabled={settingsSaving}>{settingsSaving ? 'Saving…' : 'Save Settings'}</Btn>
