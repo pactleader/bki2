@@ -547,7 +547,7 @@ export default function ArticleEdit() {
               {saving ? 'Saving…' : 'Save Draft'}
             </Btn>
             <Btn onClick={() => save(true)} disabled={saving} variant="accent">
-              {saving ? 'Saving…' : 'Publish'}
+              {saving ? 'Saving…' : (!isNew && form.status === 'published' ? 'Save' : 'Publish')}
             </Btn>
           </div>
         }
