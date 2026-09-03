@@ -201,6 +201,7 @@ export default function HomepageConfig() {
                     <option value="style2">Style 2</option>
                     <option value="style3">Style 3</option>
                     <option value="style4">Style 4</option>
+                    <option value="2x2">2×2 (equal thumbnails)</option>
                   </select>
                 </div>
 

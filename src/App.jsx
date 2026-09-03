@@ -1034,6 +1034,30 @@ function ContainerD({ title, articles, sectionKey, color, setPage, layout }) {
           </div>
         </div>
 
+      ) : layout === '2x2' ? (
+        /* 2×2 — four articles in a 2-row, 2-column grid with equal-size thumbnails */
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
+          {articles.slice(0, 4).map(a => (
+            <article key={a.id} onClick={() => setPage('article-' + a.id, a.slug)} style={{ cursor: 'pointer' }}>
+              <div style={{ borderRadius: 6, overflow: 'hidden', marginBottom: 10 }}>
+                <div style={{ transition: 'transform 300ms ease' }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <ArticleImage aspect="16/9" seed={a.id} category={a.category?.name || a.category} src={a.featured_image} />
+                </div>
+              </div>
+              <h3 style={{
+                fontFamily: 'var(--f-display)', fontSize: 'var(--text-lg)', fontWeight: 700,
+                color: 'var(--color-text-primary)', lineHeight: 1.3,
+              }}>{a.title}</h3>
+              <span style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 6, display: 'block' }}>
+                {a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: SITE_TZ, month: 'long', day: 'numeric', year: 'numeric' }) : a.date}
+              </span>
+            </article>
+          ))}
+        </div>
+
       ) : layout === 'style3' ? (
         /* Style 3 — 3 articles on top, 1 big article on bottom */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
