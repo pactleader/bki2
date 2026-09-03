@@ -352,6 +352,49 @@ export default function HomepageConfig() {
                 noOptionsMessage={({ inputValue }) => inputValue ? 'No articles found' : 'Type to search…'}
               />
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>Search and select articles to show in the sidebar Most Read list</div>
+
+              {/* Reorderable list — order here determines sidebar display order */}
+              {mostRead.length > 1 && (
+                <div style={{ marginTop: 12, border: '1px solid var(--border)', borderRadius: 6, background: '#fafafa' }}>
+                  <div style={{ padding: '8px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid var(--border)' }}>
+                    Display order (top → bottom)
+                  </div>
+                  {mostRead.map((item, idx) => (
+                    <div key={item.value} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: idx < mostRead.length - 1 ? '1px solid #eee' : 'none' }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 20, textAlign: 'center', fontWeight: 600 }}>{idx + 1}</span>
+                      <span style={{ flex: 1, fontSize: 12, color: 'var(--text)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = [...mostRead];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            setMostRead(next);
+                          }}
+                          disabled={idx === 0}
+                          style={{ width: 26, height: 26, border: '1px solid var(--border)', borderRadius: 4, background: idx === 0 ? '#f3f4f6' : '#fff', color: idx === 0 ? '#d1d5db' : 'var(--primary)', cursor: idx === 0 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}
+                        >↑</button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = [...mostRead];
+                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                            setMostRead(next);
+                          }}
+                          disabled={idx === mostRead.length - 1}
+                          style={{ width: 26, height: 26, border: '1px solid var(--border)', borderRadius: 4, background: idx === mostRead.length - 1 ? '#f3f4f6' : '#fff', color: idx === mostRead.length - 1 ? '#d1d5db' : 'var(--primary)', cursor: idx === mostRead.length - 1 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}
+                        >↓</button>
+                        <button
+                          type="button"
+                          onClick={() => setMostRead(mostRead.filter((_, i) => i !== idx))}
+                          style={{ width: 26, height: 26, border: '1px solid var(--border)', borderRadius: 4, background: '#fff', color: 'var(--danger)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}
+                          title="Remove"
+                        >×</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
