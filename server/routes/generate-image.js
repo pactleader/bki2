@@ -127,6 +127,53 @@ router.post('/suggest-prompt', async (req, res) => {
   }
 });
 
+// POST /api/admin/generate-image/generate-seo
+router.post('/generate-seo', async (req, res) => {
+  try {
+    const { title, body, excerpt } = req.body;
+    if (!title && !body && !excerpt) return res.status(400).json({ error: 'title, excerpt or body required' });
+
+    const [[row]] = await db.execute(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'openai_api_key' LIMIT 1`
+    );
+    const apiKey = row?.setting_value?.trim();
+    if (!apiKey) return res.status(400).json({ error: 'OpenAI API key not configured in Settings' });
+
+    const { default: OpenAI } = require('openai');
+    const openai = new OpenAI({ apiKey });
+
+    const plainBody = (body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 2000);
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      max_tokens: 400,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: 'You write SEO metadata for news articles. Return a JSON object with exactly three keys: "seo_title" (max 60 chars, compelling, keyword-rich, no clickbait), "seo_description" (max 160 chars, informative summary that reads naturally and includes primary keywords), and "seo_keywords" (5-10 relevant keywords separated by commas, no hashtags). Do not wrap in markdown.',
+        },
+        {
+          role: 'user',
+          content: `Article title: "${title || ''}"\n\nExcerpt: "${excerpt || ''}"\n\nArticle body:\n${plainBody || '(no body yet)'}`,
+        },
+      ],
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() || '{}';
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { return res.status(500).json({ error: 'AI returned invalid JSON' }); }
+    res.json({
+      seo_title:       String(parsed.seo_title       || '').slice(0, 70),
+      seo_description: String(parsed.seo_description || '').slice(0, 180),
+      seo_keywords:    String(parsed.seo_keywords    || '').slice(0, 300),
+    });
+  } catch (err) {
+    console.error('generate-seo error:', err);
+    res.status(500).json({ error: err.message || 'Failed to generate SEO metadata' });
+  }
+});
+
 // POST /api/admin/generate-image
 router.post('/', async (req, res) => {
   try {

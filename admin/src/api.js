@@ -106,6 +106,9 @@ export const generateImage = (prompt, provider = 'openai', metadata = {}) =>
 export const suggestImagePrompt = (title, body) =>
   apiFetch('/admin/generate-image/suggest-prompt', { method: 'POST', body: JSON.stringify({ title, body }) });
 
+export const generateSeo = (title, body, excerpt) =>
+  apiFetch('/admin/generate-image/generate-seo', { method: 'POST', body: JSON.stringify({ title, body, excerpt }) });
+
 // ── Import ────────────────────────────────────────────────────
 export function importPreview(file) {
   const token = getToken();

@@ -438,6 +438,7 @@ export default function ArticleEdit() {
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [seoGenerating, setSeoGenerating] = useState(false);
   const [slugLocked, setSlugLocked] = useState(!isNew);
   const [siteTimezone, setSiteTimezone] = useState('America/New_York');
   const timezoneRef = useRef('America/New_York');
@@ -495,6 +496,26 @@ export default function ArticleEdit() {
       }
       return next;
     });
+  }
+
+  async function generateSeoMeta() {
+    if (!form.title && !form.body) { toast('Add a title or body first', 'error'); return; }
+    const overwrite = (form.seo_title || form.seo_description || form.seo_keywords)
+      ? confirm('Existing SEO fields will be overwritten. Continue?')
+      : true;
+    if (!overwrite) return;
+    setSeoGenerating(true);
+    try {
+      const res = await api.generateSeo(form.title, form.body, form.excerpt);
+      setForm(f => ({
+        ...f,
+        seo_title:       res.seo_title       || f.seo_title,
+        seo_description: res.seo_description || f.seo_description,
+        seo_keywords:    res.seo_keywords    || f.seo_keywords,
+      }));
+      toast('SEO metadata generated');
+    } catch (err) { toast(err.message, 'error'); }
+    finally { setSeoGenerating(false); }
   }
 
   async function save(publishNow = false) {
@@ -582,7 +603,23 @@ export default function ArticleEdit() {
 
           {/* Meta & SEO — below body */}
           <Card>
-            <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-muted)', marginBottom: 16 }}>Meta &amp; SEO</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-muted)' }}>Meta &amp; SEO</div>
+              <button
+                type="button"
+                onClick={generateSeoMeta}
+                disabled={seoGenerating}
+                style={{
+                  padding: '6px 14px',
+                  background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                  color: '#a78bfa', border: '1px solid #4c1d95', borderRadius: 4,
+                  fontSize: 12, fontWeight: 600, cursor: seoGenerating ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6, opacity: seoGenerating ? 0.7 : 1,
+                }}
+              >
+                <span style={{ fontSize: 14 }}>✦</span> {seoGenerating ? 'Generating…' : 'Generate with AI'}
+              </button>
+            </div>
             <Field label="SEO Title" hint="Leave blank to use article title">
               <Input value={form.seo_title} onChange={e => set('seo_title', e.target.value)} />
             </Field>
