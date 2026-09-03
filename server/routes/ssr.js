@@ -72,7 +72,9 @@ function renderArticle(res, a, canonical, tz = 'Pacific/Saipan') {
 
   const title       = a.seo_title || a.title;
   const description = a.seo_description || a.excerpt || '';
-  const rawImage    = a.og_image || a.featured_image || '';
+  // For og:image only use actual images (not videos)
+  const isVideoUrl = (u) => u && /(\.(mp4|webm|ogv|mov)(\?|$)|youtube\.com|youtu\.be|vimeo\.com)/i.test(u);
+  const rawImage    = a.og_image || (isVideoUrl(a.featured_image) ? '' : a.featured_image) || '';
   const image       = rawImage
     ? (rawImage.startsWith('http') ? rawImage : `${SITE_URL}${rawImage}`)
     : `${SITE_URL}/og-image.svg`;
@@ -80,6 +82,20 @@ function renderArticle(res, a, canonical, tz = 'Pacific/Saipan') {
     ? new Date(a.publish_date).toLocaleDateString('en-US', { timeZone: tz, year: 'numeric', month: 'long', day: 'numeric' })
     : '';
   const featuredImg = a.featured_image || '';
+  const featuredType = (() => {
+    const u = featuredImg.toLowerCase();
+    if (/\.(mp4|webm|ogv|mov)(\?|$)/.test(u)) return 'video';
+    if (/(?:youtube\.com|youtu\.be)/.test(u)) return 'youtube';
+    if (/vimeo\.com/.test(u)) return 'vimeo';
+    return 'image';
+  })();
+  const ytMatch = featuredType === 'youtube' && featuredImg.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  const vmMatch = featuredType === 'vimeo' && featuredImg.match(/vimeo\.com\/(\d+)/);
+  const featuredHtml = !featuredImg ? ''
+    : featuredType === 'video'   ? `<div class="featured-img"><video src="${esc(featuredImg)}" autoplay muted loop playsinline controls></video></div>`
+    : featuredType === 'youtube' && ytMatch ? `<div class="featured-img"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytMatch[1]}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="width:100%;aspect-ratio:16/9;"></iframe></div>`
+    : featuredType === 'vimeo'   && vmMatch ? `<div class="featured-img"><iframe src="https://player.vimeo.com/video/${vmMatch[1]}?autoplay=1&muted=1&loop=1" frameborder="0" allow="autoplay" style="width:100%;aspect-ratio:16/9;"></iframe></div>`
+    : `<div class="featured-img"><img src="${esc(featuredImg)}" alt="${esc(a.title)}" /></div>`;
   const safeBody    = normalizeArticleBody(a.body || '');
 
   const html = `<!doctype html>
@@ -286,7 +302,7 @@ function renderArticle(res, a, canonical, tz = 'Pacific/Saipan') {
         By <strong>${esc(a.author_name)}</strong>${pubDate ? ` &nbsp;&middot;&nbsp; ${pubDate}` : ''}
       </div>
 
-      ${featuredImg ? `<div class="featured-img"><img src="${esc(featuredImg)}" alt="${esc(a.title)}" /></div>` : ''}
+      ${featuredHtml}
 
       <div class="article-body">${safeBody || `<p>${esc(description)}</p>`}</div>
 

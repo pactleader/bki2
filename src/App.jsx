@@ -238,31 +238,64 @@ function ArticleImage({ aspect = '16/9', height, style = {}, seed = 1, category 
         </div>
       )}
 
-      {/* Actual photo */}
-      <img
-        src={img.url}
-        alt={img.alt}
-        loading="lazy"
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-        style={{
+      {/* Actual media — image, video, or iframe embed */}
+      {(() => {
+        const mediaType = detectMediaType(img.url);
+        const commonStyle = {
           position: 'absolute', inset: 0, width: '100%', height: '100%',
           objectFit: 'cover', objectPosition: 'center',
           opacity: loaded ? 1 : 0,
           transition: 'opacity 400ms ease',
-        }}
-      />
+        };
+        if (mediaType === 'video') {
+          return (
+            <video
+              src={img.url}
+              autoPlay muted loop playsInline
+              onLoadedData={() => setLoaded(true)}
+              onError={() => setError(true)}
+              style={commonStyle}
+            />
+          );
+        }
+        if (mediaType === 'youtube' || mediaType === 'vimeo') {
+          const embed = mediaType === 'youtube' ? youtubeEmbed(img.url) : vimeoEmbed(img.url);
+          return (
+            <iframe
+              src={embed}
+              title={img.alt || 'video'}
+              frameBorder="0"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              onLoad={() => setLoaded(true)}
+              style={{ ...commonStyle, border: 'none' }}
+            />
+          );
+        }
+        return (
+          <img
+            src={img.url}
+            alt={img.alt}
+            loading="lazy"
+            onLoad={() => setLoaded(true)}
+            onError={() => setError(true)}
+            style={commonStyle}
+          />
+        );
+      })()}
 
       {/* Subtle color overlay matching category */}
       {loaded && (
         <div style={{
           position: 'absolute', inset: 0,
           background: `linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.3) 100%), ${overlayColors[category] || 'transparent'}`,
+          pointerEvents: 'none',
         }} />
       )}
     </div>
   );
 }
+
 
 // ─── CATEGORY TAG ────────────────────────────────────────
 
@@ -284,6 +317,24 @@ function CatTag({ category, onClick }) {
 // ─── AD SLOT ─────────────────────────────────────────────
 
 let AD_ROTATION_INTERVAL = 5000; // ms — overridden at runtime from site settings
+
+// Detect media type from URL. Returns: 'image' | 'video' | 'youtube' | 'vimeo'
+function detectMediaType(url) {
+  if (!url) return 'image';
+  const u = String(url).toLowerCase();
+  if (/\.(mp4|webm|ogv|mov)(\?|$)/.test(u)) return 'video';
+  if (/(?:youtube\.com|youtu\.be)/.test(u)) return 'youtube';
+  if (/vimeo\.com/.test(u)) return 'vimeo';
+  return 'image';
+}
+function youtubeEmbed(url, { autoplay = 1, controls = 0 } = {}) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}?autoplay=${autoplay}&mute=1&loop=1&playlist=${m[1]}&controls=${controls}&modestbranding=1&rel=0&playsinline=1` : url;
+}
+function vimeoEmbed(url) {
+  const m = url.match(/vimeo\.com\/(\d+)/);
+  return m ? `https://player.vimeo.com/video/${m[1]}?autoplay=1&muted=1&loop=1&background=1` : url;
+}
 
 function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
   const adsCache = useContext(AdsContext);
@@ -323,29 +374,74 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
 
   const ad = ads[idx];
   const ensureHttps = url => url && !/^https?:\/\//i.test(url) && !url.startsWith('/') ? 'https://' + url : url;
-  const imageUrl = ensureHttps(ad.image_url);
+  const mediaUrl = ensureHttps(ad.image_url);
   const linkUrl  = ensureHttps(ad.link_url);
+  const mediaType = detectMediaType(mediaUrl);
 
   const autoHeight = h === 'auto' || !h;
-  const inner = (
-    <img
-      src={imageUrl}
-      alt={ad.name}
-      style={{
-        width: '100%', height: autoHeight ? 'auto' : '100%',
-        objectFit: autoHeight ? 'fill' : 'contain', display: 'block',
-        opacity: visible ? 1 : 0,
-        transition: 'opacity 400ms ease',
-      }}
-    />
-  );
+  const fadeStyle = { opacity: visible ? 1 : 0, transition: 'opacity 400ms ease' };
+
+  let inner;
+  if (mediaType === 'video') {
+    inner = (
+      <video
+        src={mediaUrl}
+        autoPlay muted loop playsInline
+        style={{
+          width: '100%', height: autoHeight ? 'auto' : '100%',
+          objectFit: autoHeight ? 'fill' : 'contain', display: 'block',
+          ...fadeStyle,
+        }}
+      />
+    );
+  } else if (mediaType === 'youtube' || mediaType === 'vimeo') {
+    const embedUrl = mediaType === 'youtube' ? youtubeEmbed(mediaUrl) : vimeoEmbed(mediaUrl);
+    inner = (
+      <iframe
+        src={embedUrl}
+        title={ad.name}
+        frameBorder="0"
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+        style={{
+          width: '100%', height: autoHeight ? 200 : '100%', display: 'block', border: 'none',
+          ...fadeStyle,
+        }}
+      />
+    );
+  } else {
+    inner = (
+      <img
+        src={mediaUrl}
+        alt={ad.name}
+        style={{
+          width: '100%', height: autoHeight ? 'auto' : '100%',
+          objectFit: autoHeight ? 'fill' : 'contain', display: 'block',
+          ...fadeStyle,
+        }}
+      />
+    );
+  }
+
+  // Videos/iframes can't be wrapped in an <a> and still be interactive.
+  // For those, overlay a transparent click layer if linkUrl exists.
+  const isEmbed = mediaType === 'video' || mediaType === 'youtube' || mediaType === 'vimeo';
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', ...style }}>
-      <div style={{ width: w, maxWidth: maxW, ...(autoHeight ? {} : { height: h }), overflow: 'hidden', lineHeight: 0 }}>
-        {linkUrl
+      <div style={{ width: w, maxWidth: maxW, ...(autoHeight ? {} : { height: h }), overflow: 'hidden', lineHeight: 0, position: 'relative' }}>
+        {linkUrl && !isEmbed
           ? <a href={linkUrl} target="_blank" rel="noopener noreferrer sponsored" style={{ display: 'block', height: autoHeight ? 'auto' : '100%' }}>{inner}</a>
           : inner}
+        {linkUrl && isEmbed && (
+          <a
+            href={linkUrl}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            aria-label={ad.name}
+            style={{ position: 'absolute', inset: 0, zIndex: 2, cursor: 'pointer' }}
+          />
+        )}
       </div>
     </div>
   );
@@ -1788,7 +1884,8 @@ function ArticlePage({ articleId, articleSlug, setPage, onSlug, partners }) {
   useMeta(article ? {
     title: article.seo_title || article.title,
     description: article.seo_description || article.excerpt,
-    image: article.og_image || articleImg.url,
+    // og:image should always be an image, not a video URL
+    image: article.og_image || (detectMediaType(articleImg.url) === 'image' ? articleImg.url : undefined),
     type: 'article',
   } : {});
 

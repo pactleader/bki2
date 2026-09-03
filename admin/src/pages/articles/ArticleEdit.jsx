@@ -34,6 +34,24 @@ const EMPTY = {
   source_name: '', source_url: '', extra_category_ids: [],
 };
 
+// Detect what kind of media a URL points to
+function detectMediaType(url) {
+  if (!url) return 'image';
+  const u = String(url).toLowerCase();
+  if (/\.(mp4|webm|ogv|mov)(\?|$)/.test(u)) return 'video';
+  if (/(?:youtube\.com|youtu\.be)/.test(u)) return 'youtube';
+  if (/vimeo\.com/.test(u)) return 'vimeo';
+  return 'image';
+}
+function youtubeEmbed(url) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&loop=1&playlist=${m[1]}&controls=1&modestbranding=1&rel=0` : url;
+}
+function vimeoEmbed(url) {
+  const m = url.match(/vimeo\.com\/(\d+)/);
+  return m ? `https://player.vimeo.com/video/${m[1]}?autoplay=1&muted=1&loop=1` : url;
+}
+
 function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTitle = '', authorName = '', articleBody = '' }) {
   const fileRef  = useRef();
   const [uploading, setUploading] = useState(false);
@@ -87,12 +105,12 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
 
   return (
     <div>
-      <Field label="Featured Image">
+      <Field label="Featured Media (image or video)">
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Input
             value={value}
             onChange={e => onChange(e.target.value)}
-            placeholder="Upload, generate, or paste a URL…"
+            placeholder="Upload, generate, or paste a URL (image, .mp4, YouTube, Vimeo)…"
             style={{ flex: 1 }}
           />
           <button
@@ -108,12 +126,13 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
           >
             {uploading ? 'Uploading…' : 'Upload'}
           </button>
-          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
+          <input ref={fileRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={handleFile} />
         </div>
         {error && <p style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{error}</p>}
       </Field>
 
-      {/* Image Metadata */}
+      {/* Image Metadata — hidden for videos */}
+      {detectMediaType(value) === 'image' && (
       <div style={{ marginTop: 6, border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
         <button
           type="button"
@@ -152,30 +171,49 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
           </div>
         )}
       </div>
+      )}
 
-      {/* Generate with AI button */}
-      <button
-        type="button"
-        onClick={() => setAiOpen(true)}
-        style={{
-          marginTop: 8, width: '100%', padding: '7px 0',
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          color: '#a78bfa', border: '1px solid #4c1d95', borderRadius: 4,
-          fontSize: 12, fontWeight: 600, cursor: 'pointer', letterSpacing: '.02em',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-        }}
-      >
-        <span style={{ fontSize: 14 }}>✦</span> Generate with AI
-      </button>
+      {/* Generate with AI button — image only */}
+      {detectMediaType(value) === 'image' && (
+        <button
+          type="button"
+          onClick={() => setAiOpen(true)}
+          style={{
+            marginTop: 8, width: '100%', padding: '7px 0',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            color: '#a78bfa', border: '1px solid #4c1d95', borderRadius: 4,
+            fontSize: 12, fontWeight: 600, cursor: 'pointer', letterSpacing: '.02em',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          }}
+        >
+          <span style={{ fontSize: 14 }}>✦</span> Generate with AI
+        </button>
+      )}
 
-      {value && (
+      {value && (() => {
+        const mt = detectMediaType(value);
+        return (
         <div style={{ marginTop: 8 }}>
           <div style={{ position: 'relative' }}>
-            <img
-              src={value} alt="Preview"
-              onError={e => e.target.style.display = 'none'}
-              style={{ width: '100%', borderRadius: 4, maxHeight: 180, objectFit: 'cover', display: 'block' }}
-            />
+            {mt === 'video' ? (
+              <video src={value} controls muted playsInline
+                style={{ width: '100%', borderRadius: 4, maxHeight: 220, background: '#000', display: 'block' }} />
+            ) : mt === 'youtube' ? (
+              <iframe src={youtubeEmbed(value)} title="YouTube preview" allow="autoplay; encrypted-media" allowFullScreen
+                style={{ width: '100%', height: 220, borderRadius: 4, border: 'none', display: 'block' }} />
+            ) : mt === 'vimeo' ? (
+              <iframe src={vimeoEmbed(value)} title="Vimeo preview" allow="autoplay"
+                style={{ width: '100%', height: 220, borderRadius: 4, border: 'none', display: 'block' }} />
+            ) : (
+              <img
+                src={value} alt="Preview"
+                onError={e => e.target.style.display = 'none'}
+                style={{ width: '100%', borderRadius: 4, maxHeight: 180, objectFit: 'cover', display: 'block' }}
+              />
+            )}
+            <div style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: 10, padding: '2px 7px', borderRadius: 3, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '.05em' }}>
+              {mt}
+            </div>
             <button
               type="button"
               onClick={() => { onChange(''); onAltChange?.(''); }}
@@ -197,7 +235,8 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
             />
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {aiOpen && (
         <AiGenerateModal

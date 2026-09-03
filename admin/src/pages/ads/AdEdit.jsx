@@ -30,6 +30,26 @@ function fromInputVal(v) { return v ? new Date(v).toISOString().slice(0, 19).rep
 
 const EMPTY = { name: '', image_url: '', link_url: '', position_slug: 'sidebar-1', is_active: 1, display_order: 0, starts_at: '', expires_at: '' };
 
+// Detect what kind of media a URL points to. Returns: 'image' | 'video' | 'youtube' | 'vimeo' | 'unknown'
+function detectMediaType(url) {
+  if (!url) return 'unknown';
+  const u = String(url).toLowerCase();
+  if (/\.(mp4|webm|ogv|mov)(\?|$)/.test(u)) return 'video';
+  if (/(?:youtube\.com|youtu\.be)/.test(u)) return 'youtube';
+  if (/vimeo\.com/.test(u)) return 'vimeo';
+  if (/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/.test(u)) return 'image';
+  return 'image'; // default assumption for unknown URLs
+}
+
+function youtubeEmbed(url) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&loop=1&playlist=${m[1]}&controls=0&modestbranding=1&rel=0` : url;
+}
+function vimeoEmbed(url) {
+  const m = url.match(/vimeo\.com\/(\d+)/);
+  return m ? `https://player.vimeo.com/video/${m[1]}?autoplay=1&muted=1&loop=1&background=1` : url;
+}
+
 export default function AdEdit() {
   const { id } = useParams();
   const isNew = !id;
@@ -67,14 +87,14 @@ export default function AdEdit() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Upload failed');
       set('image_url', json.url);
-      toast('Image uploaded');
+      toast(`${json.type === 'video' ? 'Video' : 'Image'} uploaded`);
     } catch (err) { toast(err.message, 'error'); }
     finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
   }
 
   async function save(e) {
     e.preventDefault();
-    if (!form.name || !form.image_url || !form.position_slug) { toast('Name, image and position required', 'error'); return; }
+    if (!form.name || !form.image_url || !form.position_slug) { toast('Name, media and position required', 'error'); return; }
     setSaving(true);
     try {
       const payload = {
@@ -113,34 +133,51 @@ export default function AdEdit() {
             </Select>
           </Field>
 
-          {/* Image — upload or external URL */}
-          <Field label="Ad Image">
+          {/* Media — upload image/video or external URL (YouTube, Vimeo, etc.) */}
+          <Field label="Ad Media (image or video)">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {/* Upload button */}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input ref={fileRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={handleFileUpload} />
                 <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
                   style={{ padding: '7px 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: uploading ? 0.6 : 1 }}>
-                  {uploading ? 'Uploading…' : '↑ Upload Image'}
+                  {uploading ? 'Uploading…' : '↑ Upload Image/Video'}
                 </button>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>or paste a URL below</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>or paste a URL below (image, .mp4, YouTube, Vimeo)</span>
               </div>
               {/* URL input */}
               <Input
                 value={form.image_url}
                 onChange={e => set('image_url', e.target.value)}
-                placeholder="https://… or /uploads/filename.jpg"
+                placeholder="https://… or /uploads/filename.mp4"
               />
               {/* Preview */}
-              {form.image_url && (
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <img src={form.image_url} alt="Preview"
-                    onError={e => e.target.style.display = 'none'}
-                    style={{ width: '100%', maxHeight: 120, objectFit: 'contain', borderRadius: 4, border: '1px solid var(--border)' }} />
-                  <button type="button" onClick={() => set('image_url', '')}
-                    style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, fontSize: 13, cursor: 'pointer', lineHeight: 1 }}>×</button>
-                </div>
-              )}
+              {form.image_url && (() => {
+                const mediaType = detectMediaType(form.image_url);
+                return (
+                  <div style={{ position: 'relative', display: 'inline-block', width: '100%', maxWidth: 400 }}>
+                    {mediaType === 'video' ? (
+                      <video src={form.image_url} controls muted playsInline
+                        style={{ width: '100%', maxHeight: 200, borderRadius: 4, border: '1px solid var(--border)', background: '#000' }} />
+                    ) : mediaType === 'youtube' ? (
+                      <iframe src={youtubeEmbed(form.image_url)} title="YouTube preview" allow="autoplay; encrypted-media" allowFullScreen
+                        style={{ width: '100%', height: 200, borderRadius: 4, border: '1px solid var(--border)' }} />
+                    ) : mediaType === 'vimeo' ? (
+                      <iframe src={vimeoEmbed(form.image_url)} title="Vimeo preview" allow="autoplay"
+                        style={{ width: '100%', height: 200, borderRadius: 4, border: '1px solid var(--border)' }} />
+                    ) : (
+                      <img src={form.image_url} alt="Preview"
+                        onError={e => e.target.style.display = 'none'}
+                        style={{ width: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: 4, border: '1px solid var(--border)' }} />
+                    )}
+                    <div style={{ position: 'absolute', top: 4, left: 4, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: 10, padding: '2px 7px', borderRadius: 3, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '.05em' }}>
+                      {mediaType}
+                    </div>
+                    <button type="button" onClick={() => set('image_url', '')}
+                      style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, fontSize: 13, cursor: 'pointer', lineHeight: 1 }}>×</button>
+                  </div>
+                );
+              })()}
             </div>
           </Field>
 

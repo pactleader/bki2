@@ -33,6 +33,41 @@ const SIDEBAR_SLOTS = ['sidebar-1', 'sidebar-2', 'sidebar-3', 'sidebar-4', 'side
 
 const fmtDate = v => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
 
+function detectMediaType(url) {
+  if (!url) return 'image';
+  const u = String(url).toLowerCase();
+  if (/\.(mp4|webm|ogv|mov)(\?|$)/.test(u)) return 'video';
+  if (/(?:youtube\.com|youtu\.be)/.test(u)) return 'youtube';
+  if (/vimeo\.com/.test(u)) return 'vimeo';
+  return 'image';
+}
+
+function ytThumb(url) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null;
+}
+
+function ListThumb({ url, name }) {
+  if (!url) return <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>No media</span>;
+  const type = detectMediaType(url);
+  const thumb = type === 'youtube' ? ytThumb(url) : (type === 'image' ? url : null);
+  const style = { width: 80, height: 44, objectFit: 'cover', borderRadius: 4, display: 'block' };
+  return (
+    <div style={{ position: 'relative', width: 80, height: 44 }}>
+      {thumb ? (
+        <img src={thumb} alt={name} style={style} onError={e => e.target.style.display = 'none'} />
+      ) : type === 'video' ? (
+        <video src={url} muted playsInline style={style} />
+      ) : (
+        <div style={{ ...style, background: 'linear-gradient(135deg,#1e293b,#334155)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700 }}>{type.toUpperCase()}</div>
+      )}
+      {type !== 'image' && (
+        <span style={{ position: 'absolute', bottom: 2, left: 2, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 8, fontWeight: 700, padding: '1px 4px', borderRadius: 2 }}>▶ {type}</span>
+      )}
+    </div>
+  );
+}
+
 function scheduleStatus(ad) {
   const now = new Date();
   if (ad.expires_at && new Date(ad.expires_at) < now) return 'expired';
@@ -188,26 +223,46 @@ function AdCard({ ad, onToggle, onDelete, onMoveUp, onMoveDown, compact = false 
       overflow: 'hidden',
       opacity: inactive ? 0.75 : 1,
     }}>
-      {/* Ad image */}
-      {ad.image_url ? (
-        <div style={{ position: 'relative', background: '#111', minHeight: compact ? 60 : 80 }}>
-          <img
-            src={ad.image_url}
-            alt={ad.name}
-            style={{ width: '100%', height: compact ? 60 : 80, objectFit: 'cover', display: 'block' }}
-            onError={e => e.target.style.display = 'none'}
-          />
-          {/* Status pill overlay */}
-          <div style={{ position: 'absolute', top: 6, right: 6 }}>
-            {status === 'expired' && <span style={{ background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>EXPIRED</span>}
-            {status === 'scheduled' && <span style={{ background: '#f59e0b', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>SCHEDULED</span>}
-            {status === 'active' && ad.is_active && <span style={{ background: '#10b981', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>ACTIVE</span>}
-            {!ad.is_active && <span style={{ background: '#6b7280', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>INACTIVE</span>}
+      {/* Ad media */}
+      {ad.image_url ? (() => {
+        const mediaType = detectMediaType(ad.image_url);
+        const isMedia = mediaType !== 'image';
+        const thumbSrc = mediaType === 'youtube' ? ytThumb(ad.image_url) : (mediaType === 'image' ? ad.image_url : null);
+        return (
+          <div style={{ position: 'relative', background: '#111', minHeight: compact ? 60 : 80 }}>
+            {thumbSrc ? (
+              <img
+                src={thumbSrc}
+                alt={ad.name}
+                style={{ width: '100%', height: compact ? 60 : 80, objectFit: 'cover', display: 'block' }}
+                onError={e => e.target.style.display = 'none'}
+              />
+            ) : mediaType === 'video' ? (
+              <video src={ad.image_url} muted playsInline
+                style={{ width: '100%', height: compact ? 60 : 80, objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <div style={{ height: compact ? 60 : 80, background: 'linear-gradient(135deg, #1e293b, #334155)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#fff', fontSize: 11, fontWeight: 600 }}>{mediaType.toUpperCase()}</span>
+              </div>
+            )}
+            {/* Media type badge */}
+            {isMedia && (
+              <div style={{ position: 'absolute', bottom: 6, left: 6, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ fontSize: 8 }}>▶</span> {mediaType}
+              </div>
+            )}
+            {/* Status pill overlay */}
+            <div style={{ position: 'absolute', top: 6, right: 6 }}>
+              {status === 'expired' && <span style={{ background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>EXPIRED</span>}
+              {status === 'scheduled' && <span style={{ background: '#f59e0b', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>SCHEDULED</span>}
+              {status === 'active' && ad.is_active && <span style={{ background: '#10b981', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>ACTIVE</span>}
+              {!ad.is_active && <span style={{ background: '#6b7280', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20 }}>INACTIVE</span>}
+            </div>
           </div>
-        </div>
-      ) : (
+        );
+      })() : (
         <div style={{ height: compact ? 50 : 70, background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 11, color: '#9ca3af' }}>No image</span>
+          <span style={{ fontSize: 11, color: '#9ca3af' }}>No media</span>
         </div>
       )}
 
@@ -436,7 +491,7 @@ function ListView({ ads, getSlotAds, handleToggle, setDeleting, moveSidebarAd })
                     return (
                       <tr key={ad.id} style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={{ padding: '10px 14px' }}>
-                          {ad.image_url ? <img src={ad.image_url} alt={ad.name} style={{ width: 80, height: 44, objectFit: 'cover', borderRadius: 4 }} onError={e => e.target.style.display='none'} /> : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>No image</span>}
+                          <ListThumb url={ad.image_url} name={ad.name} />
                         </td>
                         <td style={{ padding: '10px 14px', fontWeight: 500, fontSize: 13 }}>{ad.name}</td>
                         <td style={{ padding: '10px 14px' }}>

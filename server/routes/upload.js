@@ -22,8 +22,9 @@ const storage = multer.diskStorage({
   },
 });
 
-const ALLOWED_EXT  = /\.(jpeg|jpg|png|gif|webp|svg)$/;
-const ALLOWED_MIME = /^image\/(jpeg|png|gif|webp|svg\+xml)$/;
+const ALLOWED_EXT  = /\.(jpeg|jpg|png|gif|webp|svg|mp4|webm|ogv|mov)$/;
+const ALLOWED_MIME = /^(image\/(jpeg|png|gif|webp|svg\+xml)|video\/(mp4|webm|ogg|quicktime))$/;
+const VIDEO_EXT    = /\.(mp4|webm|ogv|mov)$/;
 
 const upload = multer({
   storage,
@@ -31,7 +32,7 @@ const upload = multer({
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const ok  = ALLOWED_EXT.test(ext) && ALLOWED_MIME.test(file.mimetype);
-    cb(ok ? null : new Error('Only image files are allowed'), ok);
+    cb(ok ? null : new Error('Only image or video files are allowed'), ok);
   },
 });
 
@@ -42,11 +43,14 @@ router.post('/', (req, res, next) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const filePath = req.file.path;
     const url = `/uploads/${req.file.filename}`;
-    try {
-      const { title, description, author, copyright } = req.body;
-      await writeImageMetadata(filePath, { title, description, author, copyright });
-    } catch (e) { console.warn('metadata write skipped:', e.message); }
-    res.json({ url });
+    const isVideo = VIDEO_EXT.test(path.extname(req.file.filename).toLowerCase());
+    if (!isVideo) {
+      try {
+        const { title, description, author, copyright } = req.body;
+        await writeImageMetadata(filePath, { title, description, author, copyright });
+      } catch (e) { console.warn('metadata write skipped:', e.message); }
+    }
+    res.json({ url, type: isVideo ? 'video' : 'image' });
   });
 });
 
