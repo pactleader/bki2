@@ -72,11 +72,32 @@ async function generateWithOpenAI(prompt, apiKey) {
 async function generateWithGoogle(prompt, apiKey) {
   const { GoogleGenAI } = require('@google/genai');
   const ai = new GoogleGenAI({ apiKey });
-  const response = await ai.models.generateImages({
-    model:  'imagen-4.0-generate-001',
-    prompt: prompt.trim(),
-    config: { numberOfImages: 1, aspectRatio: '16:9' },
-  });
+
+  // Try current Imagen models in order — API deprecates model IDs periodically
+  const modelCandidates = [
+    'imagen-4.0-generate-preview-06-06',
+    'imagen-3.0-generate-002',
+    'imagen-3.0-generate-001',
+  ];
+
+  let response, lastErr;
+  for (const model of modelCandidates) {
+    try {
+      response = await ai.models.generateImages({
+        model,
+        prompt: prompt.trim(),
+        config: { numberOfImages: 1, aspectRatio: '16:9' },
+      });
+      break;
+    } catch (err) {
+      lastErr = err;
+      const msg = err?.error?.message || err?.message || '';
+      // Only fall through on model-not-found errors; other errors (auth, quota) should surface immediately
+      if (!/not\s*found|NOT_FOUND|not supported/i.test(msg)) throw err;
+    }
+  }
+  if (!response) throw lastErr || new Error('No available Imagen model succeeded');
+
   const b64 = response.generatedImages?.[0]?.image?.imageBytes;
   if (!b64) throw new Error('No image returned from Google AI');
 
