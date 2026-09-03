@@ -254,7 +254,6 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
 function AiGenerateModal({ articleTitle = '', articleBody = '', metadata = {}, onAccept, onClose }) {
   const [prompt,      setPrompt]      = useState('');
   const [suggesting,  setSuggesting]  = useState(true);
-  const [provider,    setProvider]    = useState('openai');
   const [generating,  setGenerating]  = useState(false);
   const [previewUrl,  setPreviewUrl]  = useState(null);
   const [error,       setError]       = useState('');
@@ -273,7 +272,7 @@ function AiGenerateModal({ articleTitle = '', articleBody = '', metadata = {}, o
     setError('');
     setPreviewUrl(null);
     try {
-      const res = await api.generateImage(prompt, provider, metadata);
+      const res = await api.generateImage(prompt, 'openai', metadata);
       setPreviewUrl(res.url);
     } catch (err) {
       setError(err.message);
@@ -327,29 +326,8 @@ function AiGenerateModal({ articleTitle = '', articleBody = '', metadata = {}, o
             }}
             placeholder={suggesting ? 'Generating suggestion…' : 'Describe the image you want…'}
           />
-          {/* Provider toggle */}
-          <div style={{ display: 'flex', gap: 6, margin: '10px 0 16px' }}>
-            {[
-              { value: 'openai', label: 'OpenAI DALL·E 3' },
-              { value: 'google', label: 'Google Imagen 4' },
-            ].map(p => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => { setProvider(p.value); setPreviewUrl(null); setError(''); }}
-                style={{
-                  flex: 1, padding: '6px 0', fontSize: 12, fontWeight: 600, borderRadius: 4,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  border: provider === p.value ? '2px solid #7c3aed' : '1px solid var(--border)',
-                  background: provider === p.value ? '#f5f3ff' : '#fff',
-                  color: provider === p.value ? '#7c3aed' : 'var(--text-muted)',
-                }}
-              >{p.label}</button>
-            ))}
-          </div>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '-10px 0 16px' }}>
-            {provider === 'openai' ? 'DALL·E 3 — 1792×1024, landscape.' : 'Imagen 4 — 16:9, high quality.'}
-            {' '}Be specific for best results.
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '10px 0 16px' }}>
+            OpenAI DALL·E 3 — 1792×1024, landscape. Be specific for best results.
           </p>
 
           {/* Generate button */}

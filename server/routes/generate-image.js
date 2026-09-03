@@ -69,44 +69,6 @@ async function generateWithOpenAI(prompt, apiKey) {
   return `/uploads/${filename}`;
 }
 
-async function generateWithGoogle(prompt, apiKey) {
-  const { GoogleGenAI } = require('@google/genai');
-  const ai = new GoogleGenAI({ apiKey });
-
-  // Try current Imagen models in order — API deprecates model IDs periodically
-  const modelCandidates = [
-    'imagen-4.0-generate-preview-06-06',
-    'imagen-3.0-generate-002',
-    'imagen-3.0-generate-001',
-  ];
-
-  let response, lastErr;
-  for (const model of modelCandidates) {
-    try {
-      response = await ai.models.generateImages({
-        model,
-        prompt: prompt.trim(),
-        config: { numberOfImages: 1, aspectRatio: '16:9' },
-      });
-      break;
-    } catch (err) {
-      lastErr = err;
-      const msg = err?.error?.message || err?.message || '';
-      // Only fall through on model-not-found errors; other errors (auth, quota) should surface immediately
-      if (!/not\s*found|NOT_FOUND|not supported/i.test(msg)) throw err;
-    }
-  }
-  if (!response) throw lastErr || new Error('No available Imagen model succeeded');
-
-  const b64 = response.generatedImages?.[0]?.image?.imageBytes;
-  if (!b64) throw new Error('No image returned from Google AI');
-
-  const filename = `ai-${Date.now()}.png`;
-  const dest = path.join(UPLOAD_DIR, filename);
-  fs.writeFileSync(dest, Buffer.from(b64, 'base64'));
-  return `/uploads/${filename}`;
-}
-
 // POST /api/admin/generate-image/suggest-prompt
 router.post('/suggest-prompt', async (req, res) => {
   try {
@@ -198,25 +160,16 @@ router.post('/generate-seo', async (req, res) => {
 // POST /api/admin/generate-image
 router.post('/', async (req, res) => {
   try {
-    const { prompt, provider = 'openai', title, description, author, copyright } = req.body;
+    const { prompt, title, description, author, copyright } = req.body;
     if (!prompt?.trim()) return res.status(400).json({ error: 'Prompt is required' });
 
-    const keyName = provider === 'google' ? 'google_ai_api_key' : 'openai_api_key';
-    const providerLabel = provider === 'google' ? 'Google AI' : 'OpenAI';
-
     const [[row]] = await db.execute(
-      `SELECT setting_value FROM site_settings WHERE setting_key = ? LIMIT 1`,
-      [keyName]
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'openai_api_key' LIMIT 1`
     );
     const apiKey = row?.setting_value?.trim();
-    if (!apiKey) return res.status(400).json({ error: `${providerLabel} API key not configured in Settings` });
+    if (!apiKey) return res.status(400).json({ error: 'OpenAI API key not configured in Settings' });
 
-    let url;
-    if (provider === 'google') {
-      url = await generateWithGoogle(prompt, apiKey);
-    } else {
-      url = await generateWithOpenAI(prompt, apiKey);
-    }
+    const url = await generateWithOpenAI(prompt, apiKey);
 
     try {
       const filePath = path.join(UPLOAD_DIR, path.basename(url));
