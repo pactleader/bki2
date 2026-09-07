@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import * as api from '../../api.js';
 import { getUser } from '../../auth.js';
 import QuillEditor from '../../components/QuillEditor.jsx';
 import { useToast } from '../../components/Toast.jsx';
 import PageHeader, { Btn, Card, Field, Input, Select, Textarea, Badge } from '../../components/PageHeader.jsx';
+
+// Lazy-loaded — tui-image-editor is ~1.5MB
+const ImageEditorModal = lazy(() => import('../../components/ImageEditorModal.jsx'));
 
 function slugify(text) {
   return text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/--+/g, '-');
@@ -57,6 +60,7 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
   const [uploading, setUploading] = useState(false);
   const [error,     setError]     = useState('');
   const [aiOpen,    setAiOpen]    = useState(false);
+  const [editOpen,  setEditOpen]  = useState(false);
   const [meta, setMeta] = useState({ title: '', description: '', author: '', copyright: '' });
   const [metaOpen, setMetaOpen] = useState(false);
 
@@ -214,15 +218,26 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
             <div style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: 10, padding: '2px 7px', borderRadius: 3, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '.05em' }}>
               {mt}
             </div>
-            <button
-              type="button"
-              onClick={() => { onChange(''); onAltChange?.(''); }}
-              style={{
-                position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)',
-                color: '#fff', border: 'none', borderRadius: 3, padding: '2px 8px',
-                fontSize: 12, cursor: 'pointer',
-              }}
-            >Remove</button>
+            <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 4 }}>
+              {mt === 'image' && (
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  style={{
+                    background: 'rgba(124,58,237,0.85)', color: '#fff', border: 'none',
+                    borderRadius: 3, padding: '2px 8px', fontSize: 12, cursor: 'pointer',
+                  }}
+                >Edit</button>
+              )}
+              <button
+                type="button"
+                onClick={() => { onChange(''); onAltChange?.(''); }}
+                style={{
+                  background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none',
+                  borderRadius: 3, padding: '2px 8px', fontSize: 12, cursor: 'pointer',
+                }}
+              >Remove</button>
+            </div>
           </div>
           <div style={{ marginTop: 6 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
@@ -246,6 +261,16 @@ function FeaturedImageUpload({ value, onChange, altValue, onAltChange, articleTi
           onAccept={url => { onChange(url); if (!altValue && articleTitle) onAltChange?.(articleTitle); setAiOpen(false); }}
           onClose={() => setAiOpen(false)}
         />
+      )}
+
+      {editOpen && value && (
+        <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14 }}>Loading editor…</div>}>
+          <ImageEditorModal
+            imageUrl={value}
+            onSave={url => { onChange(url); setEditOpen(false); }}
+            onClose={() => setEditOpen(false)}
+          />
+        </Suspense>
       )}
     </div>
   );
