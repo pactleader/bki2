@@ -227,6 +227,23 @@ CREATE TABLE IF NOT EXISTS pages (
   KEY idx_pages_published (is_published)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ─── REPORTS (iframe-embed pages that auto-populate nav submenu) ─────
+CREATE TABLE IF NOT EXISTS reports (
+  id               INT UNSIGNED      NOT NULL AUTO_INCREMENT,
+  title            VARCHAR(255)      NOT NULL,
+  slug             VARCHAR(200)      NOT NULL,
+  body             LONGTEXT,
+  meta_title       VARCHAR(255),
+  meta_description VARCHAR(500),
+  is_published     TINYINT(1)        NOT NULL DEFAULT 0,
+  display_order    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  created_at       DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_reports_slug (slug),
+  KEY idx_reports_published (is_published)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ─── REDIRECTS ───────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS redirects (
   id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,

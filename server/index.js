@@ -61,6 +61,8 @@ app.use('/api/admin/generate-image',  require('./routes/generate-image'));
 app.use('/api/admin/redirects',       require('./routes/redirects').admin);
 app.use('/api/pages',                 require('./routes/pages').public);
 app.use('/api/admin/pages',           require('./routes/pages').admin);
+app.use('/api/reports',               require('./routes/reports').public);
+app.use('/api/admin/reports',         require('./routes/reports').admin);
 app.use('/api/subscribe',        require('./routes/subscribers').public);
 app.use('/api/admin/subscribers',require('./routes/subscribers').admin);
 
@@ -78,6 +80,9 @@ app.use('/Articles', require('./routes/ssr'));
 
 // ── Static page SSR ───────────────────────────────────────────
 app.use('/p', require('./routes/pages-ssr'));
+
+// ── Report SSR ────────────────────────────────────────────────
+app.use('/r', require('./routes/reports-ssr'));
 
 // ── Health ────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));

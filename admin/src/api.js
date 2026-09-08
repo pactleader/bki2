@@ -134,6 +134,13 @@ export const createPage  = (data) => apiFetch('/admin/pages', { method: 'POST', 
 export const updatePage  = (id, data) => apiFetch(`/admin/pages/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deletePage  = (id) => apiFetch(`/admin/pages/${id}`, { method: 'DELETE' });
 
+// ── Reports (full-width iframe-embed pages) ───────────────────
+export const listReports   = () => apiFetch('/admin/reports');
+export const getReport     = (id) => apiFetch(`/admin/reports/${id}`);
+export const createReport  = (data) => apiFetch('/admin/reports', { method: 'POST', body: JSON.stringify(data) });
+export const updateReport  = (id, data) => apiFetch(`/admin/reports/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteReport  = (id) => apiFetch(`/admin/reports/${id}`, { method: 'DELETE' });
+
 // ── Redirects ─────────────────────────────────────────────────
 export const listRedirects   = () => apiFetch('/admin/redirects');
 export const createRedirect  = (data) => apiFetch('/admin/redirects', { method: 'POST', body: JSON.stringify(data) });

@@ -24,6 +24,8 @@ import RedirectList from './pages/redirects/RedirectList.jsx';
 import BulkAiImages from './pages/tools/BulkAiImages.jsx';
 import PageList from './pages/pages/PageList.jsx';
 import PageEdit from './pages/pages/PageEdit.jsx';
+import ReportList from './pages/reports/ReportList.jsx';
+import ReportEdit from './pages/reports/ReportEdit.jsx';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   if (!isLoggedIn()) return <Navigate to="/admin/login" replace />;
@@ -64,6 +66,9 @@ export default function App() {
           <Route path="pages" element={<ProtectedRoute adminOnly><PageList /></ProtectedRoute>} />
           <Route path="pages/new" element={<ProtectedRoute adminOnly><PageEdit /></ProtectedRoute>} />
           <Route path="pages/:id/edit" element={<ProtectedRoute adminOnly><PageEdit /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute adminOnly><ReportList /></ProtectedRoute>} />
+          <Route path="reports/new" element={<ProtectedRoute adminOnly><ReportEdit /></ProtectedRoute>} />
+          <Route path="reports/:id/edit" element={<ProtectedRoute adminOnly><ReportEdit /></ProtectedRoute>} />
         </Route>
         <Route path="/admin/" element={<Navigate to="/admin" replace />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />

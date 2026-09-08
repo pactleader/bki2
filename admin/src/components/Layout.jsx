@@ -16,6 +16,7 @@ const NAV = [
   { to: '/admin/media',       label: 'Media',       icon: '🖼',  adminOnly: true },
   { to: '/admin/subscribers', label: 'Subscribers', icon: '📧',  adminOnly: true },
   { to: '/admin/pages',      label: 'Pages',      icon: '⊡',  adminOnly: true },
+  { to: '/admin/reports',    label: 'Reports',    icon: '📊', adminOnly: true },
   { to: '/admin/settings',  label: 'Settings',   icon: '⚙',  adminOnly: true },
 ];
 

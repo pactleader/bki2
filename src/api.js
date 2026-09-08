@@ -18,6 +18,8 @@ export const getAds        = (position)   => get(`/ads?position=${position}`);
 export const getAllAds     = ()            => get('/ads');
 export const getMenu       = ()           => get('/menu');
 export const getSettings   = ()           => get('/settings');
+export const getReports    = ()           => get('/reports');
+export const getReport     = (slug)       => get(`/reports/${slug}`);
 
 export async function subscribe(email, source = 'website') {
   const res = await fetch(`${BASE}/subscribe`, {

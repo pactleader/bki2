@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
-import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getCategories, getEvents, getAds, getAllAds, getMenu, subscribe, submitContact, getSettings } from "./api.js";
+import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getCategories, getEvents, getAds, getAllAds, getMenu, subscribe, submitContact, getSettings, getReports } from "./api.js";
 
 const AdsContext = createContext({});
 
@@ -515,6 +515,7 @@ function urlToPageKey(url) {
   const clean = url.replace(/\/$/, '') || '/';
   if (URL_TO_PAGE[clean]) return URL_TO_PAGE[clean];
   if (clean.startsWith('/p/')) return 'page-' + clean.replace('/p/', '');
+  if (clean.startsWith('/r/')) return 'report-' + clean.replace('/r/', '');
   return null;
 }
 
@@ -522,6 +523,8 @@ function Header({ currentPage, setPage, logoUrl }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [reportsOpen, setReportsOpen] = useState(false);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -529,6 +532,7 @@ function Header({ currentPage, setPage, logoUrl }) {
 
   useEffect(() => {
     getMenu().then(items => setMenuItems(items)).catch(() => {});
+    getReports().then(setReports).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -599,6 +603,53 @@ function Header({ currentPage, setPage, logoUrl }) {
                 transition: 'all 150ms ease',
               }}>{n.label}</button>
             ))}
+            {/* Reports dropdown — auto-populated from /api/reports */}
+            {reports.length > 0 && (() => {
+              const isActive = currentPage.startsWith('report-');
+              return (
+                <div
+                  onMouseEnter={() => setReportsOpen(true)}
+                  onMouseLeave={() => setReportsOpen(false)}
+                  style={{ position: 'relative' }}
+                >
+                  <button style={{
+                    background: 'none', border: 'none', fontFamily: 'var(--f-ui)',
+                    fontSize: 'var(--text-base)', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? 'var(--color-nav-link)' : 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)',
+                    padding: '8px 14px', cursor: 'pointer', letterSpacing: 0.2,
+                    borderBottom: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
+                    transition: 'all 150ms ease', display: 'flex', alignItems: 'center', gap: 4,
+                  }}>Reports <span style={{ fontSize: 10, opacity: 0.7 }}>▾</span></button>
+                  {reportsOpen && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, minWidth: 240,
+                      background: '#fff', borderRadius: 4, boxShadow: '0 6px 24px rgba(0,0,0,0.15)',
+                      padding: '6px 0', zIndex: 300, border: '1px solid var(--color-border)',
+                    }}>
+                      {reports.map(r => {
+                        const key = 'report-' + r.slug;
+                        const active = currentPage === key;
+                        return (
+                          <button
+                            key={r.id}
+                            onClick={() => { setReportsOpen(false); setPage(key); }}
+                            style={{
+                              display: 'block', width: '100%', textAlign: 'left',
+                              padding: '9px 16px', background: active ? '#fdecea' : 'transparent',
+                              border: 'none', cursor: 'pointer', fontFamily: 'var(--f-ui)',
+                              fontSize: 13, color: active ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                              fontWeight: active ? 600 : 400,
+                            }}
+                            onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#f5f5f0'; }}
+                            onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+                          >{r.title}</button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             {/* Search */}
             <form onSubmit={submitSearch} style={{ display: 'flex', alignItems: 'center', marginLeft: 8, position: 'relative' }}>
               {searchOpen && (
@@ -672,6 +723,30 @@ function Header({ currentPage, setPage, logoUrl }) {
               padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer',
             }}>{n.label}</button>
           ))}
+          {reports.length > 0 && (
+            <>
+              <div style={{
+                fontFamily: 'var(--f-ui)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.4)', padding: '14px 24px 6px', letterSpacing: 0.5,
+              }}>Reports</div>
+              {reports.map(r => {
+                const key = 'report-' + r.slug;
+                const active = currentPage === key;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => { setPage(key); setMenuOpen(false); }}
+                    style={{
+                      display: 'block', width: '100%', background: 'none', border: 'none', textAlign: 'left',
+                      fontFamily: 'var(--f-ui)', fontSize: 14, fontWeight: active ? 700 : 400,
+                      color: active ? 'var(--color-nav-link)' : 'color-mix(in srgb, var(--color-nav-link) 70%, transparent)',
+                      padding: '10px 32px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer',
+                    }}
+                  >{r.title}</button>
+                );
+              })}
+            </>
+          )}
         </nav>
       )}
     </header>
@@ -2423,6 +2498,60 @@ function StaticPage({ slug }) {
   );
 }
 
+// ─── STATIC REPORT (full-width, iframe-friendly) ─────────
+
+function StaticReport({ slug }) {
+  const [report, setReport] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/reports/${slug}`)
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(setReport)
+      .catch(() => setNotFound(true));
+  }, [slug]);
+
+  useMeta(report ? {
+    title: report.meta_title || report.title,
+    description: report.meta_description || '',
+  } : {});
+
+  if (notFound) return (
+    <div style={{ maxWidth: 780, margin: '0 auto', padding: '60px 24px', textAlign: 'center', fontFamily: 'var(--f-ui)' }}>
+      <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 'var(--text-3xl)', color: 'var(--color-primary)', marginBottom: 12 }}>Report Not Found</h1>
+      <p style={{ color: 'var(--color-text-secondary)' }}>This report doesn't exist or has been removed.</p>
+    </div>
+  );
+
+  if (!report) return (
+    <div style={{ maxWidth: 780, margin: '80px auto', textAlign: 'center', color: 'var(--color-text-secondary)', fontFamily: 'var(--f-ui)' }}>Loading…</div>
+  );
+
+  // Strip <script> tags for safety — iframes intentionally allowed
+  const safeBody = String(report.body || '').replace(/<script[\s\S]*?<\/script>/gi, '');
+
+  return (
+    <div style={{ width: '100%' }}>
+      <style>{`
+        .report-body iframe { width: 100%; border: none; display: block; }
+        .report-body img    { max-width: 100%; height: auto; display: block; }
+      `}</style>
+      <div style={{ padding: '32px 24px 20px', borderBottom: '2px solid var(--color-border)', maxWidth: 1600, margin: '0 auto', width: '100%' }}>
+        <h1 style={{
+          fontFamily: 'var(--f-display)', fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)',
+          fontWeight: 700, lineHeight: 1.2, color: 'var(--color-primary)',
+          overflowWrap: 'break-word',
+        }}>{report.title}</h1>
+      </div>
+      <div
+        className="report-body"
+        style={{ width: '100%', padding: '20px 0' }}
+        dangerouslySetInnerHTML={{ __html: safeBody }}
+      />
+    </div>
+  );
+}
+
 // ─── ARCHIVES PAGE ───────────────────────────────────────
 
 function ArchivesPage() {
@@ -2663,6 +2792,9 @@ function parsePathToPage(pathname) {
   // /p/:slug  — static pages
   const pm = pathname.match(/^\/p\/([^/]+)\/?$/);
   if (pm) return 'page-' + pm[1];
+  // /r/:slug  — reports
+  const rm = pathname.match(/^\/r\/([^/]+)\/?$/);
+  if (rm) return 'report-' + rm[1];
   // /search?q=...
   if (pathname === '/search') {
     const q = new URLSearchParams(window.location.search).get('q') || '';
@@ -2687,6 +2819,9 @@ function pageToPath(p, articleSlug) {
   }
   if (p.startsWith('page-')) {
     return `/p/${p.replace('page-', '')}`;
+  }
+  if (p.startsWith('report-')) {
+    return `/r/${p.replace('report-', '')}`;
   }
   if (p.startsWith('search-')) {
     const q = p.replace('search-', '');
@@ -2823,6 +2958,9 @@ export default function App() {
   else if (page === 'subscribe') content = <SubscribePage />;
   else if (page.startsWith('page-')) {
     content = <StaticPage slug={page.replace('page-', '')} />;
+  }
+  else if (page.startsWith('report-')) {
+    content = <StaticReport slug={page.replace('report-', '')} />;
   }
   else if (page.startsWith('search-')) {
     const q = decodeURIComponent(page.replace('search-', ''));
