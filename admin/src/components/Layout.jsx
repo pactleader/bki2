@@ -155,20 +155,40 @@ export default function Layout() {
                     </div>
                   )}
                   {reports.map(r => (
-                    <NavLink key={r.id} to={`/admin/reports/${r.id}/edit`} style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '7px 16px 7px 36px',
-                      fontSize: 12, fontWeight: isActive ? 600 : 400,
-                      color: isActive ? '#fff' : 'rgba(255,255,255,.55)',
-                      background: isActive ? 'rgba(255,255,255,.12)' : 'transparent',
-                      borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
-                      transition: 'all .15s',
-                    })}>
-                      <span style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: r.is_published ? '#10b981' : '#6b7280', flexShrink: 0,
-                      }} />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
-                    </NavLink>
+                    <div key={r.id} style={{
+                      display: 'flex', alignItems: 'center',
+                      padding: '7px 12px 7px 36px', gap: 6,
+                      borderLeft: '3px solid transparent',
+                    }}>
+                      <a
+                        href={`/r/${r.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0,
+                          fontSize: 12, color: 'rgba(255,255,255,.55)',
+                          textDecoration: 'none',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,.55)'}
+                      >
+                        <span style={{
+                          width: 6, height: 6, borderRadius: '50%',
+                          background: r.is_published ? '#10b981' : '#6b7280', flexShrink: 0,
+                        }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
+                      </a>
+                      <NavLink
+                        to={`/admin/reports/${r.id}/edit`}
+                        title="Edit"
+                        style={({ isActive }) => ({
+                          fontSize: 11, color: isActive ? '#fff' : 'rgba(255,255,255,.4)',
+                          textDecoration: 'none', padding: '2px 6px', borderRadius: 3,
+                          background: isActive ? 'rgba(255,255,255,.12)' : 'transparent',
+                          flexShrink: 0,
+                        })}
+                      >✎</NavLink>
+                    </div>
                   ))}
                 </>
               )}
