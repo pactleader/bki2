@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getUser, logout } from '../auth.js';
-import { apiLogout } from '../api.js';
+import { apiLogout, listReports } from '../api.js';
 
 const NAV = [
   { to: '/admin',           label: 'Dashboard',  icon: '▦',  exact: true },
@@ -16,7 +16,6 @@ const NAV = [
   { to: '/admin/media',       label: 'Media',       icon: '🖼',  adminOnly: true },
   { to: '/admin/subscribers', label: 'Subscribers', icon: '📧',  adminOnly: true },
   { to: '/admin/pages',      label: 'Pages',      icon: '⊡',  adminOnly: true },
-  { to: '/admin/reports',    label: 'Reports',    icon: '📊', adminOnly: true },
   { to: '/admin/settings',  label: 'Settings',   icon: '⚙',  adminOnly: true },
 ];
 
@@ -32,6 +31,15 @@ export default function Layout() {
   const user = getUser();
   const toolsActive = location.pathname.startsWith('/admin/tools');
   const [toolsOpen, setToolsOpen] = useState(toolsActive);
+  const reportsActive = location.pathname.startsWith('/admin/reports');
+  const [reportsOpen, setReportsOpen] = useState(reportsActive);
+  const [reports, setReports] = useState([]);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      listReports().then(setReports).catch(() => {});
+    }
+  }, [location.pathname, user?.role]);
 
   async function handleLogout() {
     try { await apiLogout(); } catch {}
@@ -99,6 +107,71 @@ export default function Layout() {
                   {n.label}
                 </NavLink>
               ))}
+
+              {/* Reports group — expandable, shows individual reports */}
+              <button
+                onClick={() => setReportsOpen(o => !o)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px',
+                  width: '100%', background: reportsOpen ? 'rgba(255,255,255,.07)' : 'transparent',
+                  border: 'none', borderLeft: reportsActive ? '3px solid var(--accent)' : '3px solid transparent',
+                  color: reportsActive ? '#fff' : 'rgba(255,255,255,.65)',
+                  fontSize: 13, fontWeight: reportsActive ? 600 : 400, cursor: 'pointer',
+                  transition: 'all .15s', justifyContent: 'space-between',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 14 }}>📊</span> Reports
+                </span>
+                <span style={{ fontSize: 10, opacity: 0.6 }}>{reportsOpen ? '▲' : '▼'}</span>
+              </button>
+              {reportsOpen && (
+                <>
+                  <NavLink to="/admin/reports" end style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 8px 36px',
+                    fontSize: 12, fontWeight: isActive ? 600 : 400,
+                    color: isActive ? '#fff' : 'rgba(255,255,255,.55)',
+                    background: isActive ? 'rgba(255,255,255,.12)' : 'transparent',
+                    borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
+                    transition: 'all .15s',
+                  })}>
+                    <span style={{ fontSize: 13 }}>▤</span>
+                    All Reports
+                  </NavLink>
+                  <NavLink to="/admin/reports/new" style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 8px 36px',
+                    fontSize: 12, fontWeight: isActive ? 600 : 400,
+                    color: isActive ? '#fff' : 'rgba(255,255,255,.55)',
+                    background: isActive ? 'rgba(255,255,255,.12)' : 'transparent',
+                    borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
+                    transition: 'all .15s',
+                  })}>
+                    <span style={{ fontSize: 13 }}>+</span>
+                    New Report
+                  </NavLink>
+                  {reports.length > 0 && (
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)', padding: '10px 16px 4px 36px', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                      Reports
+                    </div>
+                  )}
+                  {reports.map(r => (
+                    <NavLink key={r.id} to={`/admin/reports/${r.id}/edit`} style={({ isActive }) => ({
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '7px 16px 7px 36px',
+                      fontSize: 12, fontWeight: isActive ? 600 : 400,
+                      color: isActive ? '#fff' : 'rgba(255,255,255,.55)',
+                      background: isActive ? 'rgba(255,255,255,.12)' : 'transparent',
+                      borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
+                      transition: 'all .15s',
+                    })}>
+                      <span style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: r.is_published ? '#10b981' : '#6b7280', flexShrink: 0,
+                      }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
+                    </NavLink>
+                  ))}
+                </>
+              )}
             </>
           )}
         </nav>
