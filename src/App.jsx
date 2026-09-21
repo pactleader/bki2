@@ -1710,6 +1710,10 @@ function HomePage({ setPage, partners }) {
     return arts.length === 0 ? null : { sec, idx, pageKey, arts };
   }).filter(Boolean);
 
+  // One ad slot per row so every sidebar column has content matching row height.
+  // Row 0 also gets Most Read at the top; row 1 gets Partners (if any) at the top.
+  const ROW_AD_SLOTS = ['sidebar-1', 'sidebar-2', 'sidebar-6', 'sidebar-7', 'sidebar-8', 'sidebar-3', 'sidebar-4', 'sidebar-5'];
+
   return (
     <>
       {latestArticles.length > 0 && <NewsTicker highlights={latestArticles} setPage={setPage} />}
@@ -1729,39 +1733,28 @@ function HomePage({ setPage, partners }) {
               />
               {idx === 0 && <AdSlot position="leaderboard-top" style={{ margin: '20px 0' }} />}
               {idx === 1 && <InlineNewsletter />}
-              {rowIdx === 0 && <div className="inline-sidebar-ad"><SidebarMostRead setPage={setPage} mostRead={mostRead} /><AdSlot position="sidebar-1" w="100%" h="auto" /></div>}
-              {rowIdx === 1 && <div className="inline-sidebar-ad"><AdSlot position="sidebar-2" w="100%" h="auto" /></div>}
+              {rowIdx === 0 && <div className="inline-sidebar-ad"><SidebarMostRead setPage={setPage} mostRead={mostRead} /><AdSlot position={ROW_AD_SLOTS[0]} w="100%" h="auto" /></div>}
+              {rowIdx > 0 && rowIdx < ROW_AD_SLOTS.length && <div className="inline-sidebar-ad"><AdSlot position={ROW_AD_SLOTS[rowIdx]} w="100%" h="auto" /></div>}
             </div>
             {/* Sidebar column — alignItems:stretch so this div is as tall as the content beside it, enabling sticky */}
             <div className="sidebar-col" style={{ flex: '0 0 300px', width: 300, minWidth: 300 }}>
               <div style={{ position: 'sticky', top: 72, paddingTop: 36 }}>
-                {rowIdx === 0 && (
-                  <>
-                    <SidebarMostRead setPage={setPage} mostRead={mostRead} />
-                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-1" w="100%" maxW={300} h="auto" /></div>
-                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-6" w="100%" maxW={300} h="auto" /></div>
-                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-7" w="100%" maxW={300} h="auto" /></div>
-                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-8" w="100%" maxW={300} h="auto" /></div>
-                  </>
+                {rowIdx === 0 && <SidebarMostRead setPage={setPage} mostRead={mostRead} />}
+                {rowIdx === 1 && partners.length > 0 && (
+                  <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
+                    <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
+                    {partners.map((p, i) => (
+                      <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
+                        style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-accent)', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
+                        {p.name}
+                      </a>
+                    ))}
+                  </div>
                 )}
-                {rowIdx === 1 && (
-                  <>
-                    {partners.length > 0 && (
-                      <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, padding: 20, marginBottom: 28 }}>
-                        <h3 style={{ fontFamily: 'var(--f-ui)', fontSize: 'var(--text-xs)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: 'var(--color-text-secondary)' }}>Partners</h3>
-                        {partners.map((p, i) => (
-                          <a key={i} href={p.url || '#'} target={p.url ? '_blank' : undefined} rel="noopener noreferrer"
-                            style={{ display: 'block', fontFamily: 'var(--f-ui)', fontSize: 'var(--text-sm)', color: 'var(--color-accent)', padding: '8px 0', borderBottom: i < partners.length - 1 ? '1px solid var(--color-border)' : 'none', textDecoration: 'none' }}>
-                            {p.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-2" w="100%" maxW={300} h="auto" /></div>
-                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-3" w="100%" maxW={300} h="auto" /></div>
-                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-4" w="100%" maxW={300} h="auto" /></div>
-                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-5" w="100%" maxW={300} h="auto" /></div>
-                  </>
+                {rowIdx < ROW_AD_SLOTS.length && (
+                  <div style={{ marginBottom: 28 }}>
+                    <AdSlot position={ROW_AD_SLOTS[rowIdx]} w="100%" maxW={300} h="auto" />
+                  </div>
                 )}
               </div>
             </div>
