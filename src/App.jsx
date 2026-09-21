@@ -1738,7 +1738,10 @@ function HomePage({ setPage, partners }) {
                 {rowIdx === 0 && (
                   <>
                     <SidebarMostRead setPage={setPage} mostRead={mostRead} />
-                    <AdSlot position="sidebar-1" w="100%" maxW={300} h="auto" />
+                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-1" w="100%" maxW={300} h="auto" /></div>
+                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-6" w="100%" maxW={300} h="auto" /></div>
+                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-7" w="100%" maxW={300} h="auto" /></div>
+                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-8" w="100%" maxW={300} h="auto" /></div>
                   </>
                 )}
                 {rowIdx === 1 && (
@@ -1754,7 +1757,10 @@ function HomePage({ setPage, partners }) {
                         ))}
                       </div>
                     )}
-                    <AdSlot position="sidebar-2" w="100%" maxW={300} h="auto" />
+                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-2" w="100%" maxW={300} h="auto" /></div>
+                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-3" w="100%" maxW={300} h="auto" /></div>
+                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-4" w="100%" maxW={300} h="auto" /></div>
+                    <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-5" w="100%" maxW={300} h="auto" /></div>
                   </>
                 )}
               </div>
