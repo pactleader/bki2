@@ -453,21 +453,38 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
 
 function NewsTicker({ highlights, setPage }) {
   const [idx, setIdx] = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    if (highlights.length < 2) return;
-    const interval = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setIdx(i => (i + 1) % highlights.length);
-        setVisible(true);
-      }, 300);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [highlights.length]);
+  const [wordCount, setWordCount] = useState(0);
 
   const h = highlights[idx];
+  const words = h ? h.title.split(/\s+/).filter(Boolean) : [];
+
+  // Reveal words one by one, hold, then advance to next headline
+  useEffect(() => {
+    if (!h) return;
+    setWordCount(0);
+    let cancelled = false;
+
+    const WORD_MS = 120;   // delay between word reveals
+    const HOLD_MS = 2500;  // pause after the full headline is shown
+
+    const timers = [];
+    words.forEach((_, i) => {
+      timers.push(setTimeout(() => { if (!cancelled) setWordCount(i + 1); }, WORD_MS * (i + 1)));
+    });
+
+    const advance = setTimeout(() => {
+      if (!cancelled && highlights.length > 1) {
+        setIdx(i => (i + 1) % highlights.length);
+      }
+    }, WORD_MS * words.length + HOLD_MS);
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+      clearTimeout(advance);
+    };
+  }, [idx, highlights.length, h?.title]);
+
   if (!h) return null;
 
   return (
@@ -487,12 +504,19 @@ function NewsTicker({ highlights, setPage }) {
             color: 'var(--color-text-primary)', lineHeight: 1.3,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             flex: 1, textAlign: 'left', minWidth: 0,
-            opacity: visible ? 1 : 0,
-            transform: visible ? 'translateY(0)' : 'translateY(5px)',
-            transition: 'opacity 250ms ease, transform 250ms ease',
           }}
-        >{h.title}</button>
+        >
+          {words.slice(0, wordCount).join(' ')}
+          {wordCount < words.length && (
+            <span style={{
+              display: 'inline-block', marginLeft: 2, width: 1, height: '1em',
+              background: 'var(--color-text-primary)', verticalAlign: 'text-bottom',
+              animation: 'ticker-caret 700ms steps(2) infinite',
+            }} />
+          )}
+        </button>
       </div>
+      <style>{`@keyframes ticker-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }`}</style>
     </div>
   );
 }
