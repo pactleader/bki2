@@ -464,8 +464,10 @@ function NewsTicker({ highlights, setPage }) {
     setWordCount(0);
     let cancelled = false;
 
-    const WORD_MS = 120;   // delay between word reveals
-    const HOLD_MS = 2500;  // pause after the full headline is shown
+    const TOTAL_MS = 5000; // total time per headline (typing + hold)
+    const WORD_MS  = 250;  // delay between word reveals (readable pace)
+    const typingMs = WORD_MS * words.length;
+    const holdMs   = Math.max(800, TOTAL_MS - typingMs); // remaining time is hold, min 800ms
 
     const timers = [];
     words.forEach((_, i) => {
@@ -476,7 +478,7 @@ function NewsTicker({ highlights, setPage }) {
       if (!cancelled && highlights.length > 1) {
         setIdx(i => (i + 1) % highlights.length);
       }
-    }, WORD_MS * words.length + HOLD_MS);
+    }, typingMs + holdMs);
 
     return () => {
       cancelled = true;
