@@ -1380,6 +1380,9 @@ function Sidebar({ setPage, mostReadOverride, partners = [], sticky = true }) {
         </div>
       )}
       <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-2" w="100%" maxW={300} h="auto" /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-6" w="100%" maxW={300} h="auto" /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-7" w="100%" maxW={300} h="auto" /></div>
+      <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-8" w="100%" maxW={300} h="auto" /></div>
       <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-3" w="100%" maxW={300} h="auto" /></div>
       <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-4" w="100%" maxW={300} h="auto" /></div>
       <div style={{ marginBottom: 28 }}><AdSlot position="sidebar-5" w="100%" maxW={300} h="auto" /></div>
@@ -1526,7 +1529,7 @@ function MoreArticles({ setPage }) {
   }, [loaded, loading]);
 
   // Group article rows into sections of 2 rows each, each section gets a sidebar slot
-  const MA_SIDEBAR_SLOTS = ['sidebar-3', 'sidebar-4', 'sidebar-5'];
+  const MA_SIDEBAR_SLOTS = ['sidebar-6', 'sidebar-7', 'sidebar-8', 'sidebar-3', 'sidebar-4', 'sidebar-5'];
   const ROWS_PER_SECTION = 2;
 
   function ArticleCard({ a }) {

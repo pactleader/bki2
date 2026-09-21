@@ -10,6 +10,9 @@ const POSITION_LABEL = {
   'leaderboard-mid': 'Leaderboard Mid',
   'sidebar-1':       'Sidebar Slot 1 (top)',
   'sidebar-2':       'Sidebar Slot 2',
+  'sidebar-6':       'Sidebar Slot 6',
+  'sidebar-7':       'Sidebar Slot 7',
+  'sidebar-8':       'Sidebar Slot 8',
   'sidebar-3':       'Sidebar Slot 3',
   'sidebar-4':       'Sidebar Slot 4',
   'sidebar-5':       'Sidebar Slot 5 (bottom)',
@@ -22,14 +25,18 @@ const POSITION_DESC = {
   'leaderboard-mid': 'Full-width banner in the middle of the page',
   'sidebar-1':       'Top of the right sidebar on all pages',
   'sidebar-2':       'Second slot in the right sidebar',
-  'sidebar-3':       'Third slot in the right sidebar',
-  'sidebar-4':       'Fourth slot in the right sidebar',
+  'sidebar-6':       'Third visible slot in the sidebar',
+  'sidebar-7':       'Fourth visible slot in the sidebar',
+  'sidebar-8':       'Fifth visible slot in the sidebar',
+  'sidebar-3':       'Sixth visible slot in the sidebar',
+  'sidebar-4':       'Seventh visible slot in the sidebar',
   'sidebar-5':       'Bottom of the right sidebar',
   'in-feed':         'Injected between article sections in the content feed',
   'footer-banner':   'Full-width banner above the footer',
 };
 
-const SIDEBAR_SLOTS = ['sidebar-1', 'sidebar-2', 'sidebar-3', 'sidebar-4', 'sidebar-5'];
+// Order in the sidebar (top → bottom). Slugs 6/7/8 are new — inserted between 2 and 3.
+const SIDEBAR_SLOTS = ['sidebar-1', 'sidebar-2', 'sidebar-6', 'sidebar-7', 'sidebar-8', 'sidebar-3', 'sidebar-4', 'sidebar-5'];
 
 const fmtDate = v => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
 
@@ -421,7 +428,7 @@ function VisualView({ ads, leaderboardTop, leaderboardMid, inFeed, footerBanner,
             </div>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {['sidebar-1', 'sidebar-2', 'sidebar-3', 'sidebar-4', 'sidebar-5'].map(s => (
+            {SIDEBAR_SLOTS.map(s => (
               <div key={s} style={{ border: '2px dashed #10b981', borderRadius: 4, padding: '4px 6px', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: 9, fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>📢 {POSITION_LABEL[s]}</span>
               </div>
