@@ -90,25 +90,55 @@ export default function AdList() {
   const [ads, setAds] = useState([]);
   const [deleting, setDeleting] = useState(null);
   const [view, setView] = useState('visual'); // 'visual' | 'list'
-  const [rotationInterval, setRotationInterval] = useState('5');
-  const [savingInterval, setSavingInterval] = useState(false);
+  // Per-slot intervals: { 'sidebar-1': '5', 'leaderboard-top': '7', ... }
+  const [slotIntervals, setSlotIntervals] = useState({});
+  const [globalDefault, setGlobalDefault] = useState('5');
+  const [savingSlot, setSavingSlot] = useState('');
 
   useEffect(() => {
     api.listAds().catch(() => toast('Load failed', 'error')).then(setAds);
     api.listSettings().then(rows => {
-      const row = rows.find(r => r.setting_key === 'ad_rotation_interval');
-      if (row?.setting_value) setRotationInterval(row.setting_value);
+      const next = {};
+      let def = '5';
+      rows.forEach(r => {
+        if (r.setting_key === 'ad_rotation_interval') def = r.setting_value || '5';
+        else if (r.setting_key.startsWith('ad_rotation_interval_')) {
+          const slug = r.setting_key.replace('ad_rotation_interval_', '');
+          next[slug] = r.setting_value;
+        }
+      });
+      setGlobalDefault(def);
+      setSlotIntervals(next);
     }).catch(() => {});
   }, []);
 
-  async function saveInterval(val) {
-    setSavingInterval(true);
+  async function saveSlotInterval(slug, val) {
+    setSavingSlot(slug);
     try {
-      await api.saveSetting('ad_rotation_interval', val, 'string');
-      setRotationInterval(val);
-      toast('Rotation interval saved');
+      await api.saveSetting(`ad_rotation_interval_${slug}`, val, 'string');
+      setSlotIntervals(prev => ({ ...prev, [slug]: val }));
+      toast('Interval saved');
     } catch { toast('Save failed', 'error'); }
-    finally { setSavingInterval(false); }
+    finally { setSavingSlot(''); }
+  }
+
+  function IntervalControl({ slug }) {
+    const value = slotIntervals[slug] || globalDefault;
+    const isCustom = slotIntervals[slug] !== undefined;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 8px' }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Rotate every</span>
+        <select
+          value={value}
+          onChange={e => saveSlotInterval(slug, e.target.value)}
+          disabled={savingSlot === slug}
+          style={{ fontSize: 11, border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', outline: 'none', padding: 0 }}
+        >
+          {INTERVAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        {!isCustom && <span title="Using default" style={{ fontSize: 9, color: 'var(--text-muted)', fontStyle: 'italic' }}>(default)</span>}
+      </div>
+    );
   }
 
   async function handleToggle(ad) {
@@ -154,18 +184,6 @@ export default function AdList() {
         title="Ad Management"
         action={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Rotation interval */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f9fafb', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px' }}>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Rotate every</span>
-              <select
-                value={rotationInterval}
-                onChange={e => saveInterval(e.target.value)}
-                disabled={savingInterval}
-                style={{ fontSize: 12, border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', outline: 'none' }}
-              >
-                {INTERVAL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
             {/* View toggle */}
             <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
               <button onClick={() => setView('visual')} style={{ padding: '6px 14px', fontSize: 12, border: 'none', cursor: 'pointer', background: view === 'visual' ? 'var(--primary)' : '#fff', color: view === 'visual' ? '#fff' : 'var(--text)' }}>Visual</button>
@@ -187,6 +205,7 @@ export default function AdList() {
           handleToggle={handleToggle}
           setDeleting={setDeleting}
           moveSidebarAd={moveSidebarAd}
+          IntervalControl={IntervalControl}
         />
       ) : (
         <ListView
@@ -313,13 +332,14 @@ function EmptySlot({ label }) {
 }
 
 // ── Zone wrapper ──────────────────────────────────────────────────────────────
-function Zone({ label, desc, color = '#6b7280', children }) {
+function Zone({ label, desc, color = '#6b7280', control, children }) {
   return (
     <div style={{ marginBottom: 6 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
         <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0 }} />
         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</span>
-        {desc && <span style={{ fontSize: 11, color: '#9ca3af' }}>— {desc}</span>}
+        {desc && <span style={{ fontSize: 11, color: '#9ca3af', flex: 1 }}>— {desc}</span>}
+        {control && <div style={{ marginLeft: 'auto' }}>{control}</div>}
       </div>
       {children}
     </div>
@@ -327,7 +347,7 @@ function Zone({ label, desc, color = '#6b7280', children }) {
 }
 
 // ── VISUAL VIEW ───────────────────────────────────────────────────────────────
-function VisualView({ ads, leaderboardTop, leaderboardMid, inFeed, footerBanner, getSlotAds, handleToggle, setDeleting, moveSidebarAd }) {
+function VisualView({ ads, leaderboardTop, leaderboardMid, inFeed, footerBanner, getSlotAds, handleToggle, setDeleting, moveSidebarAd, IntervalControl }) {
 
   function SidebarAdCards({ slug }) {
     const slotAds = getSlotAds(slug);
@@ -420,7 +440,7 @@ function VisualView({ ads, leaderboardTop, leaderboardMid, inFeed, footerBanner,
 
       {/* Leaderboard Top */}
       <Card style={{ marginBottom: 20 }}>
-        <Zone label="Leaderboard Top" desc={POSITION_DESC['leaderboard-top']} color="#f59e0b">
+        <Zone label="Leaderboard Top" desc={POSITION_DESC['leaderboard-top']} color="#f59e0b" control={<IntervalControl slug="leaderboard-top" />}>
           <HorizontalAdCards slotAds={leaderboardTop} label="Leaderboard Top" />
         </Zone>
       </Card>
@@ -430,12 +450,12 @@ function VisualView({ ads, leaderboardTop, leaderboardMid, inFeed, footerBanner,
         {/* Left: In-feed + Leaderboard Mid */}
         <div style={{ flex: 3, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Card>
-            <Zone label="In-Feed" desc={POSITION_DESC['in-feed']} color="#818cf8">
+            <Zone label="In-Feed" desc={POSITION_DESC['in-feed']} color="#818cf8" control={<IntervalControl slug="in-feed" />}>
               <HorizontalAdCards slotAds={inFeed} label="In-Feed" />
             </Zone>
           </Card>
           <Card>
-            <Zone label="Leaderboard Mid" desc={POSITION_DESC['leaderboard-mid']} color="#f59e0b">
+            <Zone label="Leaderboard Mid" desc={POSITION_DESC['leaderboard-mid']} color="#f59e0b" control={<IntervalControl slug="leaderboard-mid" />}>
               <HorizontalAdCards slotAds={leaderboardMid} label="Leaderboard Mid" />
             </Zone>
           </Card>
@@ -451,7 +471,10 @@ function VisualView({ ads, leaderboardTop, leaderboardMid, inFeed, footerBanner,
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {SIDEBAR_SLOTS.map(slug => (
                 <div key={slug}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.04em' }}>{POSITION_LABEL[slug]}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>{POSITION_LABEL[slug]}</div>
+                    <IntervalControl slug={slug} />
+                  </div>
                   <SidebarAdCards slug={slug} />
                 </div>
               ))}
@@ -462,7 +485,7 @@ function VisualView({ ads, leaderboardTop, leaderboardMid, inFeed, footerBanner,
 
       {/* Footer Banner */}
       <Card style={{ marginBottom: 20 }}>
-        <Zone label="Footer Banner" desc={POSITION_DESC['footer-banner']} color="#ec4899">
+        <Zone label="Footer Banner" desc={POSITION_DESC['footer-banner']} color="#ec4899" control={<IntervalControl slug="footer-banner" />}>
           <HorizontalAdCards slotAds={footerBanner} label="Footer Banner" />
         </Zone>
       </Card>

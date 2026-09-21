@@ -11,7 +11,9 @@ pub.get('/', async (req, res) => {
   try {
     const placeholders = PUBLIC_KEYS.map(() => '?').join(',');
     const [rows] = await db.execute(
-      `SELECT setting_key, setting_value, setting_type FROM site_settings WHERE setting_key IN (${placeholders})`,
+      `SELECT setting_key, setting_value, setting_type FROM site_settings
+       WHERE setting_key IN (${placeholders})
+          OR setting_key LIKE 'ad_rotation_interval_%'`,
       PUBLIC_KEYS
     );
     const result = {};

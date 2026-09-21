@@ -316,7 +316,8 @@ function CatTag({ category, onClick }) {
 
 // ─── AD SLOT ─────────────────────────────────────────────
 
-let AD_ROTATION_INTERVAL = 5000; // ms — overridden at runtime from site settings
+let AD_ROTATION_INTERVAL = 5000; // ms — default; overridden at runtime from site settings
+const AD_ROTATION_INTERVAL_BY_SLOT = {}; // { 'sidebar-1': 5000, ... } — populated from settings
 
 // Detect media type from URL. Returns: 'image' | 'video' | 'youtube' | 'vimeo'
 function detectMediaType(url) {
@@ -360,15 +361,16 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
   // Rotate through ads with fade transition
   useEffect(() => {
     if (ads.length < 2) return;
+    const interval = AD_ROTATION_INTERVAL_BY_SLOT[position] || AD_ROTATION_INTERVAL;
     const timer = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
         setIdx(i => (i + 1) % ads.length);
         setVisible(true);
       }, 400);
-    }, AD_ROTATION_INTERVAL);
+    }, interval);
     return () => clearInterval(timer);
-  }, [ads]);
+  }, [ads, position]);
 
   if (!tried || ads.length === 0) return null;
 
@@ -2892,6 +2894,14 @@ export default function App() {
       if (map['logo_url']) setLogoUrl(map['logo_url']);
       if (map['site_timezone']) SITE_TZ = map['site_timezone'];
       if (map['ad_rotation_interval']) AD_ROTATION_INTERVAL = parseInt(map['ad_rotation_interval'], 10) * 1000;
+      // Populate per-slot intervals from any ad_rotation_interval_<slug> setting
+      Object.keys(map).forEach(k => {
+        if (k.startsWith('ad_rotation_interval_')) {
+          const slug = k.replace('ad_rotation_interval_', '');
+          const secs = parseInt(map[k], 10);
+          if (secs > 0) AD_ROTATION_INTERVAL_BY_SLOT[slug] = secs * 1000;
+        }
+      });
       setCookieSettings({
         enabled: map['cookie_consent_enabled'] === '1',
         message: map['cookie_consent_message'] || '',
