@@ -54,7 +54,7 @@ pub.get('/', async (req, res) => {
       const mrMode  = settings.most_read_mode || 'manual';
       const mrCount = Math.min(parseInt(settings.most_read_count || '7', 10) || 7, 20);
       if (mrMode === 'auto') {
-        const dateMap = { '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
+        const dateMap = { '4d': 4, '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
         const days = dateMap[settings.most_read_date_range || ''];
         const dateClause = days ? ` AND COALESCE(a.publish_date, a.created_at) >= DATE_SUB(NOW(), INTERVAL ${days} DAY)` : '';
         const [mrRows] = await db.execute(
@@ -103,7 +103,7 @@ pub.get('/', async (req, res) => {
 
     // Build date range clause
     function dateRangeClause(range) {
-      const map = { '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
+      const map = { '4d': 4, '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
       const days = map[range];
       if (!days) return '';
       return ` AND COALESCE(a.publish_date, a.created_at) >= DATE_SUB(NOW(), INTERVAL ${days} DAY)`;
@@ -174,7 +174,7 @@ pub.get('/most-read', async (req, res) => {
 
     if (mode === 'auto') {
       const range = cfg.most_read_date_range || '';
-      const dateMap = { '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
+      const dateMap = { '4d': 4, '7d': 7, '14d': 14, '1m': 30, '2m': 60, '3m': 90, '6m': 180 };
       const days = dateMap[range];
       const dateClause = days ? ` AND COALESCE(a.publish_date, a.created_at) >= DATE_SUB(NOW(), INTERVAL ${days} DAY)` : '';
       const [rows] = await db.execute(

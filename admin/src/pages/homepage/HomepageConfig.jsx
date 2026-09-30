@@ -299,6 +299,7 @@ export default function HomepageConfig() {
               style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, background: '#fff' }}
             >
               <option value="">No limit (all time)</option>
+              <option value="4d">Last 4 days</option>
               <option value="7d">Last 7 days</option>
               <option value="14d">Last 14 days</option>
               <option value="1m">This month</option>
