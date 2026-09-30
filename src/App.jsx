@@ -452,39 +452,42 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
 
 function NewsTicker({ highlights, setPage }) {
   const [idx, setIdx] = useState(0);
-  const [wordCount, setWordCount] = useState(0);
+  const [charCount, setCharCount] = useState(0);
 
   const h = highlights[idx];
-  const words = h ? h.title.split(/\s+/).filter(Boolean) : [];
+  const title = h?.title || '';
 
-  // Reveal words one by one, hold, then advance to next headline
+  // Letter-by-letter typewriter effect
   useEffect(() => {
     if (!h) return;
-    setWordCount(0);
+    setCharCount(0);
     let cancelled = false;
 
-    const TOTAL_MS = 5000; // total time per headline (typing + hold)
-    const WORD_MS  = 250;  // delay between word reveals (readable pace)
-    const typingMs = WORD_MS * words.length;
-    const holdMs   = Math.max(800, TOTAL_MS - typingMs); // remaining time is hold, min 800ms
+    const CHAR_MS = 40;    // ms per character (typewriter speed)
+    const MIN_HOLD_MS = 2500; // pause after full headline is shown
 
-    const timers = [];
-    words.forEach((_, i) => {
-      timers.push(setTimeout(() => { if (!cancelled) setWordCount(i + 1); }, WORD_MS * (i + 1)));
-    });
+    const typingMs = CHAR_MS * title.length;
+
+    const typer = setInterval(() => {
+      if (cancelled) return;
+      setCharCount(c => {
+        if (c >= title.length) { clearInterval(typer); return c; }
+        return c + 1;
+      });
+    }, CHAR_MS);
 
     const advance = setTimeout(() => {
       if (!cancelled && highlights.length > 1) {
         setIdx(i => (i + 1) % highlights.length);
       }
-    }, typingMs + holdMs);
+    }, typingMs + MIN_HOLD_MS);
 
     return () => {
       cancelled = true;
-      timers.forEach(clearTimeout);
+      clearInterval(typer);
       clearTimeout(advance);
     };
-  }, [idx, highlights.length, h?.title]);
+  }, [idx, highlights.length, title]);
 
   if (!h) return null;
 
@@ -507,14 +510,12 @@ function NewsTicker({ highlights, setPage }) {
             flex: 1, textAlign: 'left', minWidth: 0,
           }}
         >
-          {words.slice(0, wordCount).join(' ')}
-          {wordCount < words.length && (
-            <span style={{
-              display: 'inline-block', marginLeft: 2, width: 1, height: '1em',
-              background: 'var(--color-text-primary)', verticalAlign: 'text-bottom',
-              animation: 'ticker-caret 700ms steps(2) infinite',
-            }} />
-          )}
+          {title.slice(0, charCount)}
+          <span style={{
+            display: 'inline-block', marginLeft: 1, width: 2, height: '1em',
+            background: 'var(--color-text-primary)', verticalAlign: 'text-bottom',
+            animation: 'ticker-caret 700ms steps(2) infinite',
+          }} />
         </button>
       </div>
       <style>{`@keyframes ticker-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }`}</style>
