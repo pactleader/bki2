@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, createContext, useContext } f
 import { getHomepage, getMostRead, getArticle, getArticles, getCategory, getCategories, getEvents, getAds, getAllAds, getMenu, subscribe, submitContact, getSettings, getReports } from "./api.js";
 
 const AdsContext = createContext({});
+const AdIntervalsContext = createContext({ default: 5000, bySlot: {} });
 
 // ─── DATA ────────────────────────────────────────────────
 const ARTICLES = {
@@ -316,9 +317,6 @@ function CatTag({ category, onClick }) {
 
 // ─── AD SLOT ─────────────────────────────────────────────
 
-let AD_ROTATION_INTERVAL = 5000; // ms — default; overridden at runtime from site settings
-const AD_ROTATION_INTERVAL_BY_SLOT = {}; // { 'sidebar-1': 5000, ... } — populated from settings
-
 // Detect media type from URL. Returns: 'image' | 'video' | 'youtube' | 'vimeo'
 function detectMediaType(url) {
   if (!url) return 'image';
@@ -339,6 +337,7 @@ function vimeoEmbed(url) {
 
 function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
   const adsCache = useContext(AdsContext);
+  const intervals = useContext(AdIntervalsContext);
   const [ads, setAds] = useState([]);
   const [tried, setTried] = useState(false);
   const [idx, setIdx] = useState(0);
@@ -358,19 +357,19 @@ function AdSlot({ position, w = '100%', h = 90, maxW = 728, style = {} }) {
       .finally(() => setTried(true));
   }, [position, adsCache]);
 
-  // Rotate through ads with fade transition
+  // Rotate through ads with fade transition. Re-runs when interval changes.
+  const rotationMs = intervals.bySlot[position] || intervals.default;
   useEffect(() => {
     if (ads.length < 2) return;
-    const interval = AD_ROTATION_INTERVAL_BY_SLOT[position] || AD_ROTATION_INTERVAL;
     const timer = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
         setIdx(i => (i + 1) % ads.length);
         setVisible(true);
       }, 400);
-    }, interval);
+    }, rotationMs);
     return () => clearInterval(timer);
-  }, [ads, position]);
+  }, [ads, rotationMs]);
 
   if (!tried || ads.length === 0) return null;
 
@@ -2870,6 +2869,7 @@ export default function App() {
   const [cookieSettings, setCookieSettings] = useState({ enabled: false, message: '' });
   const [logoUrl, setLogoUrl] = useState('');
   const [adsCache, setAdsCache] = useState({});
+  const [adIntervals, setAdIntervals] = useState({ default: 5000, bySlot: {} });
 
   // Fetch all ads once at app root and group by position_slug
   useEffect(() => {
@@ -2921,15 +2921,19 @@ export default function App() {
       if (map['brand_nav_link_color']) root.style.setProperty('--color-nav-link',  map['brand_nav_link_color']);
       if (map['logo_url']) setLogoUrl(map['logo_url']);
       if (map['site_timezone']) SITE_TZ = map['site_timezone'];
-      if (map['ad_rotation_interval']) AD_ROTATION_INTERVAL = parseInt(map['ad_rotation_interval'], 10) * 1000;
-      // Populate per-slot intervals from any ad_rotation_interval_<slug> setting
+      // Ad rotation intervals — default + per-slot overrides
+      const nextDefault = map['ad_rotation_interval']
+        ? (parseInt(map['ad_rotation_interval'], 10) * 1000) || 5000
+        : 5000;
+      const nextBySlot = {};
       Object.keys(map).forEach(k => {
         if (k.startsWith('ad_rotation_interval_')) {
           const slug = k.replace('ad_rotation_interval_', '');
           const secs = parseInt(map[k], 10);
-          if (secs > 0) AD_ROTATION_INTERVAL_BY_SLOT[slug] = secs * 1000;
+          if (secs > 0) nextBySlot[slug] = secs * 1000;
         }
       });
+      setAdIntervals({ default: nextDefault, bySlot: nextBySlot });
       setCookieSettings({
         enabled: map['cookie_consent_enabled'] === '1',
         message: map['cookie_consent_message'] || '',
@@ -3017,6 +3021,7 @@ export default function App() {
 
   return (
     <AdsContext.Provider value={adsCache}>
+    <AdIntervalsContext.Provider value={adIntervals}>
     <div style={{ minHeight: '100vh' }}>
       <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700&family=Source+Serif+4:ital,wght@0,400;0,600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <style>{`
@@ -3082,6 +3087,7 @@ export default function App() {
       <Footer setPage={nav} footerSlugs={footerSlugs} />
       <CookieBanner settings={cookieSettings} privacySlug={footerSlugs.privacy} setPage={nav} />
     </div>
+    </AdIntervalsContext.Provider>
     </AdsContext.Provider>
   );
 }
