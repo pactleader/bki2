@@ -164,6 +164,7 @@ router.post('/full', (req, res) => {
     function cleanupTmp() { try { fs.unlinkSync(tmpSqlPath); } catch {} }
 
     try {
+      console.log(`[backup/full] starting ${name}`);
       // Phase 1: dump DB to temp file
       await new Promise((resolve, reject) => {
         const tmp = fs.createWriteStream(tmpSqlPath);
@@ -184,10 +185,12 @@ router.post('/full', (req, res) => {
         });
       });
 
+      console.log(`[backup/full] phase 1 done, starting phase 2 (zip)`);
       // Phase 2: build zip
       await new Promise((resolve, reject) => {
         const out = fs.createWriteStream(outPath);
         const archive = archiver('zip', { zlib: { level: 6 } });
+        console.log(`[backup/full] archiver created, piping to ${outPath}`);
         out.on('close', resolve);
         out.on('error', reject);
         archive.on('warning', err => {
@@ -210,7 +213,13 @@ router.post('/full', (req, res) => {
           `- uploads/     — contents of /public/uploads (all images and media)\n`,
           { name: 'README.txt' }
         );
-        archive.finalize().catch(reject);
+        // archiver.finalize() may or may not return a promise depending on version
+        try {
+          const maybePromise = archive.finalize();
+          if (maybePromise && typeof maybePromise.catch === 'function') {
+            maybePromise.catch(reject);
+          }
+        } catch (err) { reject(err); }
       });
 
       cleanupTmp();
