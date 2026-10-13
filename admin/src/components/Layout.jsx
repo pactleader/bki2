@@ -20,9 +20,7 @@ const NAV = [
 ];
 
 const TOOLS = [
-  { to: '/admin/tools/import',         label: 'Import',               icon: '⇪' },
   { to: '/admin/tools/redirects',      label: 'Redirects',            icon: '↪' },
-  { to: '/admin/tools/bulk-ai-images', label: 'Generate Bulk AI Images', icon: '✦' },
 ];
 
 export default function Layout() {
