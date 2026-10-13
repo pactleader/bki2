@@ -49,17 +49,25 @@ function pruneOldBackups() {
   } catch (e) { console.warn('backup prune skipped:', e.message); }
 }
 
-// GET /api/admin/backup/list  — list stored backups
+// In-progress job tracking (single-instance; survives only while server is up)
+const inProgress = new Map(); // name -> { startedAt, kind, error? }
+
+// GET /api/admin/backup/list  — list stored backups + any in-progress jobs
 router.get('/list', (req, res) => {
   try {
     const files = fs.readdirSync(BACKUPS_DIR)
       .filter(f => /^backup-.*\.(zip|sql)$/.test(f))
       .map(f => {
         const stat = fs.statSync(path.join(BACKUPS_DIR, f));
-        return { name: f, size: stat.size, created_at: stat.mtime.toISOString() };
+        return { name: f, size: stat.size, created_at: stat.mtime.toISOString(), status: 'ready' };
       })
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
-    res.json(files);
+    // Prepend any in-progress jobs
+    const jobs = Array.from(inProgress.entries()).map(([name, job]) => ({
+      name, size: 0, created_at: job.startedAt, status: job.error ? 'failed' : 'in_progress',
+      kind: job.kind, error: job.error || null,
+    }));
+    res.json([...jobs, ...files]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -123,93 +131,92 @@ router.post('/database', (req, res) => {
   });
 });
 
-// POST /api/admin/backup/full  — generate full backup (DB + uploads) as zip
-// Strategy: dump DB to a temp file first (synchronously await completion), then
-// stream everything into the zip. Separating the two phases avoids piping-order
-// race conditions and makes error reporting reliable.
-router.post('/full', async (req, res) => {
+// POST /api/admin/backup/full  — kick off a full backup in the background
+// Returns immediately with { name, status: 'in_progress' }. UI polls /list to track progress.
+router.post('/full', (req, res) => {
+  // Only one full backup at a time
+  const alreadyRunning = Array.from(inProgress.values()).some(j => j.kind === 'full');
+  if (alreadyRunning) {
+    return res.status(409).json({ error: 'A full backup is already in progress. Wait for it to finish.' });
+  }
+
   const name = `backup-full-${timestamp()}.zip`;
   const outPath = path.join(BACKUPS_DIR, name);
   const tmpSqlPath = path.join(BACKUPS_DIR, `.tmp-${Date.now()}.sql`);
+  const startedAt = new Date().toISOString();
 
-  function cleanup() {
-    try { fs.unlinkSync(tmpSqlPath); } catch {}
-  }
+  inProgress.set(name, { startedAt, kind: 'full' });
 
-  // --- Phase 1: dump DB to temp file ---
-  try {
-    await new Promise((resolve, reject) => {
-      const tmp = fs.createWriteStream(tmpSqlPath);
-      const dump = spawnMysqldump();
-      let stderr = '';
-      dump.stderr.on('data', c => { stderr += c.toString(); });
-      dump.on('error', err => reject(new Error(`mysqldump failed to start: ${err.message}`)));
-      dump.stdout.pipe(tmp);
-      tmp.on('error', reject);
-      dump.on('close', code => {
-        tmp.end();
-        if (code !== 0) {
-          const relevant = stderr.replace(/mysqldump: \[Warning\].*password.*insecure.*\n?/gi, '').trim();
-          return reject(new Error(relevant || `mysqldump exited with code ${code}`));
-        }
-        tmp.on('finish', resolve);
-        tmp.on('close',  resolve);
+  // Respond immediately so Nginx doesn't time out
+  res.json({ name, status: 'in_progress', started_at: startedAt });
+
+  // Background work — fire-and-forget
+  (async () => {
+    function cleanupTmp() { try { fs.unlinkSync(tmpSqlPath); } catch {} }
+
+    try {
+      // Phase 1: dump DB to temp file
+      await new Promise((resolve, reject) => {
+        const tmp = fs.createWriteStream(tmpSqlPath);
+        const dump = spawnMysqldump();
+        let stderr = '';
+        dump.stderr.on('data', c => { stderr += c.toString(); });
+        dump.on('error', err => reject(new Error(`mysqldump failed to start: ${err.message}`)));
+        dump.stdout.pipe(tmp);
+        tmp.on('error', reject);
+        dump.on('close', code => {
+          tmp.end();
+          if (code !== 0) {
+            const relevant = stderr.replace(/mysqldump: \[Warning\].*password.*insecure.*\n?/gi, '').trim();
+            return reject(new Error(relevant || `mysqldump exited with code ${code}`));
+          }
+          tmp.on('finish', resolve);
+          tmp.on('close',  resolve);
+        });
       });
-    });
-  } catch (err) {
-    console.error('[backup/full] mysqldump failed:', err);
-    cleanup();
-    return res.status(500).json({ error: err.message });
-  }
 
-  // --- Phase 2: build zip ---
-  try {
-    await new Promise((resolve, reject) => {
-      const out = fs.createWriteStream(outPath);
-      const archive = archiver('zip', { zlib: { level: 6 } });
-      out.on('close', resolve);
-      out.on('error', reject);
-      archive.on('warning', err => {
-        // Non-fatal: file disappeared mid-walk, or permission denied on a single file.
-        // Log and continue rather than aborting the whole backup.
-        if (err.code === 'ENOENT' || err.code === 'EACCES' || err.code === 'EPERM') {
-          console.warn('[backup/full] archive warning (skipped):', err.message);
-        } else {
-          reject(err);
-        }
+      // Phase 2: build zip
+      await new Promise((resolve, reject) => {
+        const out = fs.createWriteStream(outPath);
+        const archive = archiver('zip', { zlib: { level: 6 } });
+        out.on('close', resolve);
+        out.on('error', reject);
+        archive.on('warning', err => {
+          if (err.code === 'ENOENT' || err.code === 'EACCES' || err.code === 'EPERM') {
+            console.warn('[backup/full] archive warning (skipped):', err.message);
+          } else {
+            reject(err);
+          }
+        });
+        archive.on('error', reject);
+        archive.pipe(out);
+        archive.file(tmpSqlPath, { name: 'database.sql' });
+        if (fs.existsSync(UPLOADS_DIR)) archive.directory(UPLOADS_DIR, 'uploads');
+        archive.append(
+          `BKI Site Backup\n` +
+          `Generated: ${new Date().toISOString()}\n` +
+          `Database: ${process.env.DB_NAME}\n\n` +
+          `Contents:\n` +
+          `- database.sql — mysqldump output (import: mysql -u user -p dbname < database.sql)\n` +
+          `- uploads/     — contents of /public/uploads (all images and media)\n`,
+          { name: 'README.txt' }
+        );
+        archive.finalize().catch(reject);
       });
-      archive.on('error', reject);
-      archive.pipe(out);
-      archive.file(tmpSqlPath, { name: 'database.sql' });
-      if (fs.existsSync(UPLOADS_DIR)) {
-        archive.directory(UPLOADS_DIR, 'uploads');
-      }
-      archive.append(
-        `BKI Site Backup\n` +
-        `Generated: ${new Date().toISOString()}\n` +
-        `Database: ${process.env.DB_NAME}\n\n` +
-        `Contents:\n` +
-        `- database.sql — mysqldump output (import: mysql -u user -p dbname < database.sql)\n` +
-        `- uploads/     — contents of /public/uploads (all images and media)\n`,
-        { name: 'README.txt' }
-      );
-      archive.finalize().catch(reject);
-    });
-  } catch (err) {
-    console.error('[backup/full] zip build failed:', err);
-    cleanup();
-    try { fs.unlinkSync(outPath); } catch {}
-    return res.status(500).json({ error: err.message });
-  }
 
-  cleanup();
-  pruneOldBackups();
-  try {
-    const stat = fs.statSync(outPath);
-    res.json({ name, size: stat.size, created_at: stat.mtime.toISOString() });
-  } catch (err) {
-    res.status(500).json({ error: 'Backup created but could not read stats: ' + err.message });
-  }
+      cleanupTmp();
+      pruneOldBackups();
+      inProgress.delete(name);
+      console.log(`[backup/full] completed: ${name}`);
+    } catch (err) {
+      console.error('[backup/full] failed:', err);
+      cleanupTmp();
+      try { fs.unlinkSync(outPath); } catch {}
+      // Keep the job in the map for a bit so UI can see the error, then auto-clear
+      inProgress.set(name, { startedAt, kind: 'full', error: err.message });
+      setTimeout(() => inProgress.delete(name), 60_000);
+    }
+  })();
 });
 
 module.exports = router;

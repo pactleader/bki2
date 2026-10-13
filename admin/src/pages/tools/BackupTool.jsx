@@ -27,21 +27,34 @@ export default function BackupTool() {
 
   async function load() {
     try {
-      setLoading(true);
       const list = await api.listBackups();
       setBackups(list);
+      return list;
     } catch (err) {
       toast('Failed to load backups: ' + err.message, 'error');
+      return [];
     } finally { setLoading(false); }
   }
 
   useEffect(() => { load(); }, []);
 
+  // Auto-poll /list every 5s while any backup is in progress
+  useEffect(() => {
+    const hasInProgress = backups.some(b => b.status === 'in_progress');
+    if (!hasInProgress) return;
+    const timer = setInterval(load, 5000);
+    return () => clearInterval(timer);
+  }, [backups]);
+
   async function generate(kind) {
     setGenerating(kind);
     try {
       const result = kind === 'db' ? await api.createBackupDb() : await api.createBackupFull();
-      toast(`Backup created: ${result.name}`);
+      if (result.status === 'in_progress') {
+        toast('Full backup started — this runs in the background. Refresh in a few minutes.');
+      } else {
+        toast(`Backup created: ${result.name}`);
+      }
       load();
     } catch (err) {
       toast('Backup failed: ' + err.message, 'error');
@@ -112,10 +125,12 @@ export default function BackupTool() {
           <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</div>
         ) : backups.length === 0 ? (
           <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No backups yet. Click a button above to create one.</div>
-        ) : (
-          <Table headers={['Filename', 'Type', 'Size', 'Created', '']}>
+        ) : (<>
+          <Table headers={['Filename', 'Type', 'Size', 'Created', 'Status', '']}>
             {backups.map(b => {
               const isFull = b.name.includes('full');
+              const inProgress = b.status === 'in_progress';
+              const failed = b.status === 'failed';
               return (
                 <TR key={b.name}>
                   <TD style={{ fontFamily: 'monospace', fontSize: 12 }}>{b.name}</TD>
@@ -126,26 +141,48 @@ export default function BackupTool() {
                       color: isFull ? '#1e40af' : '#374151',
                     }}>{isFull ? 'Full' : 'Database'}</span>
                   </TD>
-                  <TD style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmtSize(b.size)}</TD>
+                  <TD style={{ fontSize: 12, color: 'var(--text-muted)' }}>{inProgress ? '—' : fmtSize(b.size)}</TD>
                   <TD style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmtDate(b.created_at)}</TD>
                   <TD>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        onClick={() => download(b.name)}
-                        disabled={downloading === b.name}
-                        style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: 12, cursor: 'pointer' }}
-                      >{downloading === b.name ? 'Downloading…' : '↓ Download'}</button>
-                      <button
-                        onClick={() => setDeleting(b)}
-                        style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}
-                      >Delete</button>
-                    </div>
+                    {inProgress ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#d97706', fontWeight: 600 }}>
+                        <span style={{
+                          display: 'inline-block', width: 10, height: 10, border: '2px solid #d97706',
+                          borderTopColor: 'transparent', borderRadius: '50%', animation: 'bk-spin 800ms linear infinite',
+                        }} />
+                        In progress…
+                      </span>
+                    ) : failed ? (
+                      <span title={b.error || ''} style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>
+                        Failed{b.error ? `: ${b.error.slice(0, 40)}` : ''}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>Ready</span>
+                    )}
+                  </TD>
+                  <TD>
+                    {inProgress || failed ? (
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => download(b.name)}
+                          disabled={downloading === b.name}
+                          style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: 12, cursor: 'pointer' }}
+                        >{downloading === b.name ? 'Downloading…' : '↓ Download'}</button>
+                        <button
+                          onClick={() => setDeleting(b)}
+                          style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}
+                        >Delete</button>
+                      </div>
+                    )}
                   </TD>
                 </TR>
               );
             })}
           </Table>
-        )}
+          <style>{`@keyframes bk-spin { to { transform: rotate(360deg); } }`}</style>
+        </>)}
       </Card>
 
       <Card style={{ marginTop: 24, background: '#f9fafb' }}>
