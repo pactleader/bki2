@@ -124,61 +124,92 @@ router.post('/database', (req, res) => {
 });
 
 // POST /api/admin/backup/full  — generate full backup (DB + uploads) as zip
-router.post('/full', (req, res) => {
+// Strategy: dump DB to a temp file first (synchronously await completion), then
+// stream everything into the zip. Separating the two phases avoids piping-order
+// race conditions and makes error reporting reliable.
+router.post('/full', async (req, res) => {
   const name = `backup-full-${timestamp()}.zip`;
   const outPath = path.join(BACKUPS_DIR, name);
-  const out = fs.createWriteStream(outPath);
-  const archive = archiver('zip', { zlib: { level: 6 } });
+  const tmpSqlPath = path.join(BACKUPS_DIR, `.tmp-${Date.now()}.sql`);
 
-  let responded = false;
-  function fail(status, msg) {
-    if (responded) return;
-    responded = true;
-    try { archive.destroy(); out.destroy(); fs.unlinkSync(outPath); } catch {}
-    res.status(status).json({ error: msg });
+  function cleanup() {
+    try { fs.unlinkSync(tmpSqlPath); } catch {}
   }
 
-  archive.on('warning', err => { if (err.code !== 'ENOENT') console.warn('archive warning:', err); });
-  archive.on('error', err => fail(500, err.message));
-  archive.pipe(out);
+  // --- Phase 1: dump DB to temp file ---
+  try {
+    await new Promise((resolve, reject) => {
+      const tmp = fs.createWriteStream(tmpSqlPath);
+      const dump = spawnMysqldump();
+      let stderr = '';
+      dump.stderr.on('data', c => { stderr += c.toString(); });
+      dump.on('error', err => reject(new Error(`mysqldump failed to start: ${err.message}`)));
+      dump.stdout.pipe(tmp);
+      tmp.on('error', reject);
+      dump.on('close', code => {
+        tmp.end();
+        if (code !== 0) {
+          const relevant = stderr.replace(/mysqldump: \[Warning\].*password.*insecure.*\n?/gi, '').trim();
+          return reject(new Error(relevant || `mysqldump exited with code ${code}`));
+        }
+        tmp.on('finish', resolve);
+        tmp.on('close',  resolve);
+      });
+    });
+  } catch (err) {
+    console.error('[backup/full] mysqldump failed:', err);
+    cleanup();
+    return res.status(500).json({ error: err.message });
+  }
 
-  // 1) DB dump as sql file inside the zip
-  const dump = spawnMysqldump();
-  let stderr = '';
-  dump.stderr.on('data', chunk => { stderr += chunk.toString(); });
-  dump.on('error', err => fail(500, `mysqldump failed to start: ${err.message}. Ensure mysqldump is on PATH.`));
+  // --- Phase 2: build zip ---
+  try {
+    await new Promise((resolve, reject) => {
+      const out = fs.createWriteStream(outPath);
+      const archive = archiver('zip', { zlib: { level: 6 } });
+      out.on('close', resolve);
+      out.on('error', reject);
+      archive.on('warning', err => {
+        // Non-fatal: file disappeared mid-walk, or permission denied on a single file.
+        // Log and continue rather than aborting the whole backup.
+        if (err.code === 'ENOENT' || err.code === 'EACCES' || err.code === 'EPERM') {
+          console.warn('[backup/full] archive warning (skipped):', err.message);
+        } else {
+          reject(err);
+        }
+      });
+      archive.on('error', reject);
+      archive.pipe(out);
+      archive.file(tmpSqlPath, { name: 'database.sql' });
+      if (fs.existsSync(UPLOADS_DIR)) {
+        archive.directory(UPLOADS_DIR, 'uploads');
+      }
+      archive.append(
+        `BKI Site Backup\n` +
+        `Generated: ${new Date().toISOString()}\n` +
+        `Database: ${process.env.DB_NAME}\n\n` +
+        `Contents:\n` +
+        `- database.sql — mysqldump output (import: mysql -u user -p dbname < database.sql)\n` +
+        `- uploads/     — contents of /public/uploads (all images and media)\n`,
+        { name: 'README.txt' }
+      );
+      archive.finalize().catch(reject);
+    });
+  } catch (err) {
+    console.error('[backup/full] zip build failed:', err);
+    cleanup();
+    try { fs.unlinkSync(outPath); } catch {}
+    return res.status(500).json({ error: err.message });
+  }
 
-  archive.append(dump.stdout, { name: 'database.sql' });
-
-  dump.on('close', code => {
-    if (code !== 0) {
-      const relevantErr = stderr.replace(/mysqldump: \[Warning\].*password.*insecure.*\n?/gi, '').trim();
-      return fail(500, relevantErr || `mysqldump exited with code ${code}`);
-    }
-    // 2) Add uploads folder
-    if (fs.existsSync(UPLOADS_DIR)) {
-      archive.directory(UPLOADS_DIR, 'uploads');
-    }
-    // 3) Add a small README with metadata
-    archive.append(
-      `BKI Site Backup\n` +
-      `Generated: ${new Date().toISOString()}\n` +
-      `Database: ${process.env.DB_NAME}\n\n` +
-      `Contents:\n` +
-      `- database.sql — mysqldump output (import with: mysql -u user -p dbname < database.sql)\n` +
-      `- uploads/     — contents of /public/uploads (all images and media)\n`,
-      { name: 'README.txt' }
-    );
-    archive.finalize();
-  });
-
-  out.on('close', () => {
-    if (responded) return;
-    responded = true;
-    pruneOldBackups();
+  cleanup();
+  pruneOldBackups();
+  try {
     const stat = fs.statSync(outPath);
     res.json({ name, size: stat.size, created_at: stat.mtime.toISOString() });
-  });
+  } catch (err) {
+    res.status(500).json({ error: 'Backup created but could not read stats: ' + err.message });
+  }
 });
 
 module.exports = router;
