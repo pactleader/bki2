@@ -71,11 +71,14 @@ router.get('/list', (req, res) => {
         return { name: f, size: stat.size, created_at: stat.mtime.toISOString(), status: 'ready' };
       })
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
-    // Prepend any in-progress jobs
-    const jobs = Array.from(inProgress.entries()).map(([name, job]) => ({
-      name, size: 0, created_at: job.startedAt, status: job.error ? 'failed' : 'in_progress',
-      kind: job.kind, error: job.error || null,
-    }));
+    // Only show in-progress jobs that don't already have a (completed, non-empty) file on disk
+    const fileNames = new Set(files.filter(f => f.size > 0).map(f => f.name));
+    const jobs = Array.from(inProgress.entries())
+      .filter(([name]) => !fileNames.has(name))
+      .map(([name, job]) => ({
+        name, size: 0, created_at: job.startedAt, status: job.error ? 'failed' : 'in_progress',
+        kind: job.kind, error: job.error || null,
+      }));
     res.json([...jobs, ...files]);
   } catch (err) {
     res.status(500).json({ error: err.message });
