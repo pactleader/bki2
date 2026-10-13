@@ -64,21 +64,24 @@ const inProgress = new Map(); // name -> { startedAt, kind, error? }
 // GET /api/admin/backup/list  — list stored backups + any in-progress jobs
 router.get('/list', (req, res) => {
   try {
+    // inProgress is the source of truth for ongoing jobs — if a name is in the map,
+    // the file on disk is partially-written and must NOT be shown as ready.
+    const inProgressNames = new Set(inProgress.keys());
+
     const files = fs.readdirSync(BACKUPS_DIR)
       .filter(f => /^backup-.*\.(zip|sql)$/.test(f))
+      .filter(f => !inProgressNames.has(f)) // hide partial files for ongoing jobs
       .map(f => {
         const stat = fs.statSync(path.join(BACKUPS_DIR, f));
         return { name: f, size: stat.size, created_at: stat.mtime.toISOString(), status: 'ready' };
       })
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
-    // Only show in-progress jobs that don't already have a (completed, non-empty) file on disk
-    const fileNames = new Set(files.filter(f => f.size > 0).map(f => f.name));
-    const jobs = Array.from(inProgress.entries())
-      .filter(([name]) => !fileNames.has(name))
-      .map(([name, job]) => ({
-        name, size: 0, created_at: job.startedAt, status: job.error ? 'failed' : 'in_progress',
-        kind: job.kind, error: job.error || null,
-      }));
+
+    const jobs = Array.from(inProgress.entries()).map(([name, job]) => ({
+      name, size: 0, created_at: job.startedAt, status: job.error ? 'failed' : 'in_progress',
+      kind: job.kind, error: job.error || null,
+    }));
+
     res.json([...jobs, ...files]);
   } catch (err) {
     res.status(500).json({ error: err.message });
