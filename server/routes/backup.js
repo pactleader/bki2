@@ -12,6 +12,15 @@ const UPLOADS_DIR  = path.join(__dirname, '../../public/uploads');
 const BACKUPS_DIR  = path.join(__dirname, '../../backups');
 if (!fs.existsSync(BACKUPS_DIR)) fs.mkdirSync(BACKUPS_DIR, { recursive: true });
 
+// Clean up any orphaned temp files from previous crashed backups
+try {
+  fs.readdirSync(BACKUPS_DIR)
+    .filter(f => f.startsWith('.tmp-'))
+    .forEach(f => {
+      try { fs.unlinkSync(path.join(BACKUPS_DIR, f)); console.log('[backup] cleaned stale tmp:', f); } catch {}
+    });
+} catch {}
+
 const MAX_STORED_BACKUPS = 5;
 
 function timestamp() {
