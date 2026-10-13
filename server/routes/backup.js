@@ -170,19 +170,25 @@ router.post('/full', (req, res) => {
         const tmp = fs.createWriteStream(tmpSqlPath);
         const dump = spawnMysqldump();
         let stderr = '';
+        let dumpExitCode = null;
+        let tmpDone = false;
+
+        function maybeResolve() {
+          if (dumpExitCode === null || !tmpDone) return;
+          if (dumpExitCode !== 0) {
+            const relevant = stderr.replace(/mysqldump: \[Warning\].*password.*insecure.*\n?/gi, '').trim();
+            return reject(new Error(relevant || `mysqldump exited with code ${dumpExitCode}`));
+          }
+          resolve();
+        }
+
         dump.stderr.on('data', c => { stderr += c.toString(); });
         dump.on('error', err => reject(new Error(`mysqldump failed to start: ${err.message}`)));
-        dump.stdout.pipe(tmp);
         tmp.on('error', reject);
-        dump.on('close', code => {
-          tmp.end();
-          if (code !== 0) {
-            const relevant = stderr.replace(/mysqldump: \[Warning\].*password.*insecure.*\n?/gi, '').trim();
-            return reject(new Error(relevant || `mysqldump exited with code ${code}`));
-          }
-          tmp.on('finish', resolve);
-          tmp.on('close',  resolve);
-        });
+        tmp.on('finish', () => { tmpDone = true; maybeResolve(); });
+
+        dump.stdout.pipe(tmp); // piping auto-calls tmp.end() when source closes
+        dump.on('close', code => { dumpExitCode = code; maybeResolve(); });
       });
 
       console.log(`[backup/full] phase 1 done, starting phase 2 (zip)`);
