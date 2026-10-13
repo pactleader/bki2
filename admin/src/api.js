@@ -147,6 +147,14 @@ export const createRedirect  = (data) => apiFetch('/admin/redirects', { method: 
 export const updateRedirect  = (id, data) => apiFetch(`/admin/redirects/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteRedirect  = (id) => apiFetch(`/admin/redirects/${id}`, { method: 'DELETE' });
 
+// ── Backup ────────────────────────────────────────────────────
+export const listBackups       = () => apiFetch('/admin/backup/list');
+export const createBackupDb    = () => apiFetch('/admin/backup/database', { method: 'POST' });
+export const createBackupFull  = () => apiFetch('/admin/backup/full',     { method: 'POST' });
+export const deleteBackup      = (name) => apiFetch(`/admin/backup/${encodeURIComponent(name)}`, { method: 'DELETE' });
+// Download goes via <a href>, needs token in URL — build download URL that includes token
+export const backupDownloadUrl = (name) => `/api/admin/backup/download/${encodeURIComponent(name)}`;
+
 // ── Subscribers ───────────────────────────────────────────────
 export const listSubscribers        = (params = {}) => apiFetch('/admin/subscribers?' + new URLSearchParams(params));
 export const deleteSubscriber       = (id) => apiFetch(`/admin/subscribers/${id}`, { method: 'DELETE' });

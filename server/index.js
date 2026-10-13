@@ -59,6 +59,7 @@ app.use('/api/admin/media',      require('./routes/media'));
 app.use('/api/admin/import',          require('./routes/import'));
 app.use('/api/admin/generate-image',  require('./routes/generate-image'));
 app.use('/api/admin/redirects',       require('./routes/redirects').admin);
+app.use('/api/admin/backup',          require('./routes/backup'));
 app.use('/api/pages',                 require('./routes/pages').public);
 app.use('/api/admin/pages',           require('./routes/pages').admin);
 app.use('/api/reports',               require('./routes/reports').public);

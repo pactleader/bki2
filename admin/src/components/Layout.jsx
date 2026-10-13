@@ -21,6 +21,7 @@ const NAV = [
 
 const TOOLS = [
   { to: '/admin/tools/redirects',      label: 'Redirects',            icon: '↪' },
+  { to: '/admin/tools/backup',         label: 'Backup',               icon: '💾' },
 ];
 
 export default function Layout() {

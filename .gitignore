@@ -4,3 +4,4 @@ dist
 admin/node_modules
 admin/dist
 server/node_modules
+backups

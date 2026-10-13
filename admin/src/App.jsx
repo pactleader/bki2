@@ -20,6 +20,7 @@ import SiteSettings from './pages/settings/SiteSettings.jsx';
 import MediaLibrary from './pages/media/MediaLibrary.jsx';
 import SubscriberList from './pages/subscribers/SubscriberList.jsx';
 import RedirectList from './pages/redirects/RedirectList.jsx';
+import BackupTool from './pages/tools/BackupTool.jsx';
 import PageList from './pages/pages/PageList.jsx';
 import PageEdit from './pages/pages/PageEdit.jsx';
 import ReportList from './pages/reports/ReportList.jsx';
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="subscribers" element={<ProtectedRoute adminOnly><SubscriberList /></ProtectedRoute>} />
           <Route path="settings" element={<ProtectedRoute adminOnly><SiteSettings /></ProtectedRoute>} />
           <Route path="tools/redirects" element={<ProtectedRoute adminOnly><RedirectList /></ProtectedRoute>} />
+          <Route path="tools/backup" element={<ProtectedRoute adminOnly><BackupTool /></ProtectedRoute>} />
           <Route path="pages" element={<ProtectedRoute adminOnly><PageList /></ProtectedRoute>} />
           <Route path="pages/new" element={<ProtectedRoute adminOnly><PageEdit /></ProtectedRoute>} />
           <Route path="pages/:id/edit" element={<ProtectedRoute adminOnly><PageEdit /></ProtectedRoute>} />
